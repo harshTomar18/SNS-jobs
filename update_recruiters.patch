@@ -1,0 +1,121 @@
+--- project/app/admin/(dashboard)/recruiters/page.tsx
++++ project/app/admin/(dashboard)/recruiters/page.tsx
+@@ -17,6 +17,7 @@
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
++  DialogDescription,
+   DialogFooter,
+ } from '@/components/ui/dialog';
+ import { PageHeader } from '@/components/page-header';
+@@ -29,6 +30,8 @@
+   const [search, setSearch] = useState('');
+   const [showCreate, setShowCreate] = useState(false);
+   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', industryIds: [] as number[] });
++  const [editMode, setEditMode] = useState(false);
++  const [selectedRecruiterId, setSelectedRecruiterId] = useState('');
+   const recruitersQuery = useQuery({ queryKey: ['admin-recruiters'], queryFn: adminApi.recruiters });
+   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
+   const recruiters = useMemo<RecruiterView[]>(() => recruitersQuery.data ?? [], [recruitersQuery.data]);
+@@ -46,6 +49,17 @@
+     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not create recruiter')),
+   });
+ 
++  const editMutation = useMutation({
++    mutationFn: () => adminApi.updateRecruiter(selectedRecruiterId, form),
++    onSuccess: () => {
++      toast.success('Recruiter updated successfully');
++      setShowCreate(false);
++      setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
++      queryClient.invalidateQueries({ queryKey: ['admin-recruiters'] });
++    },
++    onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update recruiter')),
++  });
++
+   const statusMutation = useMutation({
+     mutationFn: ({ id, active }: { id: string; active: boolean }) => adminApi.setRecruiterStatus(id, active),
+     onSuccess: () => {
+@@ -70,12 +84,26 @@
+     }));
+   };
+ 
++  const handleClose = (open: boolean) => {
++    setShowCreate(open);
++    if (!open) {
++      setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
++      setEditMode(false);
++      setSelectedRecruiterId('');
++    }
++  };
++
+   return (
+     <div className="space-y-6">
+       <PageHeader
+         title="Recruiter Management"
+         description="Create, manage, and oversee recruiter accounts"
+-        action={<Button onClick={() => setShowCreate(true)}><Plus className="mr-2 h-4 w-4" />Add Recruiter</Button>}
++        action={<Button onClick={() => {
++          setEditMode(false);
++          setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
++          setShowCreate(true);
++        }}><Plus className="mr-2 h-4 w-4" />Add Recruiter</Button>}
+       />
+ 
+       <div className="flex max-w-md items-center gap-2 rounded-xl border border-border bg-card px-3 py-2">
+@@ -99,6 +127,15 @@
+                   <Badge variant="outline" className={cn('mt-1', recruiter.status === 'active' ? 'border-success/20 bg-success/5 text-success' : 'bg-muted text-muted-foreground')}>
+                     {recruiter.status}
+                   </Badge>
++                  <Button variant="link" className="text-xs h-6 px-0 ml-2" onClick={() => {
++                    setEditMode(true);
++                    setSelectedRecruiterId(recruiter.id);
++                    setForm({ name: recruiter.name, email: recruiter.email, phone: recruiter.phone || '', password: '', industryIds: recruiter.industries.map((ind: string) => industries.find((i: any) => i.name === ind)?.id).filter(Boolean) as number[] });
++                    setShowCreate(true);
++                  }}>
++                    Edit
++                  </Button>
+                 </div>
+               </div>
+               <Switch
+@@ -122,9 +159,10 @@
+         ))}
+       </div>
+ 
+-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
++      <Dialog open={showCreate} onOpenChange={handleClose}>
+         <DialogContent>
+-          <DialogHeader><DialogTitle>Create New Recruiter</DialogTitle></DialogHeader>
++          <DialogHeader><DialogTitle>{editMode ? 'Edit Recruiter' : 'Create New Recruiter'}</DialogTitle></DialogHeader>
++          <DialogDescription className="sr-only">Form to {editMode ? 'edit' : 'create'} a recruiter profile</DialogDescription>
+           <div className="space-y-4">
+             <div className="grid gap-4 sm:grid-cols-2">
+               <div className="space-y-2">
+@@ -140,11 +178,13 @@
+                 <Label>Phone Number</Label>
+                 <Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} type="tel" placeholder="9876543210" />
+               </div>
++              {!editMode && (
+               <div className="space-y-2">
+                 <Label>Temporary Password <span className="text-destructive">*</span></Label>
+                 <Input value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} type="password" placeholder="Minimum 6 characters" required />
+               </div>
++              )}
+             </div>
+             <div className="space-y-2">
+               <Label>Assigned Industries</Label>
+@@ -165,9 +205,12 @@
+             </div>
+           </div>
+           <DialogFooter>
+-            <Button variant="outline" onClick={() => setShowCreate(false)}>Cancel</Button>
+-            <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+-              {createMutation.isPending ? 'Creating...' : 'Create Recruiter'}
++            <Button variant="outline" onClick={() => handleClose(false)}>Cancel</Button>
++            <Button 
++              onClick={() => editMode ? editMutation.mutate() : createMutation.mutate()} 
++              disabled={(editMode ? editMutation.isPending : createMutation.isPending) || (!editMode && (!form.email || !form.password))}
++            >
++              {editMode ? (editMutation.isPending ? 'Updating...' : 'Update Recruiter') : (createMutation.isPending ? 'Creating...' : 'Create Recruiter')}
+             </Button>
+           </DialogFooter>
+         </DialogContent>
