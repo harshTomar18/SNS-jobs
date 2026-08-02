@@ -93,6 +93,10 @@ export default function WorkerOnboardingPage() {
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   const onSubmit = async (data: FormData) => {
+    if (!resumeUrl) {
+      toast.error('Please upload your resume to complete your profile.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       // 1. Create or update profile
@@ -316,7 +320,7 @@ export default function WorkerOnboardingPage() {
                   <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting}>
+                <Button type="submit" disabled={isSubmitting || !resumeUrl}>
                   {isSubmitting ? 'Saving Profile...' : 'Complete Profile'}
                   <Check className="ml-2 h-4 w-4" />
                 </Button>

@@ -63,21 +63,7 @@ export default function RecruiterDashboardPage() {
   // Scheduled Interviews
   const interviewApplications = applications.filter(a => a.status === 'interview_scheduled');
   
-  const simulatedInterviews = [
-    {
-      time: "10:30 AM",
-      candidateName: "Alex Rivera",
-      details: "Technical Round • 45m"
-    },
-    {
-      time: "02:00 PM",
-      candidateName: "Sarah Connor",
-      details: "Cultural Fit • 30m"
-    }
-  ];
-
-  const displayInterviews = interviewApplications.length > 0
-    ? interviewApplications.map(app => {
+  const displayInterviews = interviewApplications.map(app => {
         const event = app.timeline.find(e => e.status === 'interview_scheduled');
         const timeStr = event 
           ? new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
@@ -87,8 +73,7 @@ export default function RecruiterDashboardPage() {
           candidateName: app.workerName,
           details: event?.description || "Technical Round • 45m"
         };
-      })
-    : simulatedInterviews;
+      });
 
   const formatWage = (min: number, max: number) => {
     const formatNum = (num: number) => {
@@ -155,15 +140,9 @@ export default function RecruiterDashboardPage() {
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">ACTIVE JOBS</span>
-            <Badge variant="outline" className="bg-green-50 text-green-600 border-none text-[9px] font-extrabold rounded-full px-2 py-0.5">
-              ↑ 8.4%
-            </Badge>
           </div>
           <div className="flex items-end justify-between mt-4">
             <span className="text-3xl font-extrabold text-slate-800 leading-none">{activeJobsCount}</span>
-            <svg className="w-16 h-8 text-indigo-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M0,20 Q15,5 30,15 T60,10 T90,5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
           </div>
         </Card>
 
@@ -171,15 +150,9 @@ export default function RecruiterDashboardPage() {
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">TOTAL APPLICATIONS</span>
-            <Badge variant="outline" className="bg-green-50 text-green-600 border-none text-[9px] font-extrabold rounded-full px-2 py-0.5">
-              ↑ 12%
-            </Badge>
           </div>
           <div className="flex items-end justify-between mt-4">
             <span className="text-3xl font-extrabold text-slate-800 leading-none">{totalApplicationsCount}</span>
-            <svg className="w-16 h-8 text-indigo-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M0,25 Q20,10 40,20 T80,5 T100,10" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
           </div>
         </Card>
 
@@ -187,15 +160,9 @@ export default function RecruiterDashboardPage() {
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">INTERVIEWS</span>
-            <Badge variant="outline" className="bg-green-50 text-green-600 border-none text-[9px] font-extrabold rounded-full px-2 py-0.5">
-              ↑ 5%
-            </Badge>
           </div>
           <div className="flex items-end justify-between mt-4">
             <span className="text-3xl font-extrabold text-slate-800 leading-none">{interviewsCount}</span>
-            <svg className="w-16 h-8 text-indigo-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M0,15 Q25,25 50,10 T75,5 T100,20" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
           </div>
         </Card>
 
@@ -203,15 +170,9 @@ export default function RecruiterDashboardPage() {
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">SHORTLISTED</span>
-            <Badge variant="outline" className="bg-red-50 text-red-500 border-none text-[9px] font-extrabold rounded-full px-2 py-0.5">
-              ↓ 2%
-            </Badge>
           </div>
           <div className="flex items-end justify-between mt-4">
             <span className="text-3xl font-extrabold text-slate-800 leading-none">{shortlistedCount}</span>
-            <svg className="w-16 h-8 text-indigo-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M0,5 Q20,25 40,15 T80,20 T100,5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
           </div>
         </Card>
 
@@ -219,15 +180,9 @@ export default function RecruiterDashboardPage() {
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">HIRED</span>
-            <Badge variant="outline" className="bg-green-50 text-green-600 border-none text-[9px] font-extrabold rounded-full px-2 py-0.5">
-              ↑ 10%
-            </Badge>
           </div>
           <div className="flex items-end justify-between mt-4">
             <span className="text-3xl font-extrabold text-slate-800 leading-none">{hiredCount}</span>
-            <svg className="w-16 h-8 text-indigo-500" viewBox="0 0 100 30" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M0,28 Q15,10 30,22 T60,5 T90,2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
           </div>
         </Card>
       </div>

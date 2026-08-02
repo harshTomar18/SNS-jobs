@@ -66,6 +66,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { UploadButton } from '@/utils/uploadthing';
 
 export default function WorkerProfilePage() {
   const queryClient = useQueryClient();
@@ -592,7 +593,35 @@ export default function WorkerProfilePage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-slate-500">Resume URL</Label>
-                      <Input value={form.resumeUrl} className="rounded-xl border-slate-200" onChange={(event) => setForm({ ...form, resumeUrl: event.target.value })} />
+                      <div className="flex gap-2 items-center">
+                        <Input 
+                          placeholder="Resume URL (upload file or paste link)"
+                          value={form.resumeUrl} 
+                          className="rounded-xl border-slate-200 flex-1 text-xs" 
+                          onChange={(event) => setForm({ ...form, resumeUrl: event.target.value })} 
+                        />
+                        <UploadButton
+                          endpoint="resumeUploader"
+                          headers={{
+                            Authorization: typeof window !== 'undefined' && localStorage.getItem('auth-token')
+                              ? `Bearer ${localStorage.getItem('auth-token')}`
+                              : '',
+                          }}
+                          onClientUploadComplete={(res) => {
+                            if (res && res[0]) {
+                              setForm((prev) => ({ ...prev, resumeUrl: res[0].url }));
+                              toast.success('Resume uploaded successfully');
+                            }
+                          }}
+                          onUploadError={(error: Error) => {
+                            toast.error(`Upload failed: ${error.message}`);
+                          }}
+                          appearance={{
+                            button: "bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs py-2 px-4 font-bold h-10 shadow-sm transition-colors cursor-pointer shrink-0 ut-ready:bg-blue-600 ut-uploading:bg-blue-500",
+                            allowedContent: "hidden"
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-slate-500">Bio Summary</Label>
@@ -694,54 +723,9 @@ export default function WorkerProfilePage() {
                       );
                     })
                   ) : (
-                    // Fallback Mock experiences matching screenshot exactly
-                    <>
-                      <div className="relative group">
-                        <div className="absolute -left-[32px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-blue-200 bg-white z-10">
-                          <span className="h-2 w-2 rounded-full bg-blue-600" />
-                        </div>
-                        <div className="flex gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 shadow-sm flex items-center justify-center shrink-0 text-slate-800 font-bold text-lg">
-                            
-                          </div>
-                          <div className="space-y-1">
-                            <h4 className="font-extrabold text-slate-800 text-sm">Senior Product Designer</h4>
-                            <p className="text-xs font-bold text-blue-600">
-                              Apple <span className="text-slate-300 mx-1">•</span> Full-time
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-bold">
-                              Jan 2021 — Present <span className="text-slate-300 mx-1">•</span> 3 yrs 4 mos
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-slate-500 font-bold mt-2">
-                              Lead the accessibility initiative for iOS 17, ensuring design system compliance across 40+ engineering teams. Reduced design debt by 30% through automated auditing tools.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="relative group">
-                        <div className="absolute -left-[32px] top-1.5 flex h-4 w-4 items-center justify-center rounded-full border border-blue-200 bg-white z-10">
-                          <span className="h-2 w-2 rounded-full bg-blue-600" />
-                        </div>
-                        <div className="flex gap-4">
-                          <div className="h-10 w-10 rounded-xl bg-red-50 border border-red-100 shadow-sm flex items-center justify-center shrink-0 text-red-600 font-black text-lg">
-                            N
-                          </div>
-                          <div className="space-y-1">
-                            <h4 className="font-extrabold text-slate-800 text-sm">Product Designer II</h4>
-                            <p className="text-xs font-bold text-blue-600">
-                              Netflix <span className="text-slate-300 mx-1">•</span> Full-time
-                            </p>
-                            <p className="text-[10px] text-slate-400 font-bold">
-                              Aug 2018 — Dec 2020 <span className="text-slate-300 mx-1">•</span> 2 yrs 5 mos
-                            </p>
-                            <p className="text-[11px] leading-relaxed text-slate-500 font-bold mt-2">
-                              Spearheaded the redesign of the content discovery engine for TV platforms. Collaborated with data scientists to implement A/B testing frameworks for personalized user interfaces.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </>
+                    <div className="text-center py-6 text-slate-400">
+                      <p className="text-xs font-semibold">No experience added yet. Click the "+" button to add work experience.</p>
+                    </div>
                   )}
                 </div>
               </Card>
@@ -774,97 +758,35 @@ export default function WorkerProfilePage() {
                       </span>
                     ))
                   ) : (
-                    // Fallback Mock skills matching screenshot exactly
-                    [
-                      { name: 'Design Systems', score: 42 },
-                      { name: 'React / Tailwind', score: 38 },
-                      { name: 'User Research', score: 29 },
-                      { name: 'Accessibility (WCAG)', score: 56 }
-                    ].map((sk) => (
-                      <span
-                        key={sk.name}
-                        className="inline-flex items-center bg-[#f1f5f9]/70 text-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl border border-transparent"
-                      >
-                        <span>{sk.name}</span>
-                        <div className="h-3.5 w-px bg-slate-300 mx-2.5" />
-                        <span className="text-blue-600 font-black">{sk.score}</span>
-                      </span>
-                    ))
+                    <span className="text-xs text-slate-400 font-medium">No skills added yet. Click the edit icon to add skills.</span>
                   )}
                 </div>
               </Card>
 
-              {/* Dynamic Sub-Grid: Certifications and Education */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Certifications Card */}
-                <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
-                  <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-50 pb-2.5">
-                    Certifications
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    {[
-                      { title: 'Google UX Professional', desc: 'Issued March 2023' },
-                      { title: 'Baymard E-commerce UX', desc: 'Issued June 2022' }
-                    ].map((cert, index) => (
-                      <div key={index} className="flex gap-3">
+              {/* Education Card */}
+              <Card className="p-8 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
+                <h3 className="font-extrabold text-slate-800 text-lg border-b border-slate-50 pb-2">
+                  Education
+                </h3>
+                
+                <div className="space-y-4">
+                  {profile.education.length ? (
+                    profile.education.map((edu) => (
+                      <div key={edu.id} className="flex gap-3">
                         <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                          <CheckCircle2 className="h-4.5 w-4.5 text-blue-500 fill-blue-50" />
+                          <GraduationCap className="h-4.5 w-4.5 text-blue-600" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-extrabold text-slate-700 leading-tight">{cert.title}</h4>
-                          <p className="text-[10px] text-slate-400 font-bold mt-0.5">{cert.desc}</p>
+                          <h4 className="text-xs font-extrabold text-slate-700 leading-tight">{edu.degree}</h4>
+                          <p className="text-[10px] text-slate-400 font-bold mt-0.5">{edu.institution}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </Card>
-
-                {/* Education Card */}
-                <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
-                  <h3 className="font-extrabold text-slate-800 text-sm border-b border-slate-50 pb-2.5">
-                    Education
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    {profile.education.length ? (
-                      profile.education.map((edu) => (
-                        <div key={edu.id} className="flex gap-3">
-                          <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                            <GraduationCap className="h-4.5 w-4.5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-extrabold text-slate-700 leading-tight">{edu.degree}</h4>
-                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">{edu.institution}</p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      // Fallback mockup items
-                      <>
-                        <div className="flex gap-3">
-                          <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                            <GraduationCap className="h-4.5 w-4.5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-extrabold text-slate-700 leading-tight">Stanford University</h4>
-                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">MS in Human Computer Interaction</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <div className="h-8 w-8 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                            <GraduationCap className="h-4.5 w-4.5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="text-xs font-extrabold text-slate-700 leading-tight">RISD</h4>
-                            <p className="text-[10px] text-slate-400 font-bold mt-0.5">BFA in Graphic Design</p>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </Card>
-              </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400 font-medium">No education details added yet. Click Edit Profile to update.</span>
+                  )}
+                </div>
+              </Card>
 
               {/* Languages Card */}
               <Card className="p-8 bg-[#ffffff] border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">

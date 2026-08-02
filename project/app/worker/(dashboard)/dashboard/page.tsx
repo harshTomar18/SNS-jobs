@@ -134,68 +134,6 @@ export default function WorkerDashboardPage() {
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (completion / 100) * circumference;
 
-  // Mock Jobs from screenshot
-  const mockJobs: (Job & { matchPercent: number; matchesText: string })[] = [
-    {
-      id: 'mock-1',
-      title: 'Senior Product Designer',
-      companyId: 'google-corp',
-      companyName: 'Google',
-      companyLogo: '',
-      industry: 'Design',
-      location: 'Remote',
-      workType: 'remote',
-      jobType: 'full-time',
-      shift: 'day',
-      salaryMin: 140000,
-      salaryMax: 180000,
-      experienceMin: 5,
-      experienceMax: 8,
-      openings: 2,
-      skills: ['React', 'UI Design', 'Figma'],
-      description: 'Join the Google Design team as a Senior Product Designer.',
-      responsibilities: [],
-      requirements: [],
-      benefits: [],
-      postedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-      recruiterId: 'recruiter-google',
-      recruiterName: 'Google Recruiter',
-      status: 'published',
-      isFresherFriendly: false,
-      matchPercent: 98,
-      matchesText: 'Matches your skill: React, UI Design, and Figma',
-    },
-    {
-      id: 'mock-2',
-      title: 'Lead UI Developer',
-      companyId: 'airbnb-corp',
-      companyName: 'Airbnb',
-      companyLogo: '',
-      industry: 'Tech',
-      location: 'San Francisco',
-      workType: 'hybrid',
-      jobType: 'full-time',
-      shift: 'day',
-      salaryMin: 160000,
-      salaryMax: 210000,
-      experienceMin: 6,
-      experienceMax: 10,
-      openings: 1,
-      skills: ['Tailwind CSS', 'Next.js', 'React'],
-      description: 'Lead the UI engineering team at Airbnb.',
-      responsibilities: [],
-      requirements: [],
-      benefits: [],
-      postedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-      recruiterId: 'recruiter-airbnb',
-      recruiterName: 'Airbnb Recruiter',
-      status: 'published',
-      isFresherFriendly: false,
-      matchPercent: 95,
-      matchesText: 'Matches your skill: Tailwind CSS, Next.js',
-    }
-  ];
-
   const realJobsWithMatch = jobs.slice(0, 3).map((job) => {
     const { matchPercent, matchesText } = getJobMatchDetails(job, workerSkills);
     return {
@@ -205,16 +143,9 @@ export default function WorkerDashboardPage() {
     };
   });
 
-  const jobsToDisplay = realJobsWithMatch.length > 0 ? realJobsWithMatch.slice(0, 2) : mockJobs;
+  const jobsToDisplay = realJobsWithMatch.slice(0, 2);
 
-  // History timeline items mapping
-  const mockRecentHistory = [
-    { title: 'Applied to Stripe', subtitle: 'Senior React Developer • 2h ago', badge: 'In Review', badgeColor: 'bg-blue-50 text-blue-700 border-blue-100', active: true },
-    { title: 'Saved Shopify Job', subtitle: 'Product Manager • Yesterday', badge: null, badgeColor: '', active: false },
-    { title: 'Profile View', subtitle: 'Meta Recruiter viewed your profile • 2d ago', badge: null, badgeColor: '', active: false },
-  ];
-
-  const historyItems = applications.length > 0 ? applications.slice(0, 3).map((app, idx) => {
+  const historyItems = applications.slice(0, 3).map((app, idx) => {
     const isActive = idx === 0;
     const timeText = timeAgo(app.appliedAt);
     
@@ -241,20 +172,10 @@ export default function WorkerDashboardPage() {
       badgeColor: statusColor,
       active: isActive
     };
-  }) : mockRecentHistory;
-
-  // Interviews mapping
-  const mockInterviews = [
-    {
-      companyName: 'Vercel Inc.',
-      round: 'Technical Round',
-      time: 'Tomorrow',
-      timeDetail: '10:00 AM'
-    }
-  ];
+  });
 
   const interviewApps = applications.filter(app => app.status === 'interview_scheduled');
-  const interviewsToDisplay = interviewApps.length > 0 ? interviewApps.map(app => {
+  const interviewsToDisplay = interviewApps.map(app => {
     const interviewEvent = app.timeline.find(t => t.status === 'interview_scheduled');
     const timeString = interviewEvent ? new Date(interviewEvent.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM';
     const dateString = interviewEvent ? new Date(interviewEvent.timestamp).toLocaleDateString([], { weekday: 'long' }) : 'Tomorrow';
@@ -265,12 +186,7 @@ export default function WorkerDashboardPage() {
       time: dateString,
       timeDetail: timeString
     };
-  }) : mockInterviews;
-
-  const trendingCompanies = [
-    { name: 'Meta Platforms', openings: 24 },
-    { name: 'Stripe', openings: 12 }
-  ];
+  });
 
   return (
     <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
@@ -344,60 +260,57 @@ export default function WorkerDashboardPage() {
               <FileText className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-800">{applications.length || 24}</p>
+              <p className="text-3xl font-black text-slate-800">{applications.length}</p>
               <p className="text-slate-400 text-xs font-semibold mt-0.5">Applications</p>
             </div>
           </div>
-          <div className="self-start bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full">
-            +12%
-          </div>
         </Card>
 
-        {/* Saved Jobs */}
+        {/* Skills */}
         <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <Bookmark className="h-6 w-6" />
+              <Sparkles className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-800">12</p>
-              <p className="text-slate-400 text-xs font-semibold mt-0.5">Saved Jobs</p>
+              <p className="text-3xl font-black text-slate-800">{profile?.skills?.length || 0}</p>
+              <p className="text-slate-400 text-xs font-semibold mt-0.5">Skills Added</p>
             </div>
           </div>
           <div className="self-start bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-full">
-            Updated
+            Profile skills
           </div>
         </Card>
 
-        {/* Profile Views */}
+        {/* Experience Years */}
         <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex items-center justify-between">
           <div className="space-y-2">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-              <Eye className="h-6 w-6" />
+              <Briefcase className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-800">156</p>
-              <p className="text-slate-400 text-xs font-semibold mt-0.5">Profile Views</p>
+              <p className="text-3xl font-black text-slate-800">{profile?.experienceYears || 0}</p>
+              <p className="text-slate-400 text-xs font-semibold mt-0.5">Years of Exp</p>
             </div>
           </div>
           <div className="self-start bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-full">
-            +45 today
+            Active profile
           </div>
         </Card>
 
-        {/* Recruiter Messages */}
+        {/* Languages */}
         <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex items-center justify-between">
           <div className="space-y-2">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-600">
-              <Mail className="h-6 w-6" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+              <BookOpen className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-3xl font-black text-slate-800">8</p>
-              <p className="text-slate-400 text-xs font-semibold mt-0.5">Recruiter Messages</p>
+              <p className="text-3xl font-black text-slate-800">{profile?.languages?.length || 0}</p>
+              <p className="text-slate-400 text-xs font-semibold mt-0.5">Languages</p>
             </div>
           </div>
-          <div className="self-start bg-red-50 text-red-600 text-[10px] font-bold px-2 py-1 rounded-full">
-            8 new
+          <div className="self-start bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-1 rounded-full">
+            Fluent languages
           </div>
         </Card>
       </div>
@@ -417,55 +330,62 @@ export default function WorkerDashboardPage() {
             </div>
 
             {/* Recommended Job List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {jobsToDisplay.map((job) => (
-                <Card key={job.id} className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col justify-between hover:border-blue-100 hover:shadow-md transition-all">
-                  <div className="space-y-4">
-                    {/* Job Top Row: Logo & Match badge */}
-                    <div className="flex items-center justify-between">
-                      <CompanyLogo name={job.companyName} className="h-11 w-11" />
-                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                        {job.matchPercent}% MATCH
-                      </span>
-                    </div>
-
-                    {/* Job Info */}
-                    <div className="space-y-1">
-                      <h3 className="font-extrabold text-slate-800 text-lg leading-tight hover:text-blue-600 transition-colors">
-                        <Link href={`/worker/jobs/${job.id}`}>{job.title}</Link>
-                      </h3>
-                      <p className="text-xs text-slate-400 font-semibold">
-                        {job.companyName} • {job.location} • {displaySalary(job.salaryMin, job.salaryMax)}
-                      </p>
-                    </div>
-
-                    {/* Why Recommended Banner */}
-                    <div className="bg-[#f8fafc]/80 rounded-2xl p-3 border border-slate-100/50 flex flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-blue-600">
-                        <CheckCircle2 className="h-3.5 w-3.5 fill-blue-50" />
-                        <span className="text-[10px] font-bold">Why recommended</span>
+            {jobsToDisplay.length === 0 ? (
+              <div className="text-center py-8 text-slate-400 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+                <Briefcase className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                <span className="text-sm font-bold">No recommended jobs found at the moment</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {jobsToDisplay.map((job) => (
+                  <Card key={job.id} className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col justify-between hover:border-blue-100 hover:shadow-md transition-all">
+                    <div className="space-y-4">
+                      {/* Job Top Row: Logo & Match badge */}
+                      <div className="flex items-center justify-between">
+                        <CompanyLogo name={job.companyName} className="h-11 w-11" />
+                        <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                          {job.matchPercent}% MATCH
+                        </span>
                       </div>
-                      <p className="text-[10px] text-slate-500 font-medium pl-5 leading-relaxed">
-                        {job.matchesText}
-                      </p>
-                    </div>
-                  </div>
 
-                  <Link
-                    href={`/worker/jobs/${job.id}`}
-                    className="w-full bg-[#e8eefc] hover:bg-[#d5e2f9] text-blue-600 font-bold py-3 rounded-2xl transition-all text-center block mt-6 text-xs"
-                  >
-                    Apply Now
-                  </Link>
-                </Card>
-              ))}
-            </div>
+                      {/* Job Info */}
+                      <div className="space-y-1">
+                        <h3 className="font-extrabold text-slate-800 text-lg leading-tight hover:text-blue-600 transition-colors">
+                          <Link href={`/worker/jobs/${job.id}`}>{job.title}</Link>
+                        </h3>
+                        <p className="text-xs text-slate-400 font-semibold">
+                          {job.companyName} • {job.location} • {displaySalary(job.salaryMin, job.salaryMax)}
+                        </p>
+                      </div>
+
+                      {/* Why Recommended Banner */}
+                      <div className="bg-[#f8fafc]/80 rounded-2xl p-3 border border-slate-100/50 flex flex-col gap-1">
+                        <div className="flex items-center gap-1.5 text-blue-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 fill-blue-50" />
+                          <span className="text-[10px] font-bold">Why recommended</span>
+                        </div>
+                        <p className="text-[10px] text-slate-500 font-medium pl-5 leading-relaxed">
+                          {job.matchesText}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Link
+                      href={`/worker/jobs/${job.id}`}
+                      className="w-full bg-[#e8eefc] hover:bg-[#d5e2f9] text-blue-600 font-bold py-3 rounded-2xl transition-all text-center block mt-6 text-xs"
+                    >
+                      Apply Now
+                    </Link>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Services Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
             {/* Resume Builder */}
-            <Link href="/worker/profile" className="block">
+            {/* <Link href="/worker/profile" className="block">
               <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
                   <PenTool className="h-5 w-5" />
@@ -475,10 +395,10 @@ export default function WorkerDashboardPage() {
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Update your CV with AI assistance.</p>
                 </div>
               </Card>
-            </Link>
+            </Link> */}
 
             {/* Career Advice */}
-            <Link href="/worker/profile" className="block">
+            {/* <Link href="/worker/profile" className="block">
               <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
                   <GraduationCap className="h-5 w-5" />
@@ -488,10 +408,10 @@ export default function WorkerDashboardPage() {
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">1-on-1 sessions with industry leads.</p>
                 </div>
               </Card>
-            </Link>
+            </Link> */}
 
             {/* Interview Prep */}
-            <Link href="/worker/profile" className="block">
+            {/* <Link href="/worker/profile" className="block">
               <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
                   <BookOpen className="h-5 w-5" />
@@ -501,7 +421,7 @@ export default function WorkerDashboardPage() {
                   <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Mock interviews and common Q&As.</p>
                 </div>
               </Card>
-            </Link>
+            </Link> */}
           </div>
         </div>
 
@@ -514,21 +434,27 @@ export default function WorkerDashboardPage() {
               <h3 className="font-extrabold text-slate-800 text-sm">Upcoming Interviews</h3>
             </div>
             <div className="space-y-4">
-              {interviewsToDisplay.map((interview, index) => (
-                <div key={index} className="flex items-start gap-3 bg-blue-50/40 rounded-2xl p-4 border border-blue-50/60">
-                  <CompanyLogo name={interview.companyName} className="h-10 w-10 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-extrabold text-slate-800 text-xs truncate">{interview.companyName}</h4>
-                    <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                      {interview.round} • {interview.time}
-                    </p>
-                    <div className="flex items-center gap-1 text-[10px] text-blue-600 font-bold mt-2">
-                      <Clock className="h-3 w-3" />
-                      <span>{interview.timeDetail}</span>
+              {interviewsToDisplay.length === 0 ? (
+                <p className="text-xs text-slate-400 font-semibold text-center py-4">
+                  No interviews scheduled
+                </p>
+              ) : (
+                interviewsToDisplay.map((interview, index) => (
+                  <div key={index} className="flex items-start gap-3 bg-blue-50/40 rounded-2xl p-4 border border-blue-50/60">
+                    <CompanyLogo name={interview.companyName} className="h-10 w-10 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-extrabold text-slate-800 text-xs truncate">{interview.companyName}</h4>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                        {interview.round} • {interview.time}
+                      </p>
+                      <div className="flex items-center gap-1 text-[10px] text-blue-600 font-bold mt-2">
+                        <Clock className="h-3 w-3" />
+                        <span>{interview.timeDetail}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </Card>
 
@@ -540,52 +466,39 @@ export default function WorkerDashboardPage() {
             </div>
             
             {/* Timeline */}
-            <div className="relative border-l border-slate-100 pl-5 ml-2.5 space-y-6">
-              {historyItems.map((item, index) => (
-                <div key={index} className="relative">
-                  {/* Timeline Dot */}
-                  <span className={`absolute -left-[26px] top-1 flex h-3 w-3 items-center justify-center rounded-full border bg-white ${
-                    item.active ? 'border-blue-600 ring-4 ring-blue-50' : 'border-slate-200'
-                  }`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${
-                      item.active ? 'bg-blue-600' : 'bg-slate-300'
-                    }`} />
-                  </span>
-                  
-                  <div className="space-y-1">
-                    <h4 className="font-extrabold text-slate-800 text-xs leading-none">{item.title}</h4>
-                    <p className="text-[10px] text-slate-400 font-semibold leading-tight">{item.subtitle}</p>
-                    {item.badge && (
-                      <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1.5 ${item.badgeColor}`}>
-                        {item.badge}
-                      </span>
-                    )}
+            {historyItems.length === 0 ? (
+              <p className="text-xs text-slate-400 font-semibold text-center py-4">
+                No recent activity
+              </p>
+            ) : (
+              <div className="relative border-l border-slate-100 pl-5 ml-2.5 space-y-6">
+                {historyItems.map((item, index) => (
+                  <div key={index} className="relative">
+                    {/* Timeline Dot */}
+                    <span className={`absolute -left-[26px] top-1 flex h-3 w-3 items-center justify-center rounded-full border bg-white ${
+                      item.active ? 'border-blue-600 ring-4 ring-blue-50' : 'border-slate-200'
+                    }`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${
+                        item.active ? 'bg-blue-600' : 'bg-slate-300'
+                      }`} />
+                    </span>
+                    
+                    <div className="space-y-1">
+                      <h4 className="font-extrabold text-slate-800 text-xs leading-none">{item.title}</h4>
+                      <p className="text-[10px] text-slate-400 font-semibold leading-tight">{item.subtitle}</p>
+                      {item.badge && (
+                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1.5 ${item.badgeColor}`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
 
-          {/* Trending Companies */}
-          <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl">
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-4 mb-4">
-              <TrendingUp className="h-5 w-5 text-slate-500" />
-              <h3 className="font-extrabold text-slate-800 text-sm">Trending Companies</h3>
-            </div>
-            <div className="space-y-4">
-              {trendingCompanies.map((company, index) => (
-                <div key={index} className="flex items-center justify-between border-b border-slate-50/55 last:border-b-0 pb-3 last:pb-0">
-                  <div className="flex items-center gap-3">
-                    <CompanyLogo name={company.name} className="h-9 w-9 shrink-0" />
-                    <span className="font-extrabold text-slate-800 text-xs">{company.name}</span>
-                  </div>
-                  <span className="text-emerald-600 text-[10px] font-bold">
-                    {company.openings} Openings
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Card>
+
         </div>
       </div>
     </div>

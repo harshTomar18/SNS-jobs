@@ -28,7 +28,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Job, Application } from '@/lib/types';
-import { jobsApi, applicationsApi, workerApi, WorkerWithMeta } from '@/lib/scn-api';
+import { jobsApi, applicationsApi, workerApi, WorkerWithMeta, JobWithMeta } from '@/lib/scn-api';
 import { useAuth } from '@/lib/auth-context';
 import { timeAgo } from '@/lib/format';
 import { toast } from 'sonner';
@@ -144,7 +144,7 @@ export default function WorkerJobsPage() {
   const [freshersOnly, setFreshersOnly] = useState(false);
 
   // Data helpers
-  const jobs: Job[] = jobsQuery.data ?? [];
+  const jobs: JobWithMeta[] = jobsQuery.data ?? [];
   const applications: Application[] = applicationsQuery.data ?? [];
   const profile = profileQuery.data as WorkerWithMeta | undefined;
   
@@ -168,95 +168,8 @@ export default function WorkerJobsPage() {
     return new Set(applications.map(app => app.jobId));
   }, [applications]);
 
-  // Mock Jobs from screenshot
-  const mockJobs: Job[] = [
-    {
-      id: 'mock-1',
-      title: 'Staff Product Designer',
-      companyId: 'nebula-systems',
-      companyName: 'Nebula Systems',
-      companyLogo: '',
-      industry: 'Design',
-      location: 'San Francisco, CA',
-      workType: 'remote',
-      jobType: 'full-time',
-      shift: 'day',
-      salaryMin: 180000,
-      salaryMax: 240000,
-      experienceMin: 6,
-      experienceMax: 9,
-      openings: 1,
-      skills: ['React', 'UI Design', 'Figma', 'TypeScript'],
-      description: 'Join Nebula Systems as a Staff Product Designer.',
-      responsibilities: [],
-      requirements: [],
-      benefits: [],
-      postedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-      recruiterId: 'recruiter-nebula',
-      recruiterName: 'Nebula Recruiter',
-      status: 'published',
-      isFresherFriendly: false,
-    },
-    {
-      id: 'mock-2',
-      title: 'Senior Frontend Developer (React/TS)',
-      companyId: 'lumina-cloud',
-      companyName: 'Lumina Cloud',
-      companyLogo: '',
-      industry: 'Tech',
-      location: 'New York, NY',
-      workType: 'hybrid',
-      jobType: 'full-time',
-      shift: 'day',
-      salaryMin: 150000,
-      salaryMax: 195000,
-      experienceMin: 5,
-      experienceMax: 8,
-      openings: 3,
-      skills: ['React', 'TypeScript', 'Tailwind CSS'],
-      description: 'Senior Frontend Developer role at Lumina Cloud.',
-      responsibilities: [],
-      requirements: [],
-      benefits: [],
-      postedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-      recruiterId: 'recruiter-lumina',
-      recruiterName: 'Lumina Recruiter',
-      status: 'published',
-      isFresherFriendly: false,
-    },
-    {
-      id: 'mock-3',
-      title: 'Lead AI Engineer',
-      companyId: 'cognito-ai',
-      companyName: 'Cognito AI',
-      companyLogo: '',
-      industry: 'AI',
-      location: 'Austin, TX',
-      workType: 'remote',
-      jobType: 'full-time',
-      shift: 'day',
-      salaryMin: 220000,
-      salaryMax: 310000,
-      experienceMin: 7,
-      experienceMax: 12,
-      openings: 2,
-      skills: ['Python', 'PyTorch', 'TypeScript', 'React'],
-      description: 'Lead AI engineering projects at Cognito AI.',
-      responsibilities: [],
-      requirements: [],
-      benefits: [],
-      postedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
-      recruiterId: 'recruiter-cognito',
-      recruiterName: 'Cognito Recruiter',
-      status: 'published',
-      isFresherFriendly: false,
-    }
-  ];
-
-  // Merge real and mock jobs
-  const allAvailableJobs = useMemo(() => {
-    return jobs.length > 0 ? jobs : mockJobs;
-  }, [jobs]);
+  // Real jobs only
+  const allAvailableJobs = jobs;
 
   // Compute industries and jobTypes dynamically for the old filters
   const industries = useMemo(() => {
@@ -716,8 +629,6 @@ export default function WorkerJobsPage() {
                 const badgeLabel = type === 'remote' ? 'REMOTE FRIENDLY' : type === 'hybrid' ? 'HYBRID' : 'ON SITE';
                 const badgeColor = type === 'remote' ? 'bg-emerald-50 text-emerald-700' : type === 'hybrid' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700';
 
-                const isHiringActive = idx % 2 === 0;
-                
                 return (
                   <Card
                     key={job.id}
@@ -755,16 +666,9 @@ export default function WorkerJobsPage() {
                         </div>
 
                         {/* Status indicators */}
-                        {isHiringActive ? (
-                          <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-extrabold">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            <span>Hiring team is active</span>
-                          </div>
-                        ) : (
-                          <p className="text-[10px] text-slate-400 font-bold">
-                            Posted {timeAgo(job.postedAt)} • {job.openings + (idx * 5)} applicants
-                          </p>
-                        )}
+                        <p className="text-[10px] text-slate-400 font-bold">
+                          Posted {timeAgo(job.postedAt)} • {job.applicationsCount || 0} applicants
+                        </p>
                       </div>
                     </div>
 
@@ -828,7 +732,7 @@ export default function WorkerJobsPage() {
             {activeJob ? (
               <div className="space-y-5">
                 <p className="text-[10px] text-slate-400 font-bold leading-normal">
-                  Based on your Profile Analysis and {experienceYears}+ years of React experience.
+                  Based on your Profile Analysis and {experienceYears}+ years of professional experience.
                 </p>
 
                 <div className="space-y-4">

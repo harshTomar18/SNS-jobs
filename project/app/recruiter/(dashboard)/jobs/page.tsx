@@ -380,43 +380,36 @@ export default function RecruiterJobsPage() {
 
       {/* Bottom Summary cards */}
       <div className="grid gap-4 sm:grid-cols-3">
-        {/* Card 1: AVG Time to Hire */}
-        <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between bg-white text-left">
+        {/* Card 1: Active Jobs */}
+        <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center bg-white text-left">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">AVG TIME TO HIRE</span>
-            <p className="text-2xl font-extrabold text-slate-800 mt-2">18.5 Days</p>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Active Jobs</span>
+            <p className="text-2xl font-extrabold text-slate-800 mt-2">{counts.published}</p>
           </div>
-          <div className="mt-4 flex items-center gap-1.5 text-[10px] font-extrabold text-red-500">
-            <span className="bg-red-50 px-2 py-0.5 rounded-full">↓ 2.4%</span>
-            <span className="text-slate-400 font-semibold">from last month</span>
+          <div className="bg-indigo-50 h-10 w-10 flex items-center justify-center rounded-xl">
+            <Briefcase className="h-5 w-5 text-indigo-600" />
           </div>
         </Card>
 
         {/* Card 2: Active Applications */}
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center bg-white text-left">
-          <div className="flex flex-col justify-between h-full">
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">ACTIVE APPLICATIONS</span>
-              <p className="text-2xl font-extrabold text-slate-800 mt-2">{totalApplications}</p>
-            </div>
-            <div className="mt-4 flex items-center gap-1.5 text-[10px] font-extrabold text-indigo-600">
-              <span className="bg-indigo-50 px-2 py-0.5 rounded-full">↑ 15%</span>
-              <span className="text-slate-400 font-semibold">increase</span>
-            </div>
+          <div>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Active Applications</span>
+            <p className="text-2xl font-extrabold text-slate-800 mt-2">{totalApplications}</p>
           </div>
           <div className="bg-orange-50 h-10 w-10 flex items-center justify-center rounded-xl">
             <Users className="h-5 w-5 text-orange-500" />
           </div>
         </Card>
 
-        {/* Card 3: Budget Utilization */}
-        <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between bg-white text-left">
+        {/* Card 3: Draft Jobs */}
+        <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex justify-between items-center bg-white text-left">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">BUDGET UTILIZATION</span>
-            <p className="text-2xl font-extrabold text-slate-800 mt-2">74%</p>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Draft Jobs</span>
+            <p className="text-2xl font-extrabold text-slate-800 mt-2">{counts.draft}</p>
           </div>
-          <div className="mt-6 w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-            <div className="bg-indigo-600 h-full rounded-full" style={{ width: '74%' }} />
+          <div className="bg-amber-50 h-10 w-10 flex items-center justify-center rounded-xl">
+            <Briefcase className="h-5 w-5 text-amber-500" />
           </div>
         </Card>
       </div>
