@@ -483,13 +483,13 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
                 <p className="text-[10px] text-slate-400 font-bold">CEO & Co-founder</p>
               </div>
             </div>
-            <Button
+            {/* <Button
               variant="outline"
               className="w-full border-slate-200 text-blue-600 hover:text-blue-700 font-extrabold text-xs py-3.5 rounded-xl transition-colors mt-2"
               onClick={() => toast.success(`Starting conversation with ${job.recruiterName || 'Karri Saarinen'}`)}
             >
               Send Message
-            </Button>
+            </Button> */}
           </Card>
 
           {/* Similar Jobs */}

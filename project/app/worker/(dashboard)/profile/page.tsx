@@ -18,8 +18,7 @@ import {
   MoreHorizontal,
   Camera,
   CheckCircle2,
-  Calendar,
-  DollarSign,
+
   FileText,
   BadgeCheck,
   Heart,
@@ -233,37 +232,7 @@ export default function WorkerProfilePage() {
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update languages')),
   });
 
-  // Preferences Update state & logic
-  const [prefModalOpen, setPrefModalOpen] = useState(false);
-  const [expectedSalaryMin, setExpectedSalaryMin] = useState(0);
-  const [expectedSalaryMax, setExpectedSalaryMax] = useState(0);
-  const [prefAvailability, setPrefAvailability] = useState('');
-  const [selectedLocations, setSelectedLocations] = useState<{ id: number; label: string }[]>([]);
 
-  const handleOpenPrefModal = () => {
-    if (!profile) return;
-    setExpectedSalaryMin(profile.expectedSalaryMin || 0);
-    setExpectedSalaryMax(profile.expectedSalaryMax || 0);
-    setPrefAvailability(profile.availability || 'immediate');
-    setSelectedLocations(profile.preferredLocationDetails || []);
-    setPrefModalOpen(true);
-  };
-
-  const updatePreferencesMutation = useMutation({
-    mutationFn: () =>
-      workerApi.updateProfile({
-        expectedSalaryMin,
-        expectedSalaryMax,
-        availability: prefAvailability,
-        preferredLocationIds: selectedLocations.map((loc) => loc.id),
-      }),
-    onSuccess: () => {
-      toast.success('Job preferences updated successfully');
-      setPrefModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['worker-profile'] });
-    },
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update preferences')),
-  });
 
   // Pseudo-random endorsement counts for skills
   const skillsWithScores = useMemo(() => {
@@ -472,91 +441,6 @@ export default function WorkerProfilePage() {
                 </p>
               </Card>
 
-              {/* AI Performance Metrics */}
-              <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-5">
-                <h3 className="font-extrabold text-slate-800 text-xs border-b border-slate-50 pb-2.5">
-                  AI Performance Metrics
-                </h3>
-                
-                <div className="space-y-4">
-                  {/* Resume Score */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-bold text-slate-700">
-                      <span>Resume Score</span>
-                      <span className="text-blue-600 font-extrabold">88<span className="text-slate-400 font-normal">/100</span></span>
-                    </div>
-                    <Progress value={88} className="h-2 bg-slate-100 rounded-full" />
-                  </div>
-
-                  {/* ATS Compatibility */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-bold text-slate-700">
-                      <span>ATS Compatibility</span>
-                      <span className="text-blue-600 font-extrabold">94<span className="text-slate-400 font-normal">/100</span></span>
-                    </div>
-                    <Progress value={94} className="h-2 bg-slate-100 rounded-full" style={{ background: '#f1f5f9' }} />
-                  </div>
-                </div>
-              </Card>
-
-              {/* Job Preferences Card */}
-              <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-50 pb-2.5">
-                  <h3 className="font-extrabold text-slate-800 text-xs pb-1">
-                    Job Preferences
-                  </h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-lg"
-                    onClick={handleOpenPrefModal}
-                    title="Edit Job Preferences"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  {/* Expected Salary */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                      <DollarSign className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">Expected Salary</p>
-                      <p className="text-xs font-extrabold text-slate-800 mt-1">
-                        ${(profile.expectedSalaryMin / 1000).toFixed(0)}k — ${(profile.expectedSalaryMax / 1000).toFixed(0)}k / year
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Preferred Location */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                      <MapPin className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">Preferred Location</p>
-                      <p className="text-xs font-extrabold text-slate-800 mt-1">
-                        {profile.preferredLocations.join(' | ') || 'Remote (Global)'}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Availability */}
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
-                      <Calendar className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-none">Availability</p>
-                      <p className="text-xs font-extrabold text-slate-800 mt-1 capitalize">
-                        {profile.availability.replace('-', ' ') || '2 Weeks Notice'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
             </div>
 
             {/* Right Main Column (2/3 width) */}
@@ -1068,106 +952,6 @@ export default function WorkerProfilePage() {
             </DialogContent>
           </Dialog>
 
-          {/* Job Preferences Dialog */}
-          <Dialog open={prefModalOpen} onOpenChange={setPrefModalOpen}>
-            <DialogContent className="max-w-xl rounded-3xl p-6 gap-5">
-              <DialogHeader>
-                <DialogTitle className="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-                  Edit Job Preferences
-                </DialogTitle>
-                <DialogDescription className="text-xs text-slate-400 font-bold">
-                  Update your expected salary, availability, and preferred job locations.
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                {/* Expected Salary Range */}
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-500">Expected Salary Min ($ / year)</Label>
-                    <Input
-                      type="number"
-                      value={expectedSalaryMin}
-                      onChange={(e) => setExpectedSalaryMin(Number(e.target.value))}
-                      className="rounded-xl border-slate-200 text-slate-800 font-medium"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold text-slate-500">Expected Salary Max ($ / year)</Label>
-                    <Input
-                      type="number"
-                      value={expectedSalaryMax}
-                      onChange={(e) => setExpectedSalaryMax(Number(e.target.value))}
-                      className="rounded-xl border-slate-200 text-slate-800 font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Availability */}
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-500">Availability</Label>
-                  <Select value={prefAvailability} onValueChange={setPrefAvailability}>
-                    <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-9">
-                      <SelectValue placeholder="Select availability" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="immediate" className="text-xs font-medium">Immediate</SelectItem>
-                      <SelectItem value="15-days" className="text-xs font-medium">15 Days Notice</SelectItem>
-                      <SelectItem value="30-days" className="text-xs font-medium">30 Days Notice</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Selected Preferred Locations */}
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-slate-500">Preferred Locations</Label>
-                  {selectedLocations.length === 0 ? (
-                    <p className="text-xs text-slate-400 font-medium bg-slate-50 border border-slate-100/55 rounded-xl p-3 text-center">
-                      No preferred locations added yet. Add one below.
-                    </p>
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5 p-3 bg-slate-50/50 border border-slate-100 rounded-xl max-h-[120px] overflow-y-auto font-sans">
-                      {selectedLocations.map((loc) => (
-                        <Badge
-                          key={loc.id}
-                          className="bg-blue-50 text-blue-700 hover:bg-blue-100/70 border border-blue-100 text-xs font-bold py-1 px-2.5 rounded-lg flex items-center gap-1.5"
-                        >
-                          <span>{loc.label}</span>
-                          <X
-                            className="h-3 w-3 cursor-pointer text-blue-400 hover:text-blue-700 transition-colors"
-                            onClick={() => setSelectedLocations((prev) => prev.filter((l) => l.id !== loc.id))}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Cascading Picker */}
-                <LocationCascadePicker
-                  onAddLocation={(newLoc) => {
-                    if (!selectedLocations.some((l) => l.id === newLoc.id)) {
-                      setSelectedLocations((prev) => [...prev, newLoc]);
-                    }
-                  }}
-                  excludeIds={selectedLocations.map((l) => l.id)}
-                />
-              </div>
-
-              <DialogFooter className="gap-2 sm:gap-0 pt-2 border-t border-slate-50">
-                <Button variant="outline" className="rounded-xl text-xs" onClick={() => setPrefModalOpen(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5"
-                  onClick={() => updatePreferencesMutation.mutate()}
-                  disabled={updatePreferencesMutation.isPending}
-                >
-                  {updatePreferencesMutation.isPending ? 'Saving...' : 'Save Preferences'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </>
       )}
     </div>

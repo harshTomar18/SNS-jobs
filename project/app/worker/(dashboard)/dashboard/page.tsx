@@ -4,21 +4,11 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
-  Bookmark,
   Briefcase,
-  Clock,
   FileText,
   Search,
   Sparkles,
-  TrendingUp,
-  User,
-  Eye,
-  Mail,
   CheckCircle2,
-  Calendar,
-  ChevronRight,
-  GraduationCap,
-  PenTool,
   BookOpen,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -27,7 +17,6 @@ import { Badge } from '@/components/ui/badge';
 import { Application, Job } from '@/lib/types';
 import { applicationsApi, jobsApi, workerApi, WorkerWithMeta } from '@/lib/scn-api';
 import { useAuth } from '@/lib/auth-context';
-import { timeAgo } from '@/lib/format';
 
 function CompanyLogo({ name, className = 'h-12 w-12' }: { name: string; className?: string }) {
   const normalized = name.toLowerCase();
@@ -143,50 +132,9 @@ export default function WorkerDashboardPage() {
     };
   });
 
-  const jobsToDisplay = realJobsWithMatch.slice(0, 2);
+  const jobsToDisplay = realJobsWithMatch.slice(0, 3);
 
-  const historyItems = applications.slice(0, 3).map((app, idx) => {
-    const isActive = idx === 0;
-    const timeText = timeAgo(app.appliedAt);
-    
-    let statusText = 'Applied';
-    let statusColor = 'bg-blue-50 text-blue-700';
-    if (app.status === 'shortlisted') {
-      statusText = 'Shortlisted';
-      statusColor = 'bg-green-50 text-green-700';
-    } else if (app.status === 'interview_scheduled') {
-      statusText = 'Interview';
-      statusColor = 'bg-purple-50 text-purple-700';
-    } else if (app.status === 'rejected') {
-      statusText = 'Rejected';
-      statusColor = 'bg-red-50 text-red-700';
-    } else if (app.status === 'hired') {
-      statusText = 'Hired';
-      statusColor = 'bg-emerald-50 text-emerald-700';
-    }
-    
-    return {
-      title: `Applied to ${app.job.companyName}`,
-      subtitle: `${app.job.title} • ${timeText}`,
-      badge: statusText,
-      badgeColor: statusColor,
-      active: isActive
-    };
-  });
 
-  const interviewApps = applications.filter(app => app.status === 'interview_scheduled');
-  const interviewsToDisplay = interviewApps.map(app => {
-    const interviewEvent = app.timeline.find(t => t.status === 'interview_scheduled');
-    const timeString = interviewEvent ? new Date(interviewEvent.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '10:00 AM';
-    const dateString = interviewEvent ? new Date(interviewEvent.timestamp).toLocaleDateString([], { weekday: 'long' }) : 'Tomorrow';
-    
-    return {
-      companyName: app.job.companyName,
-      round: 'Technical Round',
-      time: dateString,
-      timeDetail: timeString
-    };
-  });
 
   return (
     <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
@@ -315,191 +263,67 @@ export default function WorkerDashboardPage() {
         </Card>
       </div>
 
-      {/* Two Columns Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (Recommended Jobs + Quick Tools) */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Recommended Jobs Header */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-extrabold text-slate-800">Recommended Jobs</h2>
-              <Link href="/worker/jobs" className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center gap-1">
-                View all
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-
-            {/* Recommended Job List */}
-            {jobsToDisplay.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
-                <Briefcase className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                <span className="text-sm font-bold">No recommended jobs found at the moment</span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {jobsToDisplay.map((job) => (
-                  <Card key={job.id} className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col justify-between hover:border-blue-100 hover:shadow-md transition-all">
-                    <div className="space-y-4">
-                      {/* Job Top Row: Logo & Match badge */}
-                      <div className="flex items-center justify-between">
-                        <CompanyLogo name={job.companyName} className="h-11 w-11" />
-                        <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
-                          {job.matchPercent}% MATCH
-                        </span>
-                      </div>
-
-                      {/* Job Info */}
-                      <div className="space-y-1">
-                        <h3 className="font-extrabold text-slate-800 text-lg leading-tight hover:text-blue-600 transition-colors">
-                          <Link href={`/worker/jobs/${job.id}`}>{job.title}</Link>
-                        </h3>
-                        <p className="text-xs text-slate-400 font-semibold">
-                          {job.companyName} • {job.location} • {displaySalary(job.salaryMin, job.salaryMax)}
-                        </p>
-                      </div>
-
-                      {/* Why Recommended Banner */}
-                      <div className="bg-[#f8fafc]/80 rounded-2xl p-3 border border-slate-100/50 flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-blue-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 fill-blue-50" />
-                          <span className="text-[10px] font-bold">Why recommended</span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-medium pl-5 leading-relaxed">
-                          {job.matchesText}
-                        </p>
-                      </div>
-                    </div>
-
-                    <Link
-                      href={`/worker/jobs/${job.id}`}
-                      className="w-full bg-[#e8eefc] hover:bg-[#d5e2f9] text-blue-600 font-bold py-3 rounded-2xl transition-all text-center block mt-6 text-xs"
-                    >
-                      Apply Now
-                    </Link>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Quick Services Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-            {/* Resume Builder */}
-            {/* <Link href="/worker/profile" className="block">
-              <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
-                  <PenTool className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">Resume Builder</h4>
-                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Update your CV with AI assistance.</p>
-                </div>
-              </Card>
-            </Link> */}
-
-            {/* Career Advice */}
-            {/* <Link href="/worker/profile" className="block">
-              <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
-                  <GraduationCap className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">Career Advice</h4>
-                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">1-on-1 sessions with industry leads.</p>
-                </div>
-              </Card>
-            </Link> */}
-
-            {/* Interview Prep */}
-            {/* <Link href="/worker/profile" className="block">
-              <Card className="p-5 bg-white border-slate-100/80 hover:border-blue-200 hover:bg-slate-50/20 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-3 cursor-pointer group transition-all">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-105 transition-transform">
-                  <BookOpen className="h-5 w-5" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="font-extrabold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">Interview Prep</h4>
-                  <p className="text-[10px] text-slate-400 font-semibold leading-relaxed">Mock interviews and common Q&As.</p>
-                </div>
-              </Card>
-            </Link> */}
-          </div>
+      {/* Recommended Jobs Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-extrabold text-slate-800">Recommended Jobs</h2>
+          <Link href="/worker/jobs" className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center gap-1">
+            View all
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
 
-        {/* Right Column (Interviews + History + Trending) */}
-        <div className="space-y-6">
-          {/* Upcoming Interviews */}
-          <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl">
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-4 mb-4">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              <h3 className="font-extrabold text-slate-800 text-sm">Upcoming Interviews</h3>
-            </div>
-            <div className="space-y-4">
-              {interviewsToDisplay.length === 0 ? (
-                <p className="text-xs text-slate-400 font-semibold text-center py-4">
-                  No interviews scheduled
-                </p>
-              ) : (
-                interviewsToDisplay.map((interview, index) => (
-                  <div key={index} className="flex items-start gap-3 bg-blue-50/40 rounded-2xl p-4 border border-blue-50/60">
-                    <CompanyLogo name={interview.companyName} className="h-10 w-10 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-extrabold text-slate-800 text-xs truncate">{interview.companyName}</h4>
-                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                        {interview.round} • {interview.time}
-                      </p>
-                      <div className="flex items-center gap-1 text-[10px] text-blue-600 font-bold mt-2">
-                        <Clock className="h-3 w-3" />
-                        <span>{interview.timeDetail}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
-
-          {/* Recent History */}
-          <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl">
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-4 mb-4">
-              <Clock className="h-5 w-5 text-slate-500" />
-              <h3 className="font-extrabold text-slate-800 text-sm">Recent History</h3>
-            </div>
-            
-            {/* Timeline */}
-            {historyItems.length === 0 ? (
-              <p className="text-xs text-slate-400 font-semibold text-center py-4">
-                No recent activity
-              </p>
-            ) : (
-              <div className="relative border-l border-slate-100 pl-5 ml-2.5 space-y-6">
-                {historyItems.map((item, index) => (
-                  <div key={index} className="relative">
-                    {/* Timeline Dot */}
-                    <span className={`absolute -left-[26px] top-1 flex h-3 w-3 items-center justify-center rounded-full border bg-white ${
-                      item.active ? 'border-blue-600 ring-4 ring-blue-50' : 'border-slate-200'
-                    }`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${
-                        item.active ? 'bg-blue-600' : 'bg-slate-300'
-                      }`} />
+        {/* Recommended Job List */}
+        {jobsToDisplay.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 bg-white border border-slate-100 rounded-3xl p-6 shadow-sm">
+            <Briefcase className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+            <span className="text-sm font-bold">No recommended jobs found at the moment</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {jobsToDisplay.map((job) => (
+              <Card key={job.id} className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col justify-between hover:border-blue-100 hover:shadow-md transition-all">
+                <div className="space-y-4">
+                  {/* Job Top Row: Logo & Match badge */}
+                  <div className="flex items-center justify-between">
+                    <CompanyLogo name={job.companyName} className="h-11 w-11" />
+                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full">
+                      {job.matchPercent}% MATCH
                     </span>
-                    
-                    <div className="space-y-1">
-                      <h4 className="font-extrabold text-slate-800 text-xs leading-none">{item.title}</h4>
-                      <p className="text-[10px] text-slate-400 font-semibold leading-tight">{item.subtitle}</p>
-                      {item.badge && (
-                        <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1.5 ${item.badgeColor}`}>
-                          {item.badge}
-                        </span>
-                      )}
-                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </Card>
 
+                  {/* Job Info */}
+                  <div className="space-y-1">
+                    <h3 className="font-extrabold text-slate-800 text-lg leading-tight hover:text-blue-600 transition-colors">
+                      <Link href={`/worker/jobs/${job.id}`}>{job.title}</Link>
+                    </h3>
+                    <p className="text-xs text-slate-400 font-semibold">
+                      {job.companyName} • {job.location} • {displaySalary(job.salaryMin, job.salaryMax)}
+                    </p>
+                  </div>
 
-        </div>
+                  {/* Why Recommended Banner */}
+                  <div className="bg-[#f8fafc]/80 rounded-2xl p-3 border border-slate-100/50 flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-blue-600">
+                      <CheckCircle2 className="h-3.5 w-3.5 fill-blue-50" />
+                      <span className="text-[10px] font-bold">Why recommended</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium pl-5 leading-relaxed">
+                      {job.matchesText}
+                    </p>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/worker/jobs/${job.id}`}
+                  className="w-full bg-[#e8eefc] hover:bg-[#d5e2f9] text-blue-600 font-bold py-3 rounded-2xl transition-all text-center block mt-6 text-xs"
+                >
+                  Apply Now
+                </Link>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

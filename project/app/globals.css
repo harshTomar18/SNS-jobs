@@ -140,3 +140,51 @@
     @apply bg-muted-foreground/50;
   }
 }
+
+/* Dark Mode Overrides for Hardcoded Light Utilities */
+.dark {
+  .bg-white,
+  div[class*="bg-white"],
+  header[class*="bg-white"],
+  aside[class*="bg-white"],
+  .bg-\[\#ffffff\],
+  .bg-[#ffffff] {
+    background-color: hsl(var(--card)) !important;
+  }
+  
+  .bg-\[\#f8fafc\],
+  .bg-slate-50,
+  .bg-slate-50\/40,
+  .bg-slate-50\/20,
+  .bg-[#f8fafc] {
+    background-color: hsl(var(--background)) !important;
+  }
+
+  .text-slate-950,
+  .text-slate-900,
+  .text-slate-800,
+  .text-slate-700 {
+    color: hsl(var(--foreground)) !important;
+  }
+  
+  .text-slate-600,
+  .text-slate-500,
+  .text-slate-400 {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  .border-slate-50,
+  .border-slate-100,
+  .border-slate-200,
+  .border-slate-100\/80 {
+    border-color: hsl(var(--border)) !important;
+  }
+
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    background-color: hsl(var(--input)) !important;
+    color: hsl(var(--foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+}

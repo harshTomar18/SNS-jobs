@@ -20,7 +20,6 @@ import {
   X,
   ChevronRight,
   HelpCircle,
-  Sparkles,
   Banknote
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -131,9 +130,9 @@ export default function WorkerJobsPage() {
   const [location, setLocation] = useState('');
   
   const [experienceLimit, setExperienceLimit] = useState(10);
-  const [salaryMinLimit, setSalaryMinLimit] = useState(80000);
-  const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>(['remote']); // precheck remote
-  const [skills, setSkills] = useState<string[]>(['React', 'TypeScript']);
+  const [salaryMinLimit, setSalaryMinLimit] = useState(0);
+  const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
   const [newSkillInput, setNewSkillInput] = useState('');
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -270,32 +269,7 @@ export default function WorkerJobsPage() {
     return selected || filteredJobs[0] || null;
   }, [filteredJobs, selectedJobId]);
 
-  // Selected Job dynamic calculations for right Smart Match card
-  const smartMatchStats = useMemo(() => {
-    if (!activeJob) return { skillAlignment: 0, salaryAlignment: 0, strengths: [] };
-    
-    const jobSkills = activeJob.skills || [];
-    const common = jobSkills.filter(s => skills.some(sk => sk.toLowerCase() === s.toLowerCase()));
-    const skillAlignment = jobSkills.length > 0 ? Math.min(100, Math.round((common.length / jobSkills.length) * 100)) : 80;
 
-    const maxSalary = activeJob.salaryMax || 150000;
-    const salaryAlignment = maxSalary >= salaryMinLimit ? 100 : Math.round((maxSalary / salaryMinLimit) * 100);
-
-    const strengths = [];
-    if (common.length >= 2) strengths.push('Perfect Tech Stack match');
-    if (experienceYears >= activeJob.experienceMin) strengths.push('Seniority level exceeded');
-    if (activeJob.workType === 'remote') strengths.push('Ideal remote work setup');
-    if (strengths.length === 0) {
-      strengths.push('Hiring team actively reviewing');
-      strengths.push('Strong industry alignment');
-    }
-
-    return {
-      skillAlignment: Math.max(70, skillAlignment),
-      salaryAlignment: Math.max(65, salaryAlignment),
-      strengths
-    };
-  }, [activeJob, skills, salaryMinLimit, experienceYears]);
 
   // Radial Progress Ring Math for Profile Health Card
   const radius = 45;
@@ -306,7 +280,7 @@ export default function WorkerJobsPage() {
 
   // Track gradients math for sliders
   const expPercentage = (experienceLimit / 10) * 100;
-  const salPercentage = ((salaryMinLimit - 80000) / (300000 - 80000)) * 100;
+  const salPercentage = (salaryMinLimit / 300000) * 100;
 
   return (
     <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
@@ -315,7 +289,22 @@ export default function WorkerJobsPage() {
         <aside className="lg:col-span-1 block bg-white border border-slate-100/80 rounded-3xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.02)] self-start space-y-6">
           <div className="flex items-center justify-between border-b border-slate-50 pb-3">
             <h3 className="font-extrabold text-slate-800 text-base">Filters</h3>
-            <SlidersHorizontal className="h-4 w-4 text-slate-400" />
+            <button 
+              onClick={() => {
+                setSelectedEnvironments([]);
+                setSkills([]);
+                setSalaryMinLimit(0);
+                setExperienceLimit(10);
+                setSelectedIndustries([]);
+                setSelectedJobTypes([]);
+                setFreshersOnly(false);
+                setKeyword('');
+                setLocation('');
+              }}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
+            >
+              Reset
+            </button>
           </div>
 
           {/* Experience Filter */}
@@ -344,15 +333,16 @@ export default function WorkerJobsPage() {
 
           {/* Salary Filter */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">
-              Salary Range
-            </label>
+            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-wider">
+              <span>Salary Range</span>
+              <span className="text-blue-600 font-extrabold">{salaryMinLimit === 0 ? 'Any' : `$${(salaryMinLimit / 1000).toFixed(0)}k`}</span>
+            </div>
             <div className="relative pt-1">
               <input
                 type="range"
-                min="80000"
+                min="0"
                 max="300000"
-                step="10000"
+                step="5000"
                 value={salaryMinLimit}
                 onChange={(e) => setSalaryMinLimit(parseInt(e.target.value))}
                 className="w-full h-1 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none transition-all"
@@ -362,7 +352,7 @@ export default function WorkerJobsPage() {
               />
             </div>
             <div className="flex justify-between text-[10px] font-extrabold text-blue-600">
-              <span>$80k</span>
+              <span>Any</span>
               <span>$300k+</span>
             </div>
           </div>
@@ -722,77 +712,7 @@ export default function WorkerJobsPage() {
 
         {/* Right Column: Smart Match & Profile Health (1/4 width) */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Smart Match Card */}
-          <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-5">
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-3">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <h3 className="font-extrabold text-slate-800 text-sm">Smart Match</h3>
-            </div>
 
-            {activeJob ? (
-              <div className="space-y-5">
-                <p className="text-[10px] text-slate-400 font-bold leading-normal">
-                  Based on your Profile Analysis and {experienceYears}+ years of professional experience.
-                </p>
-
-                <div className="space-y-4">
-                  {/* Skill Alignment */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-extrabold text-slate-700">
-                      <span>SKILL ALIGNMENT</span>
-                      <span>{smartMatchStats.skillAlignment}%</span>
-                    </div>
-                    <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-600 h-full rounded-full transition-all duration-700 ease-out"
-                        style={{ width: `${smartMatchStats.skillAlignment}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Salary Alignment */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs font-extrabold text-slate-700">
-                      <span>SALARY ALIGNMENT</span>
-                      <span>{smartMatchStats.salaryAlignment}%</span>
-                    </div>
-                    <div className="w-full bg-slate-50 h-2.5 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-600 h-full rounded-full transition-all duration-700 ease-out"
-                        style={{ width: `${smartMatchStats.salaryAlignment}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 border-t border-slate-50 pt-4">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-2">
-                    Top Strengths
-                  </span>
-                  <div className="space-y-2 text-[10px] text-slate-600 font-bold leading-normal pl-1">
-                    {smartMatchStats.strengths.map((str, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500 fill-emerald-50 shrink-0" />
-                        <span>{str}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <Link
-                  href="/worker/profile"
-                  className="text-blue-600 hover:text-blue-700 font-bold text-xs flex items-center gap-1.5 pt-2 border-t border-slate-50"
-                >
-                  Improve my Match Score
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 font-semibold text-center py-6">
-                Select a job to view Smart Match alignment details.
-              </p>
-            )}
-          </Card>
 
           {/* Profile Health Card */}
           <Card className="p-6 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col items-center justify-center gap-4 text-center">
