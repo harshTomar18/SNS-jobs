@@ -137,51 +137,12 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
           >
             {sidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
-          
-          {/* Recruiter Search Bar */}
-          <div className="relative w-80 max-w-md hidden md:block">
-            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="search candidates, jobs..."
-              className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all"
-            />
-          </div>
         </div>
 
-        <div className="flex items-center gap-6">
-          {/* Navigation Links */}
-          <div className="hidden lg:flex items-center gap-6 text-sm font-semibold">
-            <Link href="/recruiter/dashboard" className="text-indigo-600 border-b-2 border-indigo-600 pb-1 hover:text-indigo-800 transition-colors">
-              Analytics
-            </Link>
-            <Link href="/recruiter/dashboard" className="text-slate-500 hover:text-slate-800 transition-colors">
-              Reports
-            </Link>
-          </div>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
 
-          <div className="flex items-center gap-4">
-            {/* Add Candidate Button */}
-            <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-4 py-2 text-xs">
-              <Link href="/recruiter/workers">
-                Add Candidate
-              </Link>
-            </Button>
-
-            {/* Notification and Task indicators */}
-            <div className="flex items-center gap-1 text-slate-400 font-medium text-xs">
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 text-slate-500 hover:bg-slate-50">
-                <Bell className="h-5 w-5" />
-                <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </Button>
-              <span className="text-slate-400 text-xs select-none">notificati</span>
-              <Button variant="ghost" size="icon" className="relative h-10 w-10 text-slate-500 hover:bg-slate-50">
-                <span className="h-5 w-5 flex items-center justify-center border-2 border-slate-400 rounded-sm text-[8px] font-bold">✓</span>
-              </Button>
-              <span className="text-slate-400 text-xs select-none">task_mode</span>
-            </div>
-
-            {/* User Profile Card */}
+          {/* User Profile Card */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-3 border-l border-slate-100 pl-4 text-left hover:bg-slate-50/50 h-auto py-1 px-2 rounded-xl">
@@ -209,7 +170,6 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
         </div>
       </header>
     );

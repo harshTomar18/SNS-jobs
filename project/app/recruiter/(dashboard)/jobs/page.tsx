@@ -120,9 +120,9 @@ export default function RecruiterJobsPage() {
   const formatWage = (min: number, max: number) => {
     const formatNum = (num: number) => {
       if (num >= 1000) {
-        return `$${Math.round(num / 1000)}k`;
+        return `₹${Math.round(num / 1000)}k`;
       }
-      return `$${num}`;
+      return `₹${num}`;
     };
     if (min === max) return formatNum(min);
     return `${formatNum(min)} - ${formatNum(max)}`;
@@ -142,7 +142,7 @@ export default function RecruiterJobsPage() {
               {counts.published} Active Jobs
             </span>
             <span>•</span>
-            <span>Updated 5m ago</span>
+            <span>Updated just now</span>
           </div>
         </div>
         <div className="flex items-center gap-3">

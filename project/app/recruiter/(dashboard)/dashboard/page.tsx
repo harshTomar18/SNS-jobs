@@ -78,9 +78,9 @@ export default function RecruiterDashboardPage() {
   const formatWage = (min: number, max: number) => {
     const formatNum = (num: number) => {
       if (num >= 1000) {
-        return `$${Math.round(num / 1000)}k`;
+        return `₹${Math.round(num / 1000)}k`;
       }
-      return `$${num}`;
+      return `₹${num}`;
     };
     if (min === max) return formatNum(min);
     return `${formatNum(min)} - ${formatNum(max)}`;
