@@ -614,6 +614,8 @@ export const workerApi = {
     return toWorkerProfile(await apiPost<BackendWorkerProfile>('/worker/profile'));
   },
   async updateProfile(data: {
+    city?: string;
+    currentLocality?: string;
     name?: string;
     phone?: string;
     headline?: string;

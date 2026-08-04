@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText } from 'lucide-react';
+import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText, X, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth-context';
-import { workerApi, masterDataApi, MasterRawItem } from '@/lib/scn-api';
+import { workerApi, masterDataApi, MasterRawItem, BackendLocation } from '@/lib/scn-api';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { UploadDropzone } from '@/utils/uploadthing';
@@ -32,6 +32,7 @@ const schema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   phone: z.string().min(10, 'Valid phone is required'),
   city: z.string().min(2, 'City is required'),
+  currentLocality: z.string().optional(),
   preferredLocationIds: z.array(z.string()).default([]),
   headline: z.string().min(5, 'Headline is required'),
   summary: z.string().optional(),
@@ -54,8 +55,49 @@ export default function WorkerOnboardingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
 
+  const [selectedState, setSelectedState] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedLocality, setSelectedLocality] = useState<string>('');
+
   const locationsQuery = useQuery({ queryKey: ['master', 'locations'], queryFn: () => masterDataApi.raw('locations') });
   const qualificationsQuery = useQuery({ queryKey: ['master', 'qualifications'], queryFn: () => masterDataApi.raw('qualifications') });
+
+  const { data: states = [], isLoading: isLoadingStates } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'states'],
+    queryFn: () => masterDataApi.getStates(),
+  });
+
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'cities', selectedState],
+    queryFn: () => masterDataApi.getCities(selectedState),
+    enabled: !!selectedState,
+  });
+
+  const { data: localities = [], isLoading: isLoadingLocalities } = useQuery<BackendLocation[]>({
+    queryKey: ['master', 'locations', 'localities', selectedCity, selectedState],
+    queryFn: () => masterDataApi.getLocalities(selectedCity, selectedState),
+    enabled: !!selectedCity && !!selectedState,
+  });
+
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    setSelectedCity('');
+    setSelectedLocality('');
+    setValue('city', '');
+    setValue('currentLocality', '');
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    setSelectedLocality('');
+    setValue('city', city, { shouldValidate: true });
+    setValue('currentLocality', '');
+  };
+
+  const handleLocalityChange = (locality: string) => {
+    setSelectedLocality(locality);
+    setValue('currentLocality', locality, { shouldValidate: true });
+  };
 
   const locations: MasterRawItem[] = locationsQuery.data ?? [];
   const qualifications: MasterRawItem[] = qualificationsQuery.data ?? [];
@@ -107,6 +149,8 @@ export default function WorkerOnboardingPage() {
         summary: data.summary,
         resumeUrl: resumeUrl || undefined,
         preferredLocationIds: data.preferredLocationIds.map(Number),
+        city: data.city,
+        currentLocality: data.currentLocality || undefined,
       });
 
       // 2. Add education if provided
@@ -201,20 +245,97 @@ export default function WorkerOnboardingPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Phone Number *</Label>
-                  <Input {...register('phone')} />
+                  <Input {...register('phone')} readOnly className="bg-muted cursor-not-allowed opacity-75" />
                   {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
                 </div>
               </div>
             )}
 
             {currentStep === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-xl font-semibold">Location & Professional Info</h2>
-                <div className="space-y-2">
-                  <Label>Current City *</Label>
-                  <Input {...register('city')} placeholder="e.g. Mumbai" />
-                  {errors.city && <p className="text-xs text-destructive">{errors.city.message}</p>}
+                
+                {/* Location Grid Row */}
+                <div className="grid gap-4 sm:grid-cols-3">
+                  {/* Step 1: State */}
+                  <div className="space-y-2">
+                    <Label>State *</Label>
+                    <Select value={selectedState} onValueChange={handleStateChange}>
+                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10">
+                        <SelectValue placeholder={isLoadingStates ? "Loading..." : "Choose state"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {isLoadingStates ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : (
+                          states.map((state: string) => (
+                            <SelectItem key={state} value={state} className="text-xs font-medium">
+                              {state}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Step 2: City */}
+                  <div className="space-y-2">
+                    <Label>City *</Label>
+                    <Select
+                      value={selectedCity}
+                      onValueChange={handleCityChange}
+                      disabled={!selectedState}
+                    >
+                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 disabled:opacity-50 disabled:bg-slate-100/50">
+                        <SelectValue placeholder={isLoadingCities ? "Loading..." : "Choose city"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {isLoadingCities ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : (
+                          cities.map((city: string) => (
+                            <SelectItem key={city} value={city} className="text-xs font-medium">
+                              {city}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {errors.city && <p className="text-xs text-destructive mt-1">{errors.city.message}</p>}
+                  </div>
+
+                  {/* Step 3: Locality */}
+                  <div className="space-y-2">
+                    <Label>Locality (Optional)</Label>
+                    <Select
+                      value={selectedLocality}
+                      onValueChange={handleLocalityChange}
+                      disabled={!selectedCity}
+                    >
+                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 disabled:opacity-50 disabled:bg-slate-100/50">
+                        <SelectValue placeholder={isLoadingLocalities ? "Loading..." : "Choose locality"} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {isLoadingLocalities ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : (
+                          localities.map((loc: BackendLocation) => (
+                            <SelectItem key={loc.id} value={loc.locality} className="text-xs font-medium">
+                              {loc.locality}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
                 <div className="space-y-2">
                   <Label>Professional Headline *</Label>
                   <Input {...register('headline')} placeholder="e.g. Software Engineer" />

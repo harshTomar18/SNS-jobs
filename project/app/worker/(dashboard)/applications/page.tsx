@@ -49,7 +49,11 @@ function ApplicationTimeline({ application }: { application: Application }) {
   return (
     <div className="space-y-0">
       {application.timeline.map((event, i) => {
-        const config = statusConfig[event.status];
+        const config = statusConfig[event.status] || {
+          label: event.status || 'Applied',
+          color: 'bg-muted text-muted-foreground',
+          icon: Clock
+        };
         const isLast = i === application.timeline.length - 1;
         return (
           <div key={event.id} className="flex gap-4">
@@ -76,7 +80,11 @@ function ApplicationTimeline({ application }: { application: Application }) {
 
 function ApplicationCard({ application }: { application: Application }) {
   const queryClient = useQueryClient();
-  const config = statusConfig[application.status];
+  const config = statusConfig[application.status] || {
+    label: application.status || 'Applied',
+    color: 'bg-muted text-muted-foreground',
+    icon: Clock
+  };
   const withdrawMutation = useMutation({
     mutationFn: () => applicationsApi.withdraw(application.id),
     onSuccess: () => {

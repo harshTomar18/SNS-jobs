@@ -14,7 +14,6 @@ import {
   User,
   MapPin,
   Link as LinkIcon,
-  Share2,
   MoreHorizontal,
   Camera,
   CheckCircle2,
@@ -374,16 +373,6 @@ export default function WorkerProfilePage() {
 
                 {/* Header CTA Buttons */}
                 <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-end mt-4 lg:mt-0">
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl py-5 px-6 shadow-md shadow-blue-100 text-xs transition-colors flex items-center gap-1.5"
-                    onClick={() => {
-                      navigator.clipboard?.writeText(window.location.href);
-                      toast.success('Profile link copied to clipboard');
-                    }}
-                  >
-                    <Share2 className="h-3.5 w-3.5" />
-                    <span>Share Profile</span>
-                  </Button>
                   <Button
                     variant="outline"
                     className="bg-[#e2e8f0] text-slate-700 font-bold border-transparent hover:bg-slate-300 rounded-xl py-5 px-6 text-xs transition-colors shadow-none"

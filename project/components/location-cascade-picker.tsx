@@ -16,9 +16,16 @@ import { Loader2, Plus, MapPin } from 'lucide-react';
 interface LocationCascadePickerProps {
   onAddLocation: (location: { id: number; label: string }) => void;
   excludeIds?: number[];
+  title?: string;
+  buttonLabel?: string;
 }
 
-export function LocationCascadePicker({ onAddLocation, excludeIds = [] }: LocationCascadePickerProps) {
+export function LocationCascadePicker({ 
+  onAddLocation, 
+  excludeIds = [],
+  title = "Add a Preferred Location",
+  buttonLabel = "Add Location"
+}: LocationCascadePickerProps) {
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedLocalityId, setSelectedLocalityId] = useState<string>('');
@@ -82,7 +89,7 @@ export function LocationCascadePicker({ onAddLocation, excludeIds = [] }: Locati
     <div className="space-y-4 p-4.5 bg-slate-50/50 border border-slate-100 rounded-2xl">
       <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
         <MapPin className="h-4 w-4 text-blue-600" />
-        <span>Add a Preferred Location</span>
+        <span>{title}</span>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
@@ -183,7 +190,7 @@ export function LocationCascadePicker({ onAddLocation, excludeIds = [] }: Locati
           className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs py-1.5 px-4 flex items-center gap-1 shadow-sm disabled:opacity-50 disabled:hover:bg-blue-600"
         >
           <Plus className="h-3.5 w-3.5" />
-          Add Location
+          {buttonLabel}
         </Button>
       </div>
     </div>
