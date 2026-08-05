@@ -43,37 +43,20 @@ export default function RecruiterDashboardPage() {
   // Calculate dynamic metrics
   const activeJobsCount = jobs.filter(j => j.status === 'published' || j.backendStatus === 'active').length;
   const totalApplicationsCount = applications.length;
-  const interviewsCount = applications.filter(a => a.status === 'interview_scheduled').length;
-  const shortlistedCount = applications.filter(a => a.status === 'shortlisted').length;
-  const hiredCount = applications.filter(a => a.status === 'hired').length;
+  const acceptedCount = applications.filter(a => a.status === 'accepted').length;
+  const rejectedCount = applications.filter(a => a.status === 'rejected').length;
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Sarah';
 
   // Conversion calculations
-  const shortlistedConversion = totalApplicationsCount > 0 ? (shortlistedCount / totalApplicationsCount) * 100 : 0;
-  const interviewsConversion = shortlistedCount > 0 ? (interviewsCount / shortlistedCount) * 100 : 0;
-  const hiredConversion = interviewsCount > 0 ? (hiredCount / interviewsCount) * 100 : 0;
+  const acceptedConversion = totalApplicationsCount > 0 ? (acceptedCount / totalApplicationsCount) * 100 : 0;
+  const rejectedConversion = totalApplicationsCount > 0 ? (rejectedCount / totalApplicationsCount) * 100 : 0;
 
   // Recent jobs (slice top 3)
   const recentJobs = jobs.slice(0, 3);
 
   // Recent applications (slice top 3)
   const recentApplications = applications.slice(0, 3);
-
-  // Scheduled Interviews
-  const interviewApplications = applications.filter(a => a.status === 'interview_scheduled');
-  
-  const displayInterviews = interviewApplications.map(app => {
-        const event = app.timeline.find(e => e.status === 'interview_scheduled');
-        const timeStr = event 
-          ? new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-          : "11:00 AM";
-        return {
-          time: timeStr,
-          candidateName: app.workerName,
-          details: event?.description || "Technical Round • 45m"
-        };
-      });
 
   const formatWage = (min: number, max: number) => {
     const formatNum = (num: number) => {
@@ -159,33 +142,23 @@ export default function RecruiterDashboardPage() {
           </div>
         </Card>
 
-        {/* Card 3: Interviews */}
+        {/* Card 3: Accepted */}
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">INTERVIEWS</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">ACCEPTED</span>
           </div>
           <div className="flex items-end justify-between mt-4">
-            <span className="text-3xl font-extrabold text-slate-800 leading-none">{interviewsCount}</span>
+            <span className="text-3xl font-extrabold text-green-600 leading-none">{acceptedCount}</span>
           </div>
         </Card>
 
-        {/* Card 4: Shortlisted */}
+        {/* Card 4: Rejected */}
         <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">SHORTLISTED</span>
+            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">REJECTED</span>
           </div>
           <div className="flex items-end justify-between mt-4">
-            <span className="text-3xl font-extrabold text-slate-800 leading-none">{shortlistedCount}</span>
-          </div>
-        </Card>
-
-        {/* Card 5: Hired */}
-        <Card className="p-5 border border-slate-100 rounded-2xl shadow-sm flex flex-col justify-between">
-          <div className="flex justify-between items-start">
-            <span className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">HIRED</span>
-          </div>
-          <div className="flex items-end justify-between mt-4">
-            <span className="text-3xl font-extrabold text-slate-800 leading-none">{hiredCount}</span>
+            <span className="text-3xl font-extrabold text-red-500 leading-none">{rejectedCount}</span>
           </div>
         </Card>
       </div>
@@ -222,36 +195,25 @@ export default function RecruiterDashboardPage() {
                 </div>
               </div>
 
-              {/* Funnel Shortlisted */}
+              {/* Funnel Accepted */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-bold text-slate-700">
-                  <span>Shortlisted ({shortlistedCount})</span>
-                  <span className="text-emerald-500 font-extrabold">{shortlistedConversion.toFixed(1)}% Conversion</span>
+                  <span>Accepted ({acceptedCount})</span>
+                  <span className="text-emerald-500 font-extrabold">{acceptedConversion.toFixed(1)}% Conversion</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-8 overflow-hidden">
-                  <div className="bg-indigo-50 h-full rounded-full" style={{ width: `${Math.max(shortlistedConversion, 8)}%` }} />
+                  <div className="bg-green-500 h-full rounded-full" style={{ width: `${Math.max(acceptedConversion, 8)}%` }} />
                 </div>
               </div>
 
-              {/* Funnel Interviews */}
+              {/* Funnel Rejected */}
               <div className="space-y-1.5">
                 <div className="flex justify-between text-xs font-bold text-slate-700">
-                  <span>Interviews ({interviewsCount})</span>
-                  <span className="text-emerald-500 font-extrabold">{interviewsConversion.toFixed(1)}% Conversion</span>
+                  <span>Rejected ({rejectedCount})</span>
+                  <span className="text-red-500 font-extrabold">{rejectedConversion.toFixed(1)}%</span>
                 </div>
                 <div className="w-full bg-slate-100 rounded-full h-8 overflow-hidden">
-                  <div className="bg-indigo-400 h-full rounded-full" style={{ width: `${Math.max(interviewsConversion, 8)}%` }} />
-                </div>
-              </div>
-
-              {/* Funnel Hired */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between text-xs font-bold text-slate-700">
-                  <span>Hired ({hiredCount})</span>
-                  <span className="text-emerald-500 font-extrabold">{hiredConversion.toFixed(1)}% Conversion</span>
-                </div>
-                <div className="w-full bg-slate-100 rounded-full h-8 overflow-hidden">
-                  <div className="bg-indigo-300 h-full rounded-full" style={{ width: `${Math.max(hiredConversion, 8)}%` }} />
+                  <div className="bg-red-400 h-full rounded-full" style={{ width: `${Math.max(rejectedConversion, 8)}%` }} />
                 </div>
               </div>
             </div>
@@ -305,14 +267,12 @@ export default function RecruiterDashboardPage() {
                       <td className="px-6 py-4">
                         <Badge variant="outline" className={cn(
                           "capitalize font-extrabold text-[9px] px-3 py-1 rounded-full border-none shadow-sm",
-                          app.status === 'interview_scheduled' && "bg-blue-50 text-blue-600",
-                          app.status === 'shortlisted' && "bg-purple-50 text-purple-600",
-                          app.status === 'hired' && "bg-green-50 text-green-600",
+                          app.status === 'accepted' && "bg-green-50 text-green-600",
                           app.status === 'applied' && "bg-slate-100 text-slate-500",
                           app.status === 'rejected' && "bg-red-50 text-red-600",
                           app.status === 'withdrawn' && "bg-slate-100 text-slate-400"
                         )}>
-                          {app.status === 'interview_scheduled' ? 'INTERVIEW' : app.status}
+                          {app.status === 'applied' ? 'IN REVIEW' : app.status.toUpperCase()}
                         </Badge>
                       </td>
                       <td className="px-6 py-4">
@@ -402,34 +362,23 @@ export default function RecruiterDashboardPage() {
             </div>
           </Card>
 
-          {/* Card: TODAY'S INTERVIEWS */}
+          {/* Card: Quick Status Overview */}
           <Card className="p-6 border border-slate-100 rounded-2xl shadow-sm">
-            <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-6">TODAY'S INTERVIEWS</h3>
+            <h3 className="text-xs font-bold text-slate-500 tracking-wider uppercase mb-6">APPLICATION OVERVIEW</h3>
             
             <div className="space-y-4">
-              {displayInterviews.map((interview, index) => {
-                const timeInfo = splitTime(interview.time);
-                return (
-                  <div key={index} className="flex gap-4 items-center">
-                    {/* Time Pill Box */}
-                    <div className="bg-[#f4f5f7] p-2 flex flex-col items-center justify-center rounded-xl min-w-[70px] border border-slate-50">
-                      <span className="text-xs font-extrabold text-slate-700 leading-none">{timeInfo.time}</span>
-                      <span className="text-[9px] font-extrabold text-slate-400 mt-1 uppercase tracking-wider">{timeInfo.ampm}</span>
-                    </div>
-
-                    {/* Interview details */}
-                    <div className="flex flex-col text-left">
-                      <span className="text-sm font-bold text-slate-800 leading-tight">{interview.candidateName}</span>
-                      <span className="text-[11px] font-semibold text-slate-400 mt-0.5">{interview.details}</span>
-                    </div>
-                  </div>
-                );
-              })}
-              {displayInterviews.length === 0 && (
-                <div className="text-center py-4 text-slate-400">
-                  <span className="text-sm font-bold">No interviews scheduled today</span>
-                </div>
-              )}
+              <div className="flex items-center justify-between p-3 bg-blue-50/50 rounded-xl">
+                <span className="text-xs font-bold text-slate-600">In Review</span>
+                <span className="text-lg font-extrabold text-blue-600">{applications.filter(a => a.status === 'applied').length}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50/50 rounded-xl">
+                <span className="text-xs font-bold text-slate-600">Accepted</span>
+                <span className="text-lg font-extrabold text-green-600">{acceptedCount}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-red-50/50 rounded-xl">
+                <span className="text-xs font-bold text-slate-600">Rejected</span>
+                <span className="text-lg font-extrabold text-red-500">{rejectedCount}</span>
+              </div>
             </div>
           </Card>
         </div>

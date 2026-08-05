@@ -2,10 +2,8 @@ export type UserRole = 'worker' | 'recruiter' | 'admin';
 
 export type ApplicationStatus =
   | 'applied'
-  | 'shortlisted'
-  | 'interview_scheduled'
+  | 'accepted'
   | 'rejected'
-  | 'hired'
   | 'withdrawn';
 
 export interface User {

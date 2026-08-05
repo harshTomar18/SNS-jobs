@@ -6,7 +6,6 @@ import { motion } from 'framer-motion';
 import {
   Ban,
   Building2,
-  Calendar,
   CheckCircle2,
   Clock,
   Download,
@@ -38,10 +37,8 @@ import { toast } from 'sonner';
 
 const statusConfig: Record<ApplicationStatus, { label: string; color: string; icon: typeof Clock }> = {
   applied: { label: 'Applied', color: 'bg-muted text-muted-foreground', icon: Clock },
-  shortlisted: { label: 'Shortlisted', color: 'bg-primary/10 text-primary', icon: CheckCircle2 },
-  interview_scheduled: { label: 'Interview Scheduled', color: 'bg-accent/10 text-accent', icon: Calendar },
+  accepted: { label: 'Accepted', color: 'bg-success/10 text-success', icon: CheckCircle2 },
   rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive', icon: XCircle },
-  hired: { label: 'Hired', color: 'bg-success/10 text-success', icon: CheckCircle2 },
   withdrawn: { label: 'Withdrawn', color: 'bg-muted text-muted-foreground', icon: Ban },
 };
 
@@ -188,10 +185,8 @@ export default function WorkerApplicationsPage() {
         <TabsList className="flex h-auto flex-wrap gap-1 bg-card p-1">
           <TabsTrigger value="all" className="gap-1.5">All<Badge variant="secondary" className="text-xs">{applications.length}</Badge></TabsTrigger>
           <TabsTrigger value="applied" className="gap-1.5">Applied<Badge variant="secondary" className="text-xs">{count('applied')}</Badge></TabsTrigger>
-          <TabsTrigger value="shortlisted" className="gap-1.5">Shortlisted<Badge variant="secondary" className="text-xs">{count('shortlisted')}</Badge></TabsTrigger>
-          <TabsTrigger value="interview_scheduled" className="gap-1.5">Interview<Badge variant="secondary" className="text-xs">{count('interview_scheduled')}</Badge></TabsTrigger>
+          <TabsTrigger value="accepted" className="gap-1.5">Accepted<Badge variant="secondary" className="text-xs">{count('accepted')}</Badge></TabsTrigger>
           <TabsTrigger value="rejected" className="gap-1.5">Rejected<Badge variant="secondary" className="text-xs">{count('rejected')}</Badge></TabsTrigger>
-          <TabsTrigger value="hired" className="gap-1.5">Hired<Badge variant="secondary" className="text-xs">{count('hired')}</Badge></TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">

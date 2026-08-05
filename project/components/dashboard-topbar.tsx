@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, LogOut, Menu, PanelLeftClose, User, Search } from 'lucide-react';
+import { LogOut, Menu, PanelLeftClose, User, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -64,24 +64,6 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
           </div>
 
           <div className="flex items-center gap-2.5">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-slate-50 text-slate-600">
-                  <Bell className="h-[21px] w-[21px]" />
-                  <span className="absolute right-3 top-2.5 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel className="flex items-center justify-between">
-                  Notifications
-                  <Badge variant="secondary" className="text-xs">1 new</Badge>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="py-3 text-sm text-slate-600">
-                  You have 8 new recruiter messages
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
 
             <ThemeToggle />
 
@@ -192,30 +174,7 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-primary" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-80">
-              <DropdownMenuLabel className="flex items-center justify-between">
-                Notifications
-                {unreadCount > 0 && (
-                  <Badge variant="secondary" className="text-xs">
-                    {unreadCount} new
-                  </Badge>
-                )}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="py-3 text-sm text-muted-foreground">
-                No notifications yet
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="rounded-full">

@@ -7,8 +7,6 @@ import {
   Eye, 
   CheckCircle2, 
   XCircle, 
-  Calendar, 
-  UserCheck, 
   FileText, 
   Download,
   MoreVertical,
@@ -102,11 +100,12 @@ export default function RecruiterApplicationsPage() {
   const counts = {
     all: applications.length,
     applied: applications.filter((app) => app.status === 'applied').length,
-    shortlisted: applications.filter((app) => app.status === 'shortlisted').length,
-    interview_scheduled: applications.filter((app) => app.status === 'interview_scheduled').length,
-    hired: applications.filter((app) => app.status === 'hired').length,
+    accepted: applications.filter((app) => app.status === 'accepted').length,
     rejected: applications.filter((app) => app.status === 'rejected').length,
   };
+
+  // Check if an application is in a terminal state (no further status changes allowed)
+  const isTerminal = (status: string) => status === 'accepted' || status === 'rejected';
 
   // Filter logic
   const filteredApps = useMemo(() => {
@@ -178,10 +177,8 @@ export default function RecruiterApplicationsPage() {
       <div className="border-b border-slate-100 flex items-center overflow-x-auto gap-2 pb-1">
         {[
           { value: 'all', label: 'All Applications', count: counts.all },
-          { value: 'applied', label: 'Applied', count: counts.applied },
-          { value: 'shortlisted', label: 'Shortlisted', count: counts.shortlisted },
-          { value: 'interview_scheduled', label: 'Interview', count: counts.interview_scheduled },
-          { value: 'hired', label: 'Hired', count: counts.hired },
+          { value: 'applied', label: 'In Review', count: counts.applied },
+          { value: 'accepted', label: 'Accepted', count: counts.accepted },
           { value: 'rejected', label: 'Rejected', count: counts.rejected }
         ].map(tab => (
           <button
@@ -223,9 +220,7 @@ export default function RecruiterApplicationsPage() {
             >
               <option value="all">All Status</option>
               <option value="applied">In Review</option>
-              <option value="shortlisted">Shortlisted</option>
-              <option value="interview_scheduled">Interview</option>
-              <option value="hired">Hired</option>
+              <option value="accepted">Accepted</option>
               <option value="rejected">Rejected</option>
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -313,14 +308,12 @@ export default function RecruiterApplicationsPage() {
                   <td className="px-6 py-4 text-center">
                     <Badge variant="outline" className={cn(
                       "capitalize font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm inline-block tracking-wider",
-                      app.status === 'interview_scheduled' && "bg-orange-50 text-orange-600",
-                      app.status === 'shortlisted' && "bg-purple-50 text-purple-600",
-                      app.status === 'hired' && "bg-green-50 text-green-600",
+                      app.status === 'accepted' && "bg-green-50 text-green-600",
                       app.status === 'applied' && "bg-blue-50/70 text-blue-600",
                       app.status === 'rejected' && "bg-red-50 text-red-600",
                       app.status === 'withdrawn' && "bg-slate-100 text-slate-400"
                     )}>
-                      {app.status === 'applied' ? 'IN REVIEW' : app.status === 'interview_scheduled' ? 'INTERVIEW' : app.status}
+                      {app.status === 'applied' ? 'IN REVIEW' : app.status.toUpperCase()}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -343,16 +336,10 @@ export default function RecruiterApplicationsPage() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'shortlisted')} disabled={app.status === 'shortlisted'}>
-                          <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> Shortlist
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'accepted')} disabled={isTerminal(app.status)}>
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> Accept
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'interview_scheduled')} disabled={app.status === 'interview_scheduled'}>
-                          <Calendar className="mr-2 h-4 w-4 text-orange-500" /> Schedule Interview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'hired')} disabled={app.status === 'hired'}>
-                          <UserCheck className="mr-2 h-4 w-4 text-emerald-500" /> Hire
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'rejected')} disabled={app.status === 'rejected'} className="text-red-600 focus:text-red-700">
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'rejected')} disabled={isTerminal(app.status)} className="text-red-600 focus:text-red-700">
                           <XCircle className="mr-2 h-4 w-4" /> Reject
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -452,13 +439,11 @@ export default function RecruiterApplicationsPage() {
                 </div>
                 <Badge variant="outline" className={cn(
                   "capitalize font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm",
-                  selectedApp.status === 'interview_scheduled' && "bg-orange-50 text-orange-600",
-                  selectedApp.status === 'shortlisted' && "bg-purple-50 text-purple-600",
-                  selectedApp.status === 'hired' && "bg-green-50 text-green-600",
+                  selectedApp.status === 'accepted' && "bg-green-50 text-green-600",
                   selectedApp.status === 'applied' && "bg-blue-50/70 text-blue-600",
                   selectedApp.status === 'rejected' && "bg-red-50 text-red-600"
                 )}>
-                  {selectedApp.status === 'applied' ? 'IN REVIEW' : selectedApp.status === 'interview_scheduled' ? 'INTERVIEW' : selectedApp.status}
+                  {selectedApp.status === 'applied' ? 'IN REVIEW' : selectedApp.status.toUpperCase()}
                 </Badge>
               </div>
 
@@ -475,35 +460,17 @@ export default function RecruiterApplicationsPage() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'shortlisted')}
-                  disabled={selectedApp.status === 'shortlisted'}
+                  onClick={() => updateStatus(selectedApp.id, 'accepted')}
+                  disabled={isTerminal(selectedApp.status)}
                   className="border-green-200 text-green-600 hover:bg-green-50/50 hover:text-green-700 font-bold rounded-lg"
                 >
-                  <CheckCircle2 className="mr-1.5 h-4 w-4" /> Shortlist
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'interview_scheduled')}
-                  disabled={selectedApp.status === 'interview_scheduled'}
-                  className="border-orange-200 text-orange-600 hover:bg-orange-50/50 hover:text-orange-700 font-bold rounded-lg"
-                >
-                  <Calendar className="mr-1.5 h-4 w-4" /> Schedule Interview
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'hired')}
-                  disabled={selectedApp.status === 'hired'}
-                  className="border-indigo-200 text-indigo-600 hover:bg-indigo-50/50 hover:text-indigo-700 font-bold rounded-lg"
-                >
-                  <UserCheck className="mr-1.5 h-4 w-4" /> Hire
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" /> Accept
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   onClick={() => updateStatus(selectedApp.id, 'rejected')}
-                  disabled={selectedApp.status === 'rejected'}
+                  disabled={isTerminal(selectedApp.status)}
                   className="border-red-200 text-red-600 hover:bg-red-50/50 hover:text-red-700 font-bold rounded-lg"
                 >
                   <XCircle className="mr-1.5 h-4 w-4" /> Reject
@@ -526,7 +493,7 @@ export default function RecruiterApplicationsPage() {
                       <Clock className="h-4 w-4 text-slate-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="font-bold text-slate-700 capitalize leading-tight">
-                          {event.label === 'applied' ? 'Applied (In Review)' : event.label === 'interview_scheduled' ? 'Interview Scheduled' : event.label}
+                          {event.label === 'applied' ? 'Applied (In Review)' : event.label === 'accepted' ? 'Accepted' : event.label}
                         </p>
                         {event.description && <p className="text-slate-500 font-medium mt-1">{event.description}</p>}
                         <p className="text-[10px] text-slate-400 font-medium mt-1">
