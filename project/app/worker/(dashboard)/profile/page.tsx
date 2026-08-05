@@ -53,7 +53,7 @@ import {
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/page-header';
 import { getInitials } from '@/lib/format';
-import { workerApi, masterDataApi, WorkerWithMeta, MasterRawItem, BackendLookup } from '@/lib/scn-api';
+import { workerApi, masterDataApi, WorkerWithMeta, MasterRawItem, BackendLookup, BackendLocation } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import { LocationCascadePicker } from '@/components/location-cascade-picker';
