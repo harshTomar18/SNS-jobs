@@ -318,6 +318,8 @@ export default function WorkerOnboardingPage() {
                             const matched = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase());
                             if (matched) {
                               handleStateChange(matched);
+                            } else if (stateInput.trim()) {
+                              handleStateChange(stateInput.trim());
                             } else {
                               setStateInput(selectedState);
                             }
@@ -333,7 +335,7 @@ export default function WorkerOnboardingPage() {
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
                         ) : filteredStates.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No states found</div>
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
                           filteredStates.map((state: string) => (
                             <button
@@ -372,6 +374,8 @@ export default function WorkerOnboardingPage() {
                             const matched = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase());
                             if (matched) {
                               handleCityChange(matched);
+                            } else if (cityInput.trim()) {
+                              handleCityChange(cityInput.trim());
                             } else {
                               setCityInput(selectedCity);
                             }
@@ -387,7 +391,7 @@ export default function WorkerOnboardingPage() {
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
                         ) : filteredCities.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No cities found</div>
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
                           filteredCities.map((city: string) => (
                             <button
@@ -427,6 +431,8 @@ export default function WorkerOnboardingPage() {
                             const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase());
                             if (matched) {
                               handleLocalityChange(matched.locality);
+                            } else if (localityInput.trim()) {
+                              handleLocalityChange(localityInput.trim());
                             } else {
                               setLocalityInput(selectedLocality);
                             }
@@ -442,7 +448,7 @@ export default function WorkerOnboardingPage() {
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
                         ) : filteredLocalities.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No localities found</div>
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
                           filteredLocalities.map((loc: BackendLocation) => (
                             <button
