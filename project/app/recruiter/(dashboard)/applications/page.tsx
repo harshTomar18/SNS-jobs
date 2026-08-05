@@ -63,13 +63,18 @@ export default function RecruiterApplicationsPage() {
   const statusMutation = useMutation({
     mutationFn: ({ id, status, notes }: { id: string; status: ApplicationStatus; notes?: string }) => 
       applicationsApi.updateStatus(id, status, notes),
-    onSuccess: () => {
+    onSuccess: (updatedApp) => {
       toast.success('Application status updated');
+      // Immediately update the cache with the returned data so UI reflects the change
+      queryClient.setQueryData(['recruiter-applications'], (old: Application[] | undefined) => {
+        if (!old) return old;
+        return old.map(app => app.id === updatedApp.id ? updatedApp : app);
+      });
+      // Also refetch in background for full consistency
       queryClient.invalidateQueries({ queryKey: ['recruiter-applications'] });
-      // If dialog is open, update selected application reference
-      if (selectedApp) {
-        const updated = applications.find(a => a.id === selectedApp.id);
-        if (updated) setSelectedApp(updated);
+      // If dialog is open, update selected application with fresh data
+      if (selectedApp && selectedApp.id === updatedApp.id) {
+        setSelectedApp(updatedApp);
       }
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update application')),
