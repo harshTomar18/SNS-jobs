@@ -76,12 +76,12 @@ function CompanyLogo({ name, className = 'h-12 w-12' }: { name: string; classNam
 function displaySalary(min: number, max: number) {
   if (min === 0 && max === 0) return 'Salary not specified';
   if (min >= 100000) {
-    return `$${Math.round(min / 1000)}k - $${Math.round(max / 1000)}k`;
+    return `₹${Math.round(min / 1000)}k - ₹${Math.round(max / 1000)}k`;
   }
   if (min >= 1000) {
-    return `$${(min / 1000).toFixed(0)}k - $${(max / 1000).toFixed(0)}k`;
+    return `₹${(min / 1000).toFixed(0)}k - ₹${(max / 1000).toFixed(0)}k`;
   }
-  return `$${min} - $${max}`;
+  return `₹${min} - ₹${max}`;
 }
 
 function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
@@ -134,7 +134,8 @@ export default function WorkerDashboardPage() {
 
   const jobsToDisplay = realJobsWithMatch.slice(0, 3);
 
-
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
   return (
     <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
@@ -144,7 +145,7 @@ export default function WorkerDashboardPage() {
         <Card className="lg:col-span-2 p-8 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl flex flex-col justify-between">
           <div className="space-y-3">
             <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-              Good Morning {profile?.fullName || user?.name || 'Harsh'} <span className="animate-bounce"></span>
+              {greeting} {profile?.fullName || user?.name || 'Harsh'} <span className="animate-bounce"></span>
             </h1>
             <p className="text-slate-500 font-medium text-sm">
               Your dream career is just one application away.

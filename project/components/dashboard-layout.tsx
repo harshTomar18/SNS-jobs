@@ -49,7 +49,7 @@ export function DashboardLayout({ children, items, role, title }: DashboardLayou
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <DashboardSidebar
         items={items}
         role={role}

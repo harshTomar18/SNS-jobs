@@ -108,9 +108,9 @@ function CompanyLogo({ name, className = 'h-16 w-16' }: { name: string; classNam
 function displaySalary(min: number, max: number) {
   if (min === 0 && max === 0) return 'Salary not specified';
   if (max >= 1000) {
-    return `$${Math.round(min / 1000)}k - $${Math.round(max / 1000)}k`;
+    return `₹${Math.round(min / 1000)}k - ₹${Math.round(max / 1000)}k`;
   }
-  return `$${min} - $${max}`;
+  return `₹${min} - ₹${max}`;
 }
 
 function getJobMatchDetails(job: JobWithMeta, profileSkills: string[] = []) {
@@ -408,7 +408,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
                 },
                 {
                   title: 'Modern Equipment',
-                  desc: '$5,000 budget for your home office setup and latest MacBook Pro.',
+                  desc: '₹4,00,000 budget for your home office setup and latest MacBook Pro.',
                   icon: Monitor,
                   color: 'text-blue-500 bg-blue-50'
                 },

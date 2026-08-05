@@ -94,13 +94,16 @@ export default function RecruiterDashboardPage() {
     };
   };
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
   return (
     <div className="space-y-8 pb-12">
       {/* Welcome & Controls Row */}
       <div className="flex flex-row items-center justify-between flex-wrap gap-6">
         <div className="flex flex-col text-left">
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-            Good morning, {firstName}
+            {greeting}, {firstName}
           </h1>
           {/* <span className="text-3xl mt-1.5 leading-none">👋</span> */}
           <p className="text-slate-400 text-sm font-semibold mt-2">Here's what's happening with your hiring pipeline today.</p>

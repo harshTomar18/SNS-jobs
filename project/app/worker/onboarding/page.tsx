@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,6 +59,27 @@ export default function WorkerOnboardingPage() {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedLocality, setSelectedLocality] = useState<string>('');
 
+  const [stateInput, setStateInput] = useState('');
+  const [isStateOpen, setIsStateOpen] = useState(false);
+
+  const [cityInput, setCityInput] = useState('');
+  const [isCityOpen, setIsCityOpen] = useState(false);
+
+  const [localityInput, setLocalityInput] = useState('');
+  const [isLocalityOpen, setIsLocalityOpen] = useState(false);
+
+  useEffect(() => {
+    setStateInput(selectedState);
+  }, [selectedState]);
+
+  useEffect(() => {
+    setCityInput(selectedCity);
+  }, [selectedCity]);
+
+  useEffect(() => {
+    setLocalityInput(selectedLocality);
+  }, [selectedLocality]);
+
   const locationsQuery = useQuery({ queryKey: ['master', 'locations'], queryFn: () => masterDataApi.raw('locations') });
   const qualificationsQuery = useQuery({ queryKey: ['master', 'qualifications'], queryFn: () => masterDataApi.raw('qualifications') });
 
@@ -79,23 +100,42 @@ export default function WorkerOnboardingPage() {
     enabled: !!selectedCity && !!selectedState,
   });
 
+  const filteredStates = states.filter((s: string) => {
+    if (!stateInput || stateInput === selectedState) return true;
+    return s.toLowerCase().includes(stateInput.toLowerCase());
+  });
+  const filteredCities = cities.filter((c: string) => {
+    if (!cityInput || cityInput === selectedCity) return true;
+    return c.toLowerCase().includes(cityInput.toLowerCase());
+  });
+  const filteredLocalities = localities.filter((l: BackendLocation) => {
+    if (!localityInput || l.locality === selectedLocality) return true;
+    return l.locality.toLowerCase().includes(localityInput.toLowerCase());
+  });
+
   const handleStateChange = (state: string) => {
     setSelectedState(state);
+    setStateInput(state);
     setSelectedCity('');
+    setCityInput('');
     setSelectedLocality('');
+    setLocalityInput('');
     setValue('city', '');
     setValue('currentLocality', '');
   };
 
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
+    setCityInput(city);
     setSelectedLocality('');
+    setLocalityInput('');
     setValue('city', city, { shouldValidate: true });
     setValue('currentLocality', '');
   };
 
   const handleLocalityChange = (locality: string) => {
     setSelectedLocality(locality);
+    setLocalityInput(locality);
     setValue('currentLocality', locality, { shouldValidate: true });
   };
 
@@ -258,81 +298,165 @@ export default function WorkerOnboardingPage() {
                 {/* Location Grid Row */}
                 <div className="grid gap-4 sm:grid-cols-3">
                   {/* Step 1: State */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>State *</Label>
-                    <Select value={selectedState} onValueChange={handleStateChange}>
-                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10">
-                        <SelectValue placeholder={isLoadingStates ? "Loading..." : "Choose state"} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Type or select state..."
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                        value={stateInput}
+                        onChange={(e) => {
+                          setStateInput(e.target.value);
+                          setIsStateOpen(true);
+                        }}
+                        onFocus={() => setIsStateOpen(true)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setIsStateOpen(false);
+                            const matched = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase());
+                            if (matched) {
+                              handleStateChange(matched);
+                            } else {
+                              setStateInput(selectedState);
+                            }
+                          }, 200);
+                        }}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isStateOpen && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                         {isLoadingStates ? (
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
+                        ) : filteredStates.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No states found</div>
                         ) : (
-                          states.map((state: string) => (
-                            <SelectItem key={state} value={state} className="text-xs font-medium">
+                          filteredStates.map((state: string) => (
+                            <button
+                              key={state}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => handleStateChange(state)}
+                            >
                               {state}
-                            </SelectItem>
+                            </button>
                           ))
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Step 2: City */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>City *</Label>
-                    <Select
-                      value={selectedCity}
-                      onValueChange={handleCityChange}
-                      disabled={!selectedState}
-                    >
-                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 disabled:opacity-50 disabled:bg-slate-100/50">
-                        <SelectValue placeholder={isLoadingCities ? "Loading..." : "Choose city"} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        placeholder={selectedState ? "Type or select city..." : "Choose state first"}
+                        disabled={!selectedState}
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                        value={cityInput}
+                        onChange={(e) => {
+                          setCityInput(e.target.value);
+                          setIsCityOpen(true);
+                        }}
+                        onFocus={() => setIsCityOpen(true)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setIsCityOpen(false);
+                            const matched = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase());
+                            if (matched) {
+                              handleCityChange(matched);
+                            } else {
+                              setCityInput(selectedCity);
+                            }
+                          }, 200);
+                        }}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isCityOpen && selectedState && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                         {isLoadingCities ? (
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
+                        ) : filteredCities.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No cities found</div>
                         ) : (
-                          cities.map((city: string) => (
-                            <SelectItem key={city} value={city} className="text-xs font-medium">
+                          filteredCities.map((city: string) => (
+                            <button
+                              key={city}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => handleCityChange(city)}
+                            >
                               {city}
-                            </SelectItem>
+                            </button>
                           ))
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
                     {errors.city && <p className="text-xs text-destructive mt-1">{errors.city.message}</p>}
                   </div>
 
                   {/* Step 3: Locality */}
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>Locality (Optional)</Label>
-                    <Select
-                      value={selectedLocality}
-                      onValueChange={handleLocalityChange}
-                      disabled={!selectedCity}
-                    >
-                      <SelectTrigger className="w-full rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 disabled:opacity-50 disabled:bg-slate-100/50">
-                        <SelectValue placeholder={isLoadingLocalities ? "Loading..." : "Choose locality"} />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        placeholder={selectedCity ? "Type or select locality..." : "Choose city first"}
+                        disabled={!selectedCity}
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                        value={localityInput}
+                        onChange={(e) => {
+                          setLocalityInput(e.target.value);
+                          setIsLocalityOpen(true);
+                        }}
+                        onFocus={() => setIsLocalityOpen(true)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setIsLocalityOpen(false);
+                            const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase());
+                            if (matched) {
+                              handleLocalityChange(matched.locality);
+                            } else {
+                              setLocalityInput(selectedLocality);
+                            }
+                          }, 200);
+                        }}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isLocalityOpen && selectedCity && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                         {isLoadingLocalities ? (
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
+                        ) : filteredLocalities.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No localities found</div>
                         ) : (
-                          localities.map((loc: BackendLocation) => (
-                            <SelectItem key={loc.id} value={loc.locality} className="text-xs font-medium">
+                          filteredLocalities.map((loc: BackendLocation) => (
+                            <button
+                              key={loc.id}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => handleLocalityChange(loc.locality)}
+                            >
                               {loc.locality}
-                            </SelectItem>
+                            </button>
                           ))
                         )}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
                   </div>
                 </div>
 

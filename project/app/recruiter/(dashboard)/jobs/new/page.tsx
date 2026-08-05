@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -19,7 +19,9 @@ import {
   Eye,
   GraduationCap,
   Search,
-  X
+  X,
+  Loader2,
+  ChevronRight
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PageHeader } from '@/components/page-header';
 import { cn } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/api';
-import { MasterRawItem, jobsApi, masterDataApi } from '@/lib/scn-api';
+import { MasterRawItem, jobsApi, masterDataApi, BackendLocation } from '@/lib/scn-api';
 
 const schema = z.object({
   title: z.string().min(2, 'Job title is required'),
@@ -72,6 +74,88 @@ export default function CreateJobPage() {
   const router = useRouter();
   const [skillSearch, setSkillSearch] = useState('');
   const [qualSearch, setQualSearch] = useState('');
+
+  const [selectedState, setSelectedState] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
+  const [selectedLocalityId, setSelectedLocalityId] = useState<string>('');
+
+  const [stateInput, setStateInput] = useState('');
+  const [isStateOpen, setIsStateOpen] = useState(false);
+
+  const [cityInput, setCityInput] = useState('');
+  const [isCityOpen, setIsCityOpen] = useState(false);
+
+  const [localityInput, setLocalityInput] = useState('');
+  const [isLocalityOpen, setIsLocalityOpen] = useState(false);
+
+  const { data: states = [], isLoading: isLoadingStates } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'states'],
+    queryFn: () => masterDataApi.getStates(),
+  });
+
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'cities', selectedState],
+    queryFn: () => masterDataApi.getCities(selectedState),
+    enabled: !!selectedState,
+  });
+
+  const { data: localities = [], isLoading: isLoadingLocalities } = useQuery<BackendLocation[]>({
+    queryKey: ['master', 'locations', 'localities', selectedCity, selectedState],
+    queryFn: () => masterDataApi.getLocalities(selectedCity, selectedState),
+    enabled: !!selectedCity && !!selectedState,
+  });
+
+  useEffect(() => {
+    setStateInput(selectedState);
+  }, [selectedState]);
+
+  useEffect(() => {
+    setCityInput(selectedCity);
+  }, [selectedCity]);
+
+  useEffect(() => {
+    const loc = localities.find((l: BackendLocation) => String(l.id) === selectedLocalityId);
+    setLocalityInput(loc ? loc.locality : '');
+  }, [selectedLocalityId, localities]);
+
+  const filteredStates = states.filter((s: string) => {
+    if (!stateInput || stateInput === selectedState) return true;
+    return s.toLowerCase().includes(stateInput.toLowerCase());
+  });
+  const filteredCities = cities.filter((c: string) => {
+    if (!cityInput || cityInput === selectedCity) return true;
+    return c.toLowerCase().includes(cityInput.toLowerCase());
+  });
+  const filteredLocalities = localities.filter((l: BackendLocation) => {
+    const loc = localities.find((loc: BackendLocation) => String(loc.id) === selectedLocalityId);
+    if (!localityInput || (loc && l.locality === loc.locality)) return true;
+    return l.locality.toLowerCase().includes(localityInput.toLowerCase());
+  });
+
+  const handleStateChange = (state: string) => {
+    setSelectedState(state);
+    setStateInput(state);
+    setSelectedCity('');
+    setCityInput('');
+    setSelectedLocalityId('');
+    setLocalityInput('');
+    setValue('locationId', '', { shouldValidate: true });
+  };
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    setCityInput(city);
+    setSelectedLocalityId('');
+    setLocalityInput('');
+    setValue('locationId', '', { shouldValidate: true });
+  };
+
+  const handleLocalityChange = (locationId: string) => {
+    setSelectedLocalityId(locationId);
+    const loc = localities.find((l: BackendLocation) => String(l.id) === locationId);
+    setLocalityInput(loc ? loc.locality : '');
+    setValue('locationId', locationId, { shouldValidate: true });
+  };
 
   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
   const locationsQuery = useQuery({ queryKey: ['master', 'locations'], queryFn: () => masterDataApi.raw('locations') });
@@ -247,8 +331,9 @@ export default function CreateJobPage() {
                 <MapPin className="h-5 w-5" />
                 <span>2. Location & Industry</span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="space-y-4">
+                {/* Industry Selection */}
+                <div className="space-y-2 max-w-md">
                   <Label className="text-slate-700 font-extrabold text-xs">Industry *</Label>
                   <Select onValueChange={(value) => setValue('industryId', value, { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Select industry" /></SelectTrigger>
@@ -260,19 +345,176 @@ export default function CreateJobPage() {
                   </Select>
                   {errors.industryId && <p className="text-xs text-red-500 font-bold">{errors.industryId.message}</p>}
                 </div>
+
+                <Separator className="my-2 bg-slate-50" />
+
+                {/* Location Selection Grid */}
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Location *</Label>
-                  <Select onValueChange={(value) => setValue('locationId', value, { shouldValidate: true })}>
-                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Select location" /></SelectTrigger>
-                    <SelectContent>
-                      {locations.map((location) => (
-                        <SelectItem key={location.id} value={String(location.id)}>
-                          {'city' in location ? `${location.city} - ${location.locality}` : String(location.id)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.locationId && <p className="text-xs text-red-500 font-bold">{errors.locationId.message}</p>}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {/* State */}
+                    <div className="space-y-1.5 relative">
+                      <Label className="text-[10px] text-slate-400 font-bold uppercase">State</Label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          placeholder="Type or select state..."
+                          className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                          value={stateInput}
+                          onChange={(e) => {
+                            setStateInput(e.target.value);
+                            setIsStateOpen(true);
+                          }}
+                          onFocus={() => setIsStateOpen(true)}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              setIsStateOpen(false);
+                              const matched = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase());
+                              if (matched) {
+                                handleStateChange(matched);
+                              } else {
+                                setStateInput(selectedState);
+                              }
+                            }, 200);
+                          }}
+                        />
+                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                      </div>
+                      {isStateOpen && (
+                        <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                          {isLoadingStates ? (
+                            <div className="flex items-center justify-center p-2.5">
+                              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                            </div>
+                          ) : filteredStates.length === 0 ? (
+                            <div className="text-xs text-slate-400 p-2.5 text-center">No states found</div>
+                          ) : (
+                            filteredStates.map((state: string) => (
+                              <button
+                                key={state}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleStateChange(state)}
+                              >
+                                {state}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* City */}
+                    <div className="space-y-1.5 relative">
+                      <Label className="text-[10px] text-slate-400 font-bold uppercase">City</Label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          placeholder={selectedState ? "Type or select city..." : "Choose state first"}
+                          disabled={!selectedState}
+                          className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                          value={cityInput}
+                          onChange={(e) => {
+                            setCityInput(e.target.value);
+                            setIsCityOpen(true);
+                          }}
+                          onFocus={() => setIsCityOpen(true)}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              setIsCityOpen(false);
+                              const matched = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase());
+                              if (matched) {
+                                handleCityChange(matched);
+                              } else {
+                                setCityInput(selectedCity);
+                              }
+                            }, 200);
+                          }}
+                        />
+                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                      </div>
+                      {isCityOpen && selectedState && (
+                        <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                          {isLoadingCities ? (
+                            <div className="flex items-center justify-center p-2.5">
+                              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                            </div>
+                          ) : filteredCities.length === 0 ? (
+                            <div className="text-xs text-slate-400 p-2.5 text-center">No cities found</div>
+                          ) : (
+                            filteredCities.map((city: string) => (
+                              <button
+                                key={city}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleCityChange(city)}
+                              >
+                                {city}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Locality */}
+                    <div className="space-y-1.5 relative">
+                      <Label className="text-[10px] text-slate-400 font-bold uppercase">Locality</Label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          autoComplete="off"
+                          placeholder={selectedCity ? "Type or select locality..." : "Choose city first"}
+                          disabled={!selectedCity}
+                          className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                          value={localityInput}
+                          onChange={(e) => {
+                            setLocalityInput(e.target.value);
+                            setIsLocalityOpen(true);
+                          }}
+                          onFocus={() => setIsLocalityOpen(true)}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              setIsLocalityOpen(false);
+                              const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase());
+                              if (matched) {
+                                handleLocalityChange(String(matched.id));
+                              } else {
+                                const activeLoc = localities.find((l: BackendLocation) => String(l.id) === selectedLocalityId);
+                                setLocalityInput(activeLoc ? activeLoc.locality : '');
+                              }
+                            }, 200);
+                          }}
+                        />
+                        <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                      </div>
+                      {isLocalityOpen && selectedCity && (
+                        <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                          {isLoadingLocalities ? (
+                            <div className="flex items-center justify-center p-2.5">
+                              <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                            </div>
+                          ) : filteredLocalities.length === 0 ? (
+                            <div className="text-xs text-slate-400 p-2.5 text-center">No localities found</div>
+                          ) : (
+                            filteredLocalities.map((loc: BackendLocation) => (
+                              <button
+                                key={loc.id}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleLocalityChange(String(loc.id))}
+                              >
+                                {loc.locality}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {errors.locationId && <p className="text-xs text-red-500 font-bold mt-1">{errors.locationId.message}</p>}
                 </div>
               </div>
             </Card>

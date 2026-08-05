@@ -41,7 +41,7 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="lg:hidden text-slate-500 hover:bg-slate-50"
+            className="text-slate-500 hover:bg-slate-50"
             aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
             {sidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -132,7 +132,7 @@ export function DashboardTopbar({ role, title, sidebarOpen, onToggleSidebar }: D
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="lg:hidden text-slate-500 hover:bg-slate-50"
+            className="text-slate-500 hover:bg-slate-50"
             aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
           >
             {sidebarOpen ? <PanelLeftClose className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
