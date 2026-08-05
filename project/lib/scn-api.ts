@@ -55,6 +55,7 @@ interface BackendWorkerProfile {
   user?: Pick<BackendUser, 'email' | 'phone' | 'isActive' | 'createdAt'>;
   name?: string | null;
   phone?: string | null;
+  state?: string | null;
   city?: string | null;
   currentLocality?: string | null;
   profilePhotoUrl?: string | null;
@@ -199,6 +200,8 @@ export interface WorkerWithMeta extends WorkerProfile {
   status: 'active' | 'inactive';
   joinedAt: string;
   city: string;
+  state?: string;
+  locality?: string;
   preferredLocationDetails?: { id: number; label: string }[];
 }
 
@@ -397,6 +400,8 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     status: profile.user?.isActive === false ? 'inactive' : 'active',
     joinedAt: profile.user?.createdAt || profile.createdAt || '',
     city: profile.city || preferredLocations[0] || '',
+    state: profile.state || '',
+    locality: profile.currentLocality || '',
   };
 }
 
@@ -614,7 +619,9 @@ export const workerApi = {
     return toWorkerProfile(await apiPost<BackendWorkerProfile>('/worker/profile'));
   },
   async updateProfile(data: {
+    state?: string;
     city?: string;
+    locality?: string;
     currentLocality?: string;
     name?: string;
     phone?: string;

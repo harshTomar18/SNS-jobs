@@ -81,7 +81,19 @@ export default function WorkerProfilePage() {
     expectedSalaryMin: 0,
     expectedSalaryMax: 0, 
     resumeUrl: '',
+    state: '',
+    city: '',
+    locality: '',
   });
+
+  const [stateInput, setStateInput] = useState('');
+  const [isStateOpen, setIsStateOpen] = useState(false);
+
+  const [cityInput, setCityInput] = useState('');
+  const [isCityOpen, setIsCityOpen] = useState(false);
+
+  const [localityInput, setLocalityInput] = useState('');
+  const [isLocalityOpen, setIsLocalityOpen] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -94,8 +106,85 @@ export default function WorkerProfilePage() {
       expectedSalaryMin: profile.expectedSalaryMin,
       expectedSalaryMax: profile.expectedSalaryMax,
       resumeUrl: profile.resumeUrl || '',
+      state: profile.state || '',
+      city: profile.city || '',
+      locality: profile.locality || '',
     });
   }, [profile]);
+
+  const { data: states = [], isLoading: isLoadingStates } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'states'],
+    queryFn: () => masterDataApi.getStates(),
+  });
+
+  const { data: cities = [], isLoading: isLoadingCities } = useQuery<string[]>({
+    queryKey: ['master', 'locations', 'cities', form.state],
+    queryFn: () => masterDataApi.getCities(form.state),
+    enabled: !!form.state,
+  });
+
+  const { data: localities = [], isLoading: isLoadingLocalities } = useQuery<BackendLocation[]>({
+    queryKey: ['master', 'locations', 'localities', form.city, form.state],
+    queryFn: () => masterDataApi.getLocalities(form.city, form.state),
+    enabled: !!form.city && !!form.state,
+  });
+
+  useEffect(() => {
+    setStateInput(form.state || '');
+  }, [form.state]);
+
+  useEffect(() => {
+    setCityInput(form.city || '');
+  }, [form.city]);
+
+  useEffect(() => {
+    setLocalityInput(form.locality || '');
+  }, [form.locality]);
+
+  const filteredStates = states.filter((s: string) => {
+    if (!stateInput || stateInput === form.state) return true;
+    return s.toLowerCase().includes(stateInput.toLowerCase());
+  });
+
+  const filteredCities = cities.filter((c: string) => {
+    if (!cityInput || cityInput === form.city) return true;
+    return c.toLowerCase().includes(cityInput.toLowerCase());
+  });
+
+  const filteredLocalities = localities.filter((l: BackendLocation) => {
+    if (!localityInput || l.locality === form.locality) return true;
+    return l.locality.toLowerCase().includes(localityInput.toLowerCase());
+  });
+
+  const handleStateChange = (state: string) => {
+    setForm(prev => ({
+      ...prev,
+      state,
+      city: '',
+      locality: ''
+    }));
+    setStateInput(state);
+    setCityInput('');
+    setLocalityInput('');
+  };
+
+  const handleCityChange = (city: string) => {
+    setForm(prev => ({
+      ...prev,
+      city,
+      locality: ''
+    }));
+    setCityInput(city);
+    setLocalityInput('');
+  };
+
+  const handleLocalityChange = (locality: string) => {
+    setForm(prev => ({
+      ...prev,
+      locality
+    }));
+    setLocalityInput(locality);
+  };
 
   const createMutation = useMutation({
     mutationFn: workerApi.createProfile,
@@ -335,7 +424,7 @@ export default function WorkerProfilePage() {
                       )}
                       <span className="flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                        {profile.city || profile.preferredLocations[0] || 'Location Not Set'}
+                        {[profile.locality, profile.city, profile.state].filter(Boolean).join(', ') || profile.preferredLocations[0] || 'Location Not Set'}
                       </span>
                       {profile.resumeUrl ? (
                         <a
@@ -499,6 +588,173 @@ export default function WorkerProfilePage() {
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-slate-500">Bio Summary</Label>
                       <Textarea value={form.summary} rows={4} className="rounded-xl border-slate-200" onChange={(event) => setForm({ ...form, summary: event.target.value })} />
+                    </div>
+
+                    {/* Location Selection Grid */}
+                    <div className="space-y-2 border-t border-slate-100 pt-3">
+                      <Label className="text-slate-700 font-extrabold text-xs">Current Location</Label>
+                      <div className="grid gap-4 sm:grid-cols-3">
+                        {/* State */}
+                        <div className="space-y-1.5 relative">
+                          <Label className="text-[10px] text-slate-400 font-bold uppercase">State</Label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder="Type or select state..."
+                              className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                              value={stateInput}
+                              onChange={(e) => {
+                                setStateInput(e.target.value);
+                                setIsStateOpen(true);
+                              }}
+                              onFocus={() => setIsStateOpen(true)}
+                              onBlur={() => {
+                                setTimeout(() => {
+                                  setIsStateOpen(false);
+                                  const matched = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase());
+                                  if (matched) {
+                                    handleStateChange(matched);
+                                  } else {
+                                    setStateInput(form.state);
+                                  }
+                                }, 200);
+                              }}
+                            />
+                            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                          </div>
+                          {isStateOpen && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingStates ? (
+                                <div className="flex items-center justify-center p-2.5">
+                                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                </div>
+                              ) : filteredStates.length === 0 ? (
+                                <div className="text-xs text-slate-400 p-2.5 text-center">No states found</div>
+                              ) : (
+                                filteredStates.map((state: string) => (
+                                  <button
+                                    key={state}
+                                    type="button"
+                                    className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onMouseDown={() => handleStateChange(state)}
+                                  >
+                                    {state}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* City */}
+                        <div className="space-y-1.5 relative">
+                          <Label className="text-[10px] text-slate-400 font-bold uppercase">City</Label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder={form.state ? "Type or select city..." : "Choose state first"}
+                              disabled={!form.state}
+                              className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                              value={cityInput}
+                              onChange={(e) => {
+                                setCityInput(e.target.value);
+                                setIsCityOpen(true);
+                              }}
+                              onFocus={() => setIsCityOpen(true)}
+                              onBlur={() => {
+                                setTimeout(() => {
+                                  setIsCityOpen(false);
+                                  const matched = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase());
+                                  if (matched) {
+                                    handleCityChange(matched);
+                                  } else {
+                                    setCityInput(form.city);
+                                  }
+                                }, 200);
+                              }}
+                            />
+                            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                          </div>
+                          {isCityOpen && form.state && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingCities ? (
+                                <div className="flex items-center justify-center p-2.5">
+                                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                </div>
+                              ) : filteredCities.length === 0 ? (
+                                <div className="text-xs text-slate-400 p-2.5 text-center">No cities found</div>
+                              ) : (
+                                filteredCities.map((city: string) => (
+                                  <button
+                                    key={city}
+                                    type="button"
+                                    className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onMouseDown={() => handleCityChange(city)}
+                                  >
+                                    {city}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Locality */}
+                        <div className="space-y-1.5 relative">
+                          <Label className="text-[10px] text-slate-400 font-bold uppercase">Locality</Label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder={form.city ? "Type or select locality..." : "Choose city first"}
+                              disabled={!form.city}
+                              className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50"
+                              value={localityInput}
+                              onChange={(e) => {
+                                setLocalityInput(e.target.value);
+                                setIsLocalityOpen(true);
+                              }}
+                              onFocus={() => setIsLocalityOpen(true)}
+                              onBlur={() => {
+                                setTimeout(() => {
+                                  setIsLocalityOpen(false);
+                                  const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase());
+                                  if (matched) {
+                                    handleLocalityChange(matched.locality);
+                                  } else {
+                                    setLocalityInput(form.locality);
+                                  }
+                                }, 200);
+                              }}
+                            />
+                            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                          </div>
+                          {isLocalityOpen && form.city && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingLocalities ? (
+                                <div className="flex items-center justify-center p-2.5">
+                                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                </div>
+                              ) : filteredLocalities.length === 0 ? (
+                                <div className="text-xs text-slate-400 p-2.5 text-center">No localities found</div>
+                              ) : (
+                                filteredLocalities.map((loc: BackendLocation) => (
+                                  <button
+                                    key={loc.id}
+                                    type="button"
+                                    className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onMouseDown={() => handleLocalityChange(loc.locality)}
+                                  >
+                                    {loc.locality}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="flex gap-2.5 pt-2">
