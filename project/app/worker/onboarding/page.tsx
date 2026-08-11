@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/lib/auth-context';
 import { workerApi, masterDataApi, MasterRawItem, BackendLocation } from '@/lib/scn-api';
 import { useQuery } from '@tanstack/react-query';
@@ -40,10 +41,16 @@ const schema = z.object({
   qualificationId: z.string().optional(),
   institute: z.string().optional(),
   passoutYear: z.coerce.number().optional(),
-  // Experience
+  // Experience & Fresher & Working Status
+  isFresher: z.boolean().default(false),
+  workingStatus: z.string().optional(),
+  noticePeriodDays: z.coerce.number().optional(),
   companyName: z.string().optional(),
   jobTitle: z.string().optional(),
   fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+  isCurrent: z.boolean().default(false),
+  description: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -188,7 +195,7 @@ export default function WorkerOnboardingPage() {
     }
     setIsSubmitting(true);
     try {
-      // 1. Create or update profile
+      // 1. Create or update profile including isFresher & workingStatus
       await workerApi.updateProfile({
         name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
@@ -198,6 +205,9 @@ export default function WorkerOnboardingPage() {
         preferredLocationIds: data.preferredLocationIds.map(Number),
         city: data.city,
         currentLocality: data.currentLocality || undefined,
+        isFresher: data.isFresher,
+        workingStatus: data.workingStatus || undefined,
+        noticePeriodDays: data.workingStatus === 'SERVING_NOTICE' ? (data.noticePeriodDays || undefined) : undefined,
       });
 
       // 2. Add education if provided
@@ -209,12 +219,15 @@ export default function WorkerOnboardingPage() {
         });
       }
 
-      // 3. Add experience if provided
-      if (data.companyName && data.jobTitle && data.fromDate) {
+      // 3. Add experience if provided and not fresher
+      if (!data.isFresher && data.companyName && data.jobTitle && data.fromDate) {
         await workerApi.addExperience({
           companyName: data.companyName,
           jobTitle: data.jobTitle,
           fromDate: new Date(data.fromDate).toISOString(),
+          toDate: data.isCurrent || !data.toDate ? undefined : new Date(data.toDate).toISOString(),
+          isCurrent: data.isCurrent,
+          description: data.description || undefined,
         });
       }
 
@@ -536,20 +549,101 @@ export default function WorkerOnboardingPage() {
             {currentStep === 4 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-xl font-semibold">Work Experience (Optional)</h2>
+
+                {/* Fresher Checkbox */}
+                <div className="flex items-center space-x-2 rounded-lg border border-border p-3.5 bg-muted/20">
+                  <Checkbox
+                    id="onboardingFresher"
+                    checked={watch('isFresher')}
+                    onCheckedChange={(checked) => {
+                      setValue('isFresher', Boolean(checked));
+                      if (checked) {
+                        setValue('companyName', '');
+                        setValue('jobTitle', '');
+                        setValue('fromDate', '');
+                        setValue('toDate', '');
+                        setValue('isCurrent', false);
+                        setValue('description', '');
+                      }
+                    }}
+                  />
+                  <label htmlFor="onboardingFresher" className="text-sm font-semibold cursor-pointer">
+                    I am a Fresher (0 years of experience)
+                  </label>
+                </div>
+
+                {/* Working Status */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label>Company Name</Label>
-                    <Input {...register('companyName')} placeholder="e.g. Google" />
+                    <Label>Working Status</Label>
+                    <Select value={watch('workingStatus') || ''} onValueChange={(val) => setValue('workingStatus', val)}>
+                      <SelectTrigger><SelectValue placeholder="Select status..." /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="WORKING">Currently Working</SelectItem>
+                        <SelectItem value="SERVING_NOTICE">Serving Notice Period</SelectItem>
+                        <SelectItem value="NOT_WORKING">Not Working</SelectItem>
+                        <SelectItem value="IMMEDIATE_JOINER">Immediate Joiner</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Job Title</Label>
-                    <Input {...register('jobTitle')} placeholder="e.g. Frontend Developer" />
+                  {watch('workingStatus') === 'SERVING_NOTICE' && (
+                    <div className="space-y-2">
+                      <Label>Notice Period (Days)</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 30"
+                        value={watch('noticePeriodDays') || ''}
+                        onChange={(e) => setValue('noticePeriodDays', Number(e.target.value))}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {watch('isFresher') ? (
+                  <div className="rounded-lg border border-success/30 bg-success/5 p-4 text-sm font-medium text-success text-center">
+                    Fresher option selected — experience fields are disabled.
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Input type="date" {...register('fromDate')} />
-                </div>
+                ) : (
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Company Name</Label>
+                        <Input {...register('companyName')} placeholder="e.g. Google" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Job Title / Designation</Label>
+                        <Input {...register('jobTitle')} placeholder="e.g. Frontend Developer" />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input type="date" {...register('fromDate')} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input type="date" disabled={watch('isCurrent')} {...register('toDate')} className="disabled:opacity-50" />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="onboardingIsCurrent"
+                        checked={watch('isCurrent')}
+                        onCheckedChange={(checked) => setValue('isCurrent', Boolean(checked))}
+                      />
+                      <label htmlFor="onboardingIsCurrent" className="text-sm font-medium cursor-pointer">
+                        I currently work here
+                      </label>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea {...register('description')} rows={3} placeholder="Key responsibilities and achievements..." />
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
