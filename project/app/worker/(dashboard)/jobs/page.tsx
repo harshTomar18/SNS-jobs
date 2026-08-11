@@ -104,7 +104,8 @@ function displaySalary(min: number, max: number) {
 }
 
 function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
-  const jobSkills = job.skills || [];
+  const jobTitle = job?.title || '';
+  const jobSkills = job?.skills || [];
   const common = jobSkills.filter(s => profileSkills.some(ps => ps.toLowerCase() === s.toLowerCase()));
   
   let matchPercent = 75;
@@ -114,9 +115,9 @@ function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
     matchPercent = Math.min(99, 80 + common.length * 5);
     matchesText = `Matches your skill: ${common.slice(0, 3).join(', ')}`;
   } else {
-    matchPercent = 85 + (job.title.length % 15);
+    matchPercent = 85 + (jobTitle.length % 15);
     const displayedSkills = jobSkills.length > 0 ? jobSkills.slice(0, 2).join(', ') : 'React, Node';
-    matchesText = `Matches your interest in ${job.industry || 'Tech'} and ${displayedSkills}`;
+    matchesText = `Matches your interest in ${job?.industry || 'Tech'} and ${displayedSkills}`;
   }
   
   return { matchPercent, matchesText };

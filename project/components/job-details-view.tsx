@@ -114,13 +114,14 @@ function displaySalary(min: number, max: number) {
 }
 
 function getJobMatchDetails(job: JobWithMeta, profileSkills: string[] = []) {
-  const jobSkills = job.skills || [];
+  const jobTitle = job?.title || '';
+  const jobSkills = job?.skills || [];
   const common = jobSkills.filter(s => profileSkills.some(ps => ps.toLowerCase() === s.toLowerCase()));
   let matchPercent = 75;
   if (common.length > 0) {
     matchPercent = Math.min(99, 80 + common.length * 5);
   } else {
-    matchPercent = 85 + (job.title.length % 15);
+    matchPercent = 85 + (jobTitle.length % 15);
   }
   return { matchPercent };
 }
