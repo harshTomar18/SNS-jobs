@@ -599,8 +599,11 @@ export default function WorkerOnboardingPage() {
                     id="onboardingFresher"
                     checked={watch('isFresher')}
                     onCheckedChange={(checked) => {
-                      setValue('isFresher', Boolean(checked));
-                      if (checked) {
+                      const isChecked = Boolean(checked);
+                      setValue('isFresher', isChecked);
+                      if (isChecked) {
+                        setValue('workingStatus', 'IMMEDIATE_JOINER');
+                        setValue('noticePeriodDays', undefined);
                         setValue('companyName', '');
                         setValue('jobTitle', '');
                         setValue('fromDate', '');
@@ -611,7 +614,7 @@ export default function WorkerOnboardingPage() {
                     }}
                   />
                   <label htmlFor="onboardingFresher" className="text-sm font-semibold cursor-pointer">
-                    I am a Fresher (0 years of experience)
+                    I am a Fresher
                   </label>
                 </div>
 
@@ -622,14 +625,20 @@ export default function WorkerOnboardingPage() {
                     <Select value={watch('workingStatus') || ''} onValueChange={(val) => setValue('workingStatus', val)}>
                       <SelectTrigger><SelectValue placeholder="Select status..." /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="WORKING">Currently Working</SelectItem>
-                        <SelectItem value="SERVING_NOTICE">Serving Notice Period</SelectItem>
-                        <SelectItem value="NOT_WORKING">Not Working</SelectItem>
-                        <SelectItem value="IMMEDIATE_JOINER">Immediate Joiner</SelectItem>
+                        {watch('isFresher') ? (
+                          <SelectItem value="IMMEDIATE_JOINER">Immediate Joiner</SelectItem>
+                        ) : (
+                          <>
+                            <SelectItem value="WORKING">Currently Working</SelectItem>
+                            <SelectItem value="SERVING_NOTICE">Serving Notice Period</SelectItem>
+                            <SelectItem value="NOT_WORKING">Not Working</SelectItem>
+                            <SelectItem value="IMMEDIATE_JOINER">Immediate Joiner</SelectItem>
+                          </>
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
-                  {watch('workingStatus') === 'SERVING_NOTICE' && (
+                  {!watch('isFresher') && watch('workingStatus') === 'SERVING_NOTICE' && (
                     <div className="space-y-2">
                       <Label>Notice Period (Days)</Label>
                       <Input
