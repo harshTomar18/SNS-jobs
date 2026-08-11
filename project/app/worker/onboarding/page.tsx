@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/lib/auth-context';
-import { workerApi, masterDataApi, MasterRawItem, BackendLocation } from '@/lib/scn-api';
+import { workerApi, masterDataApi, MasterRawItem, BackendLocation, BackendLookup } from '@/lib/scn-api';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { UploadDropzone } from '@/utils/uploadthing';
@@ -55,6 +55,17 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+const QUAL_CATEGORY_LABELS: Record<string, string> = {
+  TEN: '10th Pass',
+  TWELVE: '12th Pass',
+  DIPLOMA: 'Diploma',
+  GRADUATE: 'Graduate',
+  POST_GRADUATE: 'Post Graduate',
+  ANY: 'Other / Any',
+};
+
+const QUAL_CATEGORY_ORDER = ['TEN', 'TWELVE', 'DIPLOMA', 'GRADUATE', 'POST_GRADUATE', 'ANY'];
+
 export default function WorkerOnboardingPage() {
   const router = useRouter();
   const { user, updateUser } = useAuth();
@@ -77,6 +88,13 @@ export default function WorkerOnboardingPage() {
 
   const [qualSearch, setQualSearch] = useState('');
   const [isQualOpen, setIsQualOpen] = useState(false);
+  const [selectedQualLevel, setSelectedQualLevel] = useState<string>('');
+
+  const qualGroupsQuery = useQuery<Record<string, BackendLookup[]>>({
+    queryKey: ['master', 'qualifications', 'grouped'],
+    queryFn: () => workerApi.getQualificationsGrouped(),
+  });
+  const qualGroups: Record<string, BackendLookup[]> = qualGroupsQuery.data || {};
 
   useEffect(() => {
     setStateInput(selectedState);
