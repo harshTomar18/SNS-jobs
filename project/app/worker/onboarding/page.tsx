@@ -490,7 +490,7 @@ export default function WorkerOnboardingPage() {
                 <h2 className="text-xl font-semibold">Education (Optional)</h2>
                 <div className="space-y-2">
                   <Label>Highest Qualification</Label>
-                  <Select onValueChange={(value) => setValue('qualificationId', value)}>
+                  <Select value={watch('qualificationId') || ''} onValueChange={(value) => setValue('qualificationId', value)}>
                     <SelectTrigger><SelectValue placeholder="Select qualification" /></SelectTrigger>
                     <SelectContent>
                       <div className="p-2 sticky top-0 bg-popover z-10 border-b border-border">
