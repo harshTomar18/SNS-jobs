@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText, X, Loader2 } from 'lucide-react';
+import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText, X, Loader2, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +67,8 @@ export default function WorkerOnboardingPage() {
 
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
+
+  const [qualSearch, setQualSearch] = useState('');
 
   useEffect(() => {
     setStateInput(selectedState);
@@ -491,9 +493,32 @@ export default function WorkerOnboardingPage() {
                   <Select onValueChange={(value) => setValue('qualificationId', value)}>
                     <SelectTrigger><SelectValue placeholder="Select qualification" /></SelectTrigger>
                     <SelectContent>
-                      {qualifications.map((q) => (
-                        <SelectItem key={q.id} value={String(q.id)}>{'name' in q ? q.name : String(q.id)}</SelectItem>
-                      ))}
+                      <div className="p-2 sticky top-0 bg-popover z-10 border-b border-border">
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                          <input
+                            type="text"
+                            placeholder="Search qualification..."
+                            value={qualSearch}
+                            onChange={(e) => setQualSearch(e.target.value)}
+                            onKeyDown={(e) => e.stopPropagation()}
+                            className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                          />
+                        </div>
+                      </div>
+                      <div className="max-h-56 overflow-y-auto">
+                        {qualifications
+                          .filter((q) => {
+                            if (!qualSearch) return true;
+                            const name = 'name' in q ? q.name : String(q.id);
+                            return name.toLowerCase().includes(qualSearch.toLowerCase());
+                          })
+                          .map((q) => (
+                            <SelectItem key={q.id} value={String(q.id)}>
+                              {'name' in q ? q.name : String(q.id)}
+                            </SelectItem>
+                          ))}
+                      </div>
                     </SelectContent>
                   </Select>
                 </div>
