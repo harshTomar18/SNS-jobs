@@ -502,40 +502,67 @@ export default function WorkerOnboardingPage() {
             {currentStep === 3 && (
               <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-xl font-semibold">Education (Optional)</h2>
+                
+                {/* 1. Qualification Level */}
                 <div className="space-y-2">
-                  <Label>Highest Qualification</Label>
-                  <Select value={watch('qualificationId') || ''} onValueChange={(value) => setValue('qualificationId', value)}>
-                    <SelectTrigger><SelectValue placeholder="Select qualification" /></SelectTrigger>
+                  <Label>Qualification Level</Label>
+                  <Select
+                    value={selectedQualLevel}
+                    onValueChange={(lvl) => {
+                      setSelectedQualLevel(lvl);
+                      setValue('qualificationId', '');
+                      setQualSearch('');
+                    }}
+                  >
+                    <SelectTrigger><SelectValue placeholder="Select Level (10th, 12th, Graduate, Diploma, etc.)" /></SelectTrigger>
                     <SelectContent>
-                      <div className="p-2 sticky top-0 bg-popover z-10 border-b border-border">
-                        <div className="relative">
-                          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                          <input
-                            type="text"
-                            placeholder="Search qualification..."
-                            value={qualSearch}
-                            onChange={(e) => setQualSearch(e.target.value)}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                          />
-                        </div>
-                      </div>
-                      <div className="max-h-56 overflow-y-auto">
-                        {qualifications
-                          .filter((q) => {
-                            if (!qualSearch) return true;
-                            const name = 'name' in q ? q.name : String(q.id);
-                            return name.toLowerCase().includes(qualSearch.toLowerCase());
-                          })
-                          .map((q) => (
-                            <SelectItem key={q.id} value={String(q.id)}>
-                              {'name' in q ? q.name : String(q.id)}
-                            </SelectItem>
-                          ))}
-                      </div>
+                      {QUAL_CATEGORY_ORDER.map((catKey) => (
+                        <SelectItem key={catKey} value={catKey}>
+                          {QUAL_CATEGORY_LABELS[catKey] || catKey}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* 2. Specific Qualification Dropdown with Search */}
+                {selectedQualLevel && (
+                  <div className="space-y-2">
+                    <Label>Specific Qualification</Label>
+                    <Select value={watch('qualificationId') || ''} onValueChange={(value) => setValue('qualificationId', value)}>
+                      <SelectTrigger><SelectValue placeholder={`Select ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}`} /></SelectTrigger>
+                      <SelectContent>
+                        <div className="p-2 sticky top-0 bg-popover z-10 border-b border-border">
+                          <div className="relative">
+                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                            <input
+                              type="text"
+                              placeholder="Search qualification..."
+                              value={qualSearch}
+                              onChange={(e) => setQualSearch(e.target.value)}
+                              onKeyDown={(e) => e.stopPropagation()}
+                              className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                            />
+                          </div>
+                        </div>
+                        <div className="max-h-56 overflow-y-auto">
+                          {(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+                            .filter((q: any) => {
+                              if (!qualSearch) return true;
+                              const name = 'name' in q ? q.name : String(q.id);
+                              return name.toLowerCase().includes(qualSearch.toLowerCase());
+                            })
+                            .map((q: any) => (
+                              <SelectItem key={q.id} value={String(q.id)}>
+                                {'name' in q ? q.name : String(q.id)}
+                              </SelectItem>
+                            ))}
+                        </div>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Institute Name</Label>
                   <Input {...register('institute')} placeholder="e.g. University of Mumbai" />

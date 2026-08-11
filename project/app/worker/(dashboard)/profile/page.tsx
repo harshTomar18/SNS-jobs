@@ -621,17 +621,74 @@ export default function WorkerProfilePage() {
 
           <Dialog open={eduModalOpen} onOpenChange={setEduModalOpen}>
             <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">{editingEduId ? 'Edit Education' : 'Add Education'}</DialogTitle><DialogDescription className="text-xs text-slate-500">Select qualification and enter details.</DialogDescription></DialogHeader>
+              <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">{editingEduId ? 'Edit Education' : 'Add Education'}</DialogTitle><DialogDescription className="text-xs text-slate-500">Select qualification level and specific qualification.</DialogDescription></DialogHeader>
               <div className="space-y-4 py-2">
-                <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search qualifications..." value={qualSearch} onChange={e => setQualSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs" /></div>
-                <div className="max-h-56 overflow-y-auto space-y-3 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
-                  {qualGroupsQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div> : Object.keys(filteredQualGroups).length === 0 ? <p className="text-xs text-slate-400 text-center py-4">No qualifications found.</p> : Object.entries(filteredQualGroups).map(([key, items]) => (
-                    <div key={key}>
-                      <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5 px-1">{QUAL_CATEGORY_LABELS[key] || key}</p>
-                      <div className="space-y-1">{items.map(q => <button key={q.id} type="button" onClick={() => { setSelectedQualId(q.id); setSelectedQualLevel(q.level || key); setSelectedQualName(q.name); }} className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${selectedQualId === q.id ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border border-transparent'}`}>{q.name}</button>)}</div>
-                    </div>
-                  ))}
+                {/* 1. Qualification Level Select */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold text-slate-600">Qualification Level *</Label>
+                  <Select
+                    value={selectedQualLevel}
+                    onValueChange={(lvl) => {
+                      setSelectedQualLevel(lvl);
+                      setSelectedQualId(null);
+                      setSelectedQualName('');
+                      setQualSearch('');
+                    }}
+                  >
+                    <SelectTrigger className="rounded-xl border-slate-200 text-xs font-bold">
+                      <SelectValue placeholder="Select Level (10th, 12th, Graduate, Diploma, etc.)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {QUAL_CATEGORY_ORDER.map((catKey) => (
+                        <SelectItem key={catKey} value={catKey} className="text-xs font-bold">
+                          {QUAL_CATEGORY_LABELS[catKey] || catKey}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* 2. Specific Qualification Dropdown with Search Box */}
+                {selectedQualLevel && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600">Specific Qualification *</Label>
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 z-10" />
+                      <Input
+                        placeholder={`Search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
+                        value={qualSearch}
+                        onChange={(e) => setQualSearch(e.target.value)}
+                        className="pl-9 rounded-xl border-slate-200 text-xs mb-2"
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto space-y-1 border rounded-xl p-2 border-slate-100 bg-slate-50/50">
+                      {qualGroupsQuery.isLoading ? (
+                        <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-blue-600" /></div>
+                      ) : !(qualGroups[selectedQualLevel] || []).filter(q => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase())).length ? (
+                        <p className="text-xs text-slate-400 text-center py-3">No matching qualifications found.</p>
+                      ) : (
+                        (qualGroups[selectedQualLevel] || [])
+                          .filter((q) => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase()))
+                          .map((q) => (
+                            <button
+                              key={q.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedQualId(q.id);
+                                setSelectedQualName(q.name);
+                              }}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                                selectedQualId === q.id ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border border-transparent'
+                              }`}
+                            >
+                              {q.name}
+                            </button>
+                          ))
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {selectedQualName && <div className="bg-blue-50 border border-blue-100 rounded-xl p-2.5 text-xs font-bold text-blue-700">Selected: {selectedQualName}</div>}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">Institution / School</Label><Input placeholder="e.g. DPS, Delhi University" value={eduInstitute} onChange={e => setEduInstitute(e.target.value)} className="rounded-xl border-slate-200 text-xs" /></div>
