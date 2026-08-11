@@ -214,6 +214,7 @@ export default function WorkerProfilePage() {
   const [eduModalOpen, setEduModalOpen] = useState(false);
   const [editingEduId, setEditingEduId] = useState<string | null>(null);
   const [qualSearch, setQualSearch] = useState('');
+  const [isQualOpen, setIsQualOpen] = useState(false);
   const [selectedQualId, setSelectedQualId] = useState<number | null>(null);
   const [selectedQualLevel, setSelectedQualLevel] = useState('');
   const [selectedQualName, setSelectedQualName] = useState('');
@@ -650,42 +651,50 @@ export default function WorkerProfilePage() {
 
                 {/* 2. Specific Qualification Dropdown with Search Box */}
                 {selectedQualLevel && (
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 relative">
                     <Label className="text-xs font-bold text-slate-600">Specific Qualification *</Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 z-10" />
                       <Input
-                        placeholder={`Search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
+                        placeholder={selectedQualName || `Type to search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
                         value={qualSearch}
-                        onChange={(e) => setQualSearch(e.target.value)}
-                        className="pl-9 rounded-xl border-slate-200 text-xs mb-2"
+                        onChange={(e) => {
+                          setQualSearch(e.target.value);
+                          setIsQualOpen(true);
+                        }}
+                        onFocus={() => setIsQualOpen(true)}
+                        className="pl-9 rounded-xl border-slate-200 text-xs font-bold"
                       />
                     </div>
-                    <div className="max-h-48 overflow-y-auto space-y-1 border rounded-xl p-2 border-slate-100 bg-slate-50/50">
-                      {qualGroupsQuery.isLoading ? (
-                        <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-blue-600" /></div>
-                      ) : !(qualGroups[selectedQualLevel] || []).filter(q => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase())).length ? (
-                        <p className="text-xs text-slate-400 text-center py-3">No matching qualifications found.</p>
-                      ) : (
-                        (qualGroups[selectedQualLevel] || [])
-                          .filter((q) => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase()))
-                          .map((q) => (
-                            <button
-                              key={q.id}
-                              type="button"
-                              onClick={() => {
-                                setSelectedQualId(q.id);
-                                setSelectedQualName(q.name);
-                              }}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
-                                selectedQualId === q.id ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border border-transparent'
-                              }`}
-                            >
-                              {q.name}
-                            </button>
-                          ))
-                      )}
-                    </div>
+                    {isQualOpen && (
+                      <div className="absolute left-0 right-0 top-[68px] z-50 max-h-48 overflow-y-auto space-y-1 border rounded-xl p-2 border-slate-200 bg-white shadow-xl">
+                        {qualGroupsQuery.isLoading ? (
+                          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-blue-600" /></div>
+                        ) : !(qualGroups[selectedQualLevel] || []).filter(q => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase())).length ? (
+                          <p className="text-xs text-slate-400 text-center py-3">No matching qualifications found.</p>
+                        ) : (
+                          (qualGroups[selectedQualLevel] || [])
+                            .filter((q) => !qualSearch || q.name.toLowerCase().includes(qualSearch.toLowerCase()))
+                            .map((q) => (
+                              <button
+                                key={q.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedQualId(q.id);
+                                  setSelectedQualName(q.name);
+                                  setQualSearch(q.name);
+                                  setIsQualOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                                  selectedQualId === q.id ? 'bg-blue-600 text-white' : 'bg-white text-slate-700 hover:bg-slate-100 border border-transparent'
+                                }`}
+                              >
+                                {q.name}
+                              </button>
+                            ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 

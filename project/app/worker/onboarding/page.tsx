@@ -76,6 +76,7 @@ export default function WorkerOnboardingPage() {
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
 
   const [qualSearch, setQualSearch] = useState('');
+  const [isQualOpen, setIsQualOpen] = useState(false);
 
   useEffect(() => {
     setStateInput(selectedState);
@@ -527,39 +528,53 @@ export default function WorkerOnboardingPage() {
 
                 {/* 2. Specific Qualification Dropdown with Search */}
                 {selectedQualLevel && (
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative">
                     <Label>Specific Qualification</Label>
-                    <Select value={watch('qualificationId') || ''} onValueChange={(value) => setValue('qualificationId', value)}>
-                      <SelectTrigger><SelectValue placeholder={`Select ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}`} /></SelectTrigger>
-                      <SelectContent>
-                        <div className="p-2 sticky top-0 bg-popover z-10 border-b border-border">
-                          <div className="relative">
-                            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                            <input
-                              type="text"
-                              placeholder="Search qualification..."
-                              value={qualSearch}
-                              onChange={(e) => setQualSearch(e.target.value)}
-                              onKeyDown={(e) => e.stopPropagation()}
-                              className="w-full rounded-md border border-input bg-background pl-8 pr-3 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                            />
-                          </div>
-                        </div>
-                        <div className="max-h-56 overflow-y-auto">
-                          {(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+                    <div className="relative">
+                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        placeholder={`Type to search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
+                        value={qualSearch}
+                        onChange={(e) => {
+                          setQualSearch(e.target.value);
+                          setIsQualOpen(true);
+                        }}
+                        onFocus={() => setIsQualOpen(true)}
+                        className="pl-9 font-medium"
+                      />
+                    </div>
+                    {isQualOpen && (
+                      <div className="absolute left-0 right-0 top-[68px] z-50 max-h-52 overflow-y-auto space-y-1 border rounded-md p-2 border-border bg-popover text-popover-foreground shadow-xl">
+                        {qualGroupsQuery.isLoading ? (
+                          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
+                        ) : !(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel)).filter((q: any) => !qualSearch || (q.name || '').toLowerCase().includes(qualSearch.toLowerCase())).length ? (
+                          <p className="text-xs text-muted-foreground text-center py-3">No matching qualifications found.</p>
+                        ) : (
+                          (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
                             .filter((q: any) => {
                               if (!qualSearch) return true;
                               const name = 'name' in q ? q.name : String(q.id);
                               return name.toLowerCase().includes(qualSearch.toLowerCase());
                             })
                             .map((q: any) => (
-                              <SelectItem key={q.id} value={String(q.id)}>
+                              <button
+                                key={q.id}
+                                type="button"
+                                onClick={() => {
+                                  setValue('qualificationId', String(q.id));
+                                  setQualSearch(q.name || String(q.id));
+                                  setIsQualOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                                  watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
+                                }`}
+                              >
                                 {'name' in q ? q.name : String(q.id)}
-                              </SelectItem>
-                            ))}
-                        </div>
-                      </SelectContent>
-                    </Select>
+                              </button>
+                            ))
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
