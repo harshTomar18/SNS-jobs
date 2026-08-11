@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
@@ -114,30 +115,12 @@ function ApplicationCard({ application }: { application: Application }) {
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Eye className="mr-1.5 h-3.5 w-3.5" />
-              View Details
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Application Details</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="rounded-lg border border-border p-4">
-                <p className="font-semibold">{application.job.title}</p>
-                <p className="text-sm text-muted-foreground">{application.job.companyName}</p>
-                <p className="mt-1 text-xs text-muted-foreground">Applied on {formatDate(application.appliedAt)}</p>
-              </div>
-              <div>
-                <h4 className="mb-4 text-sm font-semibold">Application Timeline</h4>
-                <ApplicationTimeline application={application} />
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/worker/jobs/${application.jobId}`}>
+            <Eye className="mr-1.5 h-3.5 w-3.5" />
+            View Details
+          </Link>
+        </Button>
 
         {application.resumeUrl && (
           <Button variant="ghost" size="sm" asChild>
