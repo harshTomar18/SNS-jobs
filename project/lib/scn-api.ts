@@ -362,9 +362,14 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
 
   const preferredLocations = preferredLocationDetails.map((d) => d.label);
 
-  const languageIds = (profile.languages || [])
-    .map((entry) => entry.language?.id)
-    .filter((id): id is number => id !== undefined);
+  const languageEntries = profile.languages || [];
+  const languageIds = languageEntries
+    .map((entry: any) => entry.language?.id ?? entry.languageId ?? entry.id)
+    .filter((id): id is number => typeof id === 'number');
+
+  const languages = languageEntries
+    .map((entry: any) => entry.language?.name ?? entry.name)
+    .filter((name): name is string => Boolean(name));
 
   return {
     id: profile.id,
@@ -398,9 +403,7 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     skills: (profile.skills || [])
       .map((entry) => entry.skill?.name)
       .filter((name): name is string => Boolean(name)),
-    languages: (profile.languages || [])
-      .map((entry) => entry.language?.name)
-      .filter((name): name is string => Boolean(name)),
+    languages,
     languageIds,
     preferredIndustries: (profile.preferredIndustries || [])
       .map((entry) => entry.industry?.name)
