@@ -677,14 +677,17 @@ export const workerApi = {
     workingStatus?: string;
     noticePeriodDays?: number;
   }) {
-    const localityVal = data.locality || data.currentLocality;
-    const hasAnyLocation = Boolean(data.state || data.city || localityVal);
-    const locationPayload = hasAnyLocation ? {
-      state: data.state || '',
-      city: data.city || '',
-      locality: localityVal || '',
-      currentLocality: localityVal || '',
-    } : {};
+    const localityVal = (data.locality || data.currentLocality || '').trim();
+    const stateVal = (data.state || '').trim();
+    const cityVal = (data.city || '').trim();
+
+    const locationPayload: Record<string, string> = {};
+    if (stateVal) locationPayload.state = stateVal;
+    if (cityVal) locationPayload.city = cityVal;
+    if (localityVal) {
+      locationPayload.locality = localityVal;
+      locationPayload.currentLocality = localityVal;
+    }
 
     return toWorkerProfile(
       await apiPatch<BackendWorkerProfile>('/worker/profile', {

@@ -203,6 +203,7 @@ export default function WorkerOnboardingPage() {
         summary: data.summary,
         resumeUrl: resumeUrl || undefined,
         preferredLocationIds: data.preferredLocationIds.map(Number),
+        state: selectedState || undefined,
         city: data.city,
         currentLocality: data.currentLocality || undefined,
         isFresher: data.isFresher,
