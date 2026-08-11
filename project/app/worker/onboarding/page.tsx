@@ -140,7 +140,12 @@ export default function WorkerOnboardingPage() {
   };
 
   const locations: MasterRawItem[] = locationsQuery.data ?? [];
-  const qualifications: MasterRawItem[] = qualificationsQuery.data ?? [];
+  const rawQualificationsData = qualificationsQuery.data;
+  const qualifications: MasterRawItem[] = Array.isArray(rawQualificationsData)
+    ? rawQualificationsData
+    : rawQualificationsData && typeof rawQualificationsData === 'object'
+    ? Object.values(rawQualificationsData).flat()
+    : [];
 
   const {
     register,
