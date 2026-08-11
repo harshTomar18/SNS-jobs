@@ -425,7 +425,7 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     locality: profile.currentLocality || '',
     // New personal fields
     dob: profile.dob || undefined,
-    maritalStatus: profile.maritalStatus || undefined,
+    maritalStatus: profile.maritalStatus ? (profile.maritalStatus.toLowerCase() as any) : undefined,
     category: profile.category || undefined,
     jobPreference: profile.jobPreference || undefined,
     isFresher: profile.isFresher ?? false,
@@ -677,6 +677,7 @@ export const workerApi = {
     return toWorkerProfile(
       await apiPatch<BackendWorkerProfile>('/worker/profile', {
         ...data,
+        maritalStatus: data.maritalStatus ? data.maritalStatus.toUpperCase() : undefined,
         availability: data.availability ? uiAvailabilityToApi(data.availability) : undefined,
       }),
     );
