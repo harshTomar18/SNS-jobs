@@ -674,9 +674,19 @@ export const workerApi = {
     workingStatus?: string;
     noticePeriodDays?: number;
   }) {
+    const localityVal = data.locality || data.currentLocality;
+    const hasAnyLocation = Boolean(data.state || data.city || localityVal);
+    const locationPayload = hasAnyLocation ? {
+      state: data.state || '',
+      city: data.city || '',
+      locality: localityVal || '',
+      currentLocality: localityVal || '',
+    } : {};
+
     return toWorkerProfile(
       await apiPatch<BackendWorkerProfile>('/worker/profile', {
         ...data,
+        ...locationPayload,
         maritalStatus: data.maritalStatus ? data.maritalStatus.toUpperCase() : undefined,
         availability: data.availability ? uiAvailabilityToApi(data.availability) : undefined,
       }),
