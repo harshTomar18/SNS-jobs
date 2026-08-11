@@ -34,8 +34,14 @@ export interface Job {
   shift: 'day' | 'night' | 'rotational';
   salaryMin: number;
   salaryMax: number;
+  wagePeriod?: 'monthly' | 'annual' | 'daily';
   experienceMin: number;
   experienceMax: number;
+  workingDays?: number;
+  freshersOnly?: boolean;
+  genderPreference?: 'MALE' | 'FEMALE' | 'ANY';
+  benefitNames?: string[];
+  assetNames?: string[];
   openings: number;
   skills: string[];
   description: string;

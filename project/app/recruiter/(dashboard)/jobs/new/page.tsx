@@ -31,10 +31,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PageHeader } from '@/components/page-header';
 import { cn } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/api';
 import { MasterRawItem, jobsApi, masterDataApi, BackendLocation } from '@/lib/scn-api';
+
+const BENEFITS_OPTIONS = [
+  'Cab',
+  'Meal',
+  'Insurance',
+  'PF',
+  'Medical Benefits',
+  'Accommodation',
+  'Full Accommodation',
+];
+
+const ASSETS_OPTIONS = [
+  'Bike/Car',
+  'LISCENCE',
+  'ADHAR CARD',
+  'PAN CARD',
+  'LAPTOP',
+];
 
 const schema = z.object({
   title: z.string().min(2, 'Job title is required'),
@@ -45,10 +64,17 @@ const schema = z.object({
   qualificationIds: z.array(z.string()).default([]),
   wageMin: z.coerce.number().min(0, 'Minimum salary must be positive'),
   wageMax: z.coerce.number().min(0, 'Maximum salary must be positive'),
+  wageType: z.enum(['monthly', 'annual', 'daily']).default('monthly'),
+  workingDays: z.coerce.number().min(1).max(7).default(5),
+  gender: z.enum(['ANY', 'MALE', 'FEMALE']).default('ANY'),
+  freshersOnly: z.boolean().default(false),
   shiftType: z.enum(['day', 'night', 'rotational']),
   jobType: z.enum(['full-time', 'part-time', 'contract']),
   headcountRequired: z.coerce.number().min(1, 'Headcount is required'),
   minExperienceYears: z.coerce.number().min(0, 'Minimum experience years must be positive'),
+  maxExperienceYears: z.coerce.number().min(0).optional(),
+  benefitNames: z.array(z.string()).default([]),
+  assetNames: z.array(z.string()).default([]),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   responsibilities: z.string().min(2, 'Add at least one responsibility'),
   requirements: z.string().min(2, 'Add at least one requirement'),
@@ -180,8 +206,15 @@ export default function CreateJobPage() {
     defaultValues: {
       skillIds: [],
       qualificationIds: [],
+      benefitNames: [],
+      assetNames: [],
+      wageType: 'monthly',
+      workingDays: 5,
+      gender: 'ANY',
+      freshersOnly: false,
       headcountRequired: 1,
       minExperienceYears: 0,
+      maxExperienceYears: undefined,
       shiftType: 'day',
       jobType: 'full-time',
       responsibilities: 'Own day-to-day responsibilities for the role',
@@ -206,10 +239,17 @@ export default function CreateJobPage() {
         qualificationIds: data.qualificationIds.map(Number),
         wageMin: data.wageMin,
         wageMax: data.wageMax,
+        wageType: data.wageType,
+        workingDays: data.workingDays,
+        gender: data.gender,
+        freshersOnly: data.freshersOnly,
         shiftType: data.shiftType,
         jobType: data.jobType,
         headcountRequired: data.headcountRequired,
-        minExperienceMonths: data.minExperienceYears * 12,
+        minExperienceMonths: data.freshersOnly ? 0 : data.minExperienceYears * 12,
+        maxExperienceMonths: data.freshersOnly ? 0 : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
+        benefitNames: data.benefitNames,
+        assetNames: data.assetNames,
         responsibilities: splitLines(data.responsibilities),
         requirements: splitLines(data.requirements),
         benefits: splitLines(data.benefits),
@@ -300,7 +340,8 @@ export default function CreateJobPage() {
                 <Input id="title" placeholder="e.g. Senior Frontend Engineer" {...register('title')} className="rounded-xl border-slate-200" />
                 {errors.title && <p className="text-xs text-red-500 font-bold">{errors.title.message}</p>}
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Job Role</Label>
                   <Select onValueChange={(value) => setValue('jobRoleId', value)}>
@@ -312,16 +353,74 @@ export default function CreateJobPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="headcountRequired" className="text-slate-700 font-extrabold text-xs">Headcount *</Label>
                   <Input id="headcountRequired" type="number" min={1} {...register('headcountRequired')} className="rounded-xl border-slate-200" />
                   {errors.headcountRequired && <p className="text-xs text-red-500 font-bold">{errors.headcountRequired.message}</p>}
                 </div>
+
+                {/* 5. Working Days */}
                 <div className="space-y-2">
-                  <Label htmlFor="minExperienceYears" className="text-slate-700 font-extrabold text-xs">Minimum Experience (Years)</Label>
-                  <Input id="minExperienceYears" type="number" min={0} {...register('minExperienceYears')} className="rounded-xl border-slate-200" />
-                  {errors.minExperienceYears && <p className="text-xs text-red-500 font-bold">{errors.minExperienceYears.message}</p>}
+                  <Label className="text-slate-700 font-extrabold text-xs">Working Days *</Label>
+                  <Select defaultValue="5" onValueChange={(val) => setValue('workingDays', Number(val))}>
+                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5">5 days working</SelectItem>
+                      <SelectItem value="6">6 days working</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {/* 8. Gender */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-extrabold text-xs">Gender Requirement *</Label>
+                  <Select defaultValue="ANY" onValueChange={(val: 'ANY' | 'MALE' | 'FEMALE') => setValue('gender', val)}>
+                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ANY">ANY</SelectItem>
+                      <SelectItem value="MALE">MALE</SelectItem>
+                      <SelectItem value="FEMALE">FEMALE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* 7. Required Experience */}
+              <div className="space-y-3 border-t border-slate-50 pt-3">
+                <Label className="text-slate-700 font-extrabold text-xs">Experience Requirement *</Label>
+                
+                <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <Checkbox
+                    id="freshersOnly"
+                    checked={watch('freshersOnly')}
+                    onCheckedChange={(checked) => {
+                      const isChecked = Boolean(checked);
+                      setValue('freshersOnly', isChecked);
+                      if (isChecked) {
+                        setValue('minExperienceYears', 0);
+                        setValue('maxExperienceYears', 0);
+                      }
+                    }}
+                  />
+                  <label htmlFor="freshersOnly" className="text-xs font-bold text-slate-700 cursor-pointer">
+                    Only freshers should apply
+                  </label>
+                </div>
+
+                {!watch('freshersOnly') && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="minExperienceYears" className="text-slate-500 font-bold text-xs">Minimum Experience (Years)</Label>
+                      <Input id="minExperienceYears" type="number" min={0} {...register('minExperienceYears')} className="rounded-xl border-slate-200" />
+                      {errors.minExperienceYears && <p className="text-xs text-red-500 font-bold">{errors.minExperienceYears.message}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="maxExperienceYears" className="text-slate-500 font-bold text-xs">Maximum Experience (Years)</Label>
+                      <Input id="maxExperienceYears" type="number" min={0} placeholder="e.g. 5" {...register('maxExperienceYears')} className="rounded-xl border-slate-200" />
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -656,15 +755,33 @@ export default function CreateJobPage() {
                 <IndianRupee className="h-5 w-5" />
                 <span>4. Salary, Shifts & Types</span>
               </div>
+              
+              {/* Salary Period Select */}
+              <div className="space-y-2 max-w-xs">
+                <Label className="text-slate-700 font-extrabold text-xs">Salary Type *</Label>
+                <Select defaultValue="monthly" onValueChange={(val: 'monthly' | 'annual' | 'daily') => setValue('wageType', val)}>
+                  <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">PER MONTH SALARY</SelectItem>
+                    <SelectItem value="annual">ANNUAL SALARY</SelectItem>
+                    <SelectItem value="daily">PER DAY</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="wageMin" className="text-slate-700 font-extrabold text-xs">Minimum Wage (Annual)*</Label>
-                  <Input id="wageMin" type="number" placeholder="500000" {...register('wageMin')} className="rounded-xl border-slate-200" />
+                  <Label htmlFor="wageMin" className="text-slate-700 font-extrabold text-xs">
+                    Minimum Wage ({watch('wageType') === 'daily' ? 'Per Day' : watch('wageType') === 'annual' ? 'Annual' : 'Per Month'}) *
+                  </Label>
+                  <Input id="wageMin" type="number" placeholder="25000" {...register('wageMin')} className="rounded-xl border-slate-200" />
                   {errors.wageMin && <p className="text-xs text-red-500 font-bold">{errors.wageMin.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="wageMax" className="text-slate-700 font-extrabold text-xs">Maximum Wage (Annual)*</Label>
-                  <Input id="wageMax" type="number" placeholder="1500000" {...register('wageMax')} className="rounded-xl border-slate-200" />
+                  <Label htmlFor="wageMax" className="text-slate-700 font-extrabold text-xs">
+                    Maximum Wage ({watch('wageType') === 'daily' ? 'Per Day' : watch('wageType') === 'annual' ? 'Annual' : 'Per Month'}) *
+                  </Label>
+                  <Input id="wageMax" type="number" placeholder="40000" {...register('wageMax')} className="rounded-xl border-slate-200" />
                   {errors.wageMax && <p className="text-xs text-red-500 font-bold">{errors.wageMax.message}</p>}
                 </div>
               </div>
@@ -691,6 +808,74 @@ export default function CreateJobPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </Card>
+
+            {/* Card 5: Benefits */}
+            <Card className="p-6 border border-slate-100 rounded-2xl shadow-sm text-left bg-white space-y-4">
+              <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-sm border-b border-slate-50 pb-3">
+                <Rocket className="h-5 w-5" />
+                <span>5. Benefits Provided</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {BENEFITS_OPTIONS.map((benefit) => {
+                  const current = watch('benefitNames') || [];
+                  const isChecked = current.includes(benefit);
+                  return (
+                    <div
+                      key={benefit}
+                      onClick={() => {
+                        setValue(
+                          'benefitNames',
+                          isChecked ? current.filter((b) => b !== benefit) : [...current, benefit]
+                        );
+                      }}
+                      className={cn(
+                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all',
+                        isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
+                      )}
+                    >
+                      <Checkbox id={`benefit-${benefit}`} checked={isChecked} />
+                      <label htmlFor={`benefit-${benefit}`} className="text-xs font-bold cursor-pointer">
+                        {benefit}
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+
+            {/* Card 6: Required Assets / Documents */}
+            <Card className="p-6 border border-slate-100 rounded-2xl shadow-sm text-left bg-white space-y-4">
+              <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-sm border-b border-slate-50 pb-3">
+                <FileText className="h-5 w-5" />
+                <span>6. Required Assets / Documents</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {ASSETS_OPTIONS.map((asset) => {
+                  const current = watch('assetNames') || [];
+                  const isChecked = current.includes(asset);
+                  return (
+                    <div
+                      key={asset}
+                      onClick={() => {
+                        setValue(
+                          'assetNames',
+                          isChecked ? current.filter((a) => a !== asset) : [...current, asset]
+                        );
+                      }}
+                      className={cn(
+                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all',
+                        isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
+                      )}
+                    >
+                      <Checkbox id={`asset-${asset}`} checked={isChecked} />
+                      <label htmlFor={`asset-${asset}`} className="text-xs font-bold cursor-pointer">
+                        {asset}
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
             </Card>
 

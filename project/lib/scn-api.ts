@@ -133,12 +133,16 @@ interface BackendJob {
   location?: BackendLocation;
   wageMin?: number | null;
   wageMax?: number | null;
-  wageType?: 'daily' | 'monthly' | null;
+  wageType?: 'daily' | 'monthly' | 'annual' | null;
+  workingDays?: number | null;
+  gender?: 'MALE' | 'FEMALE' | 'ANY' | null;
+  freshersOnly?: boolean | null;
   shiftType?: 'day' | 'night' | 'rotational' | null;
   jobType?: 'full_time' | 'part_time' | 'contract' | null;
   headcountRequired: number;
   headcountFilled?: number;
   minExperienceMonths?: number;
+  maxExperienceMonths?: number;
   status: BackendJobStatus;
   postedBy: string;
   poster?: {
@@ -148,6 +152,8 @@ interface BackendJob {
   };
   skills?: { skill?: BackendLookup }[];
   qualifications?: { qualification?: BackendLookup }[];
+  benefitNames?: string[];
+  assetNames?: string[];
   createdAt: string;
   updatedAt?: string;
   _count?: { applications?: number };
@@ -301,8 +307,14 @@ export function toJob(job: BackendJob): JobWithMeta {
     shift: job.shiftType || 'day',
     salaryMin: job.wageMin || 0,
     salaryMax: job.wageMax || job.wageMin || 0,
+    wagePeriod: (job.wageType as any) || 'monthly',
     experienceMin,
-    experienceMax: Math.max(experienceMin, experienceMin + 3),
+    experienceMax: job.maxExperienceMonths !== undefined && job.maxExperienceMonths !== null ? Math.floor(job.maxExperienceMonths / 12) : Math.max(experienceMin, experienceMin + 3),
+    workingDays: job.workingDays || undefined,
+    freshersOnly: job.freshersOnly || undefined,
+    genderPreference: job.gender || undefined,
+    benefitNames: job.benefitNames || [],
+    assetNames: job.assetNames || [],
     openings: job.headcountRequired,
     skills,
     description: job.description || 'No description provided.',
@@ -315,12 +327,12 @@ export function toJob(job: BackendJob): JobWithMeta {
       ...qualifications.map((qualification) => `${qualification} preferred`),
       ...skills.slice(0, 4).map((skill) => `${skill} experience`),
     ].slice(0, 6),
-    benefits: job.benefits || [],
+    benefits: job.benefits || job.benefitNames || [],
     postedAt: job.createdAt,
     recruiterId: job.postedBy,
     recruiterName: recruiter?.name || job.poster?.email || 'SCN Recruiter',
     status: statusToUi(job.status),
-    isFresherFriendly: (job.minExperienceMonths || 0) === 0,
+    isFresherFriendly: (job.minExperienceMonths || 0) === 0 || Boolean(job.freshersOnly),
     backendStatus: job.status,
     applicationsCount: job._count?.applications || 0,
     industryId: job.industryId,
@@ -601,10 +613,17 @@ export const jobsApi = {
     benefits?: string[];
     wageMin?: number;
     wageMax?: number;
+    wageType?: 'daily' | 'monthly' | 'annual';
+    workingDays?: number;
+    gender?: 'MALE' | 'FEMALE' | 'ANY';
+    freshersOnly?: boolean;
     shiftType?: string;
     jobType?: string;
     headcountRequired: number;
     minExperienceMonths?: number;
+    maxExperienceMonths?: number;
+    benefitNames?: string[];
+    assetNames?: string[];
     status?: Job['status'];
   }) {
     const job = await apiPost<BackendJob>('/jobs', {
