@@ -107,13 +107,25 @@ export interface WorkerProfile {
   experience: WorkExperience[];
   skills: string[];
   languages: string[];
+  languageIds: number[];
   preferredIndustries: string[];
   preferredLocations: string[];
+  preferredLocationDetails?: { id: number; label: string }[];
   availability: 'immediate' | '15-days' | '30-days' | '60-days';
   expectedSalaryMin: number;
   expectedSalaryMax: number;
   experienceYears: number;
   profileCompletion: number;
+  // New fields from API v2
+  dob?: string;
+  maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed';
+  category?: 'GEN' | 'OBC' | 'SC_ST';
+  jobPreference?: string;
+  isFresher?: boolean;
+  workingStatus?: 'SERVING_NOTICE' | 'WORKING' | 'NOT_WORKING' | 'IMMEDIATE_JOINER';
+  noticePeriodDays?: number;
+  preferredIndustryIds?: number[];
+  preferredLocationIds?: number[];
 }
 
 export interface Education {
@@ -123,6 +135,8 @@ export interface Education {
   field: string;
   startYear: number;
   endYear: number;
+  qualificationId?: number;
+  level?: string;
 }
 
 export interface WorkExperience {

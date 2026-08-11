@@ -68,6 +68,14 @@ interface BackendWorkerProfile {
   resumeUrl?: string | null;
   profileComplete?: boolean;
   createdAt?: string;
+  // New API v2 fields
+  dob?: string | null;
+  maritalStatus?: 'single' | 'married' | 'divorced' | 'widowed' | null;
+  category?: 'GEN' | 'OBC' | 'SC_ST' | null;
+  jobPreference?: string | null;
+  isFresher?: boolean;
+  workingStatus?: 'SERVING_NOTICE' | 'WORKING' | 'NOT_WORKING' | 'IMMEDIATE_JOINER' | null;
+  noticePeriodDays?: number | null;
   education?: {
     id: string;
     institute?: string | null;
@@ -354,6 +362,10 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
 
   const preferredLocations = preferredLocationDetails.map((d) => d.label);
 
+  const languageIds = (profile.languages || [])
+    .map((entry) => entry.language?.id)
+    .filter((id): id is number => id !== undefined);
+
   return {
     id: profile.id,
     userId: profile.userId,
@@ -371,6 +383,8 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
       field: entry.qualification?.level || 'General',
       startYear: entry.passoutYear || new Date().getFullYear(),
       endYear: entry.passoutYear || new Date().getFullYear(),
+      qualificationId: entry.qualification?.id,
+      level: entry.qualification?.level,
     })),
     experience: (profile.experience || []).map((entry) => ({
       id: entry.id,
@@ -387,11 +401,18 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     languages: (profile.languages || [])
       .map((entry) => entry.language?.name)
       .filter((name): name is string => Boolean(name)),
+    languageIds,
     preferredIndustries: (profile.preferredIndustries || [])
       .map((entry) => entry.industry?.name)
       .filter((name): name is string => Boolean(name)),
     preferredLocations,
     preferredLocationDetails,
+    preferredIndustryIds: (profile.preferredIndustries || [])
+      .map((entry) => entry.industry?.id)
+      .filter((id): id is number => id !== undefined),
+    preferredLocationIds: (profile.preferredLocations || [])
+      .map((entry) => entry.location?.id)
+      .filter((id): id is number => id !== undefined),
     availability: apiAvailabilityToUi(profile.availability),
     expectedSalaryMin: profile.expectedSalaryMin || 0,
     expectedSalaryMax: profile.expectedSalaryMax || 0,
@@ -402,6 +423,14 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     city: profile.city || preferredLocations[0] || '',
     state: profile.state || '',
     locality: profile.currentLocality || '',
+    // New personal fields
+    dob: profile.dob || undefined,
+    maritalStatus: profile.maritalStatus || undefined,
+    category: profile.category || undefined,
+    jobPreference: profile.jobPreference || undefined,
+    isFresher: profile.isFresher ?? false,
+    workingStatus: profile.workingStatus || undefined,
+    noticePeriodDays: profile.noticePeriodDays || undefined,
   };
 }
 
@@ -636,6 +665,14 @@ export const workerApi = {
     preferredLocationIds?: number[];
     preferredIndustryIds?: number[];
     languageIds?: number[];
+    // New API v2 fields
+    dob?: string;
+    maritalStatus?: string;
+    category?: string;
+    jobPreference?: string;
+    isFresher?: boolean;
+    workingStatus?: string;
+    noticePeriodDays?: number;
   }) {
     return toWorkerProfile(
       await apiPatch<BackendWorkerProfile>('/worker/profile', {
@@ -643,10 +680,6 @@ export const workerApi = {
         availability: data.availability ? uiAvailabilityToApi(data.availability) : undefined,
       }),
     );
-  },
-  async search(params?: { q?: string; skillId?: number; city?: string; completeOnly?: boolean }) {
-    const workers = await apiGet<BackendWorkerProfile[]>('/worker/search', { params });
-    return workers.map(toWorkerProfile);
   },
   async addExperience(data: {
     companyName: string;
@@ -662,11 +695,33 @@ export const workerApi = {
     return await apiDelete<any>(`/worker/experience/${id}`);
   },
   async addEducation(data: {
-    qualificationId: number;
+    qualificationId?: number;
+    qualificationName?: string;
+    level?: string;
     institute?: string;
     passoutYear?: number;
   }) {
     return await apiPost<any>('/worker/education', data);
+  },
+  async editEducation(id: string, data: {
+    qualificationId?: number;
+    qualificationName?: string;
+    level?: string;
+    institute?: string;
+    passoutYear?: number;
+  }) {
+    return await apiPatch<any>(`/worker/education/${id}`, data);
+  },
+  async deleteEducation(id: string) {
+    return await apiDelete<any>(`/worker/education/${id}`);
+  },
+  async getQualificationsGrouped(): Promise<Record<string, BackendLookup[]>> {
+    const raw = await apiGet<Record<string, BackendLookup[]>>('/master/qualifications');
+    return raw;
+  },
+  async search(params?: { q?: string; skillId?: number; city?: string; completeOnly?: boolean }) {
+    const workers = await apiGet<BackendWorkerProfile[]>('/worker/search', { params });
+    return workers.map(toWorkerProfile);
   },
 };
 
