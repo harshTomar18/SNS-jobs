@@ -192,8 +192,13 @@ export default function CreateJobPage() {
   const industries: MasterRawItem[] = industriesQuery.data ?? [];
   const locations: MasterRawItem[] = locationsQuery.data ?? [];
   const jobRoles: MasterRawItem[] = jobRolesQuery.data ?? [];
-  const skills: MasterRawItem[] = skillsQuery.data ?? [];
-  const qualifications: MasterRawItem[] = qualificationsQuery.data ?? [];
+  const skills: MasterRawItem[] = Array.isArray(skillsQuery.data) ? skillsQuery.data : [];
+  const rawQuals = qualificationsQuery.data;
+  const qualifications: MasterRawItem[] = Array.isArray(rawQuals)
+    ? rawQuals
+    : rawQuals && typeof rawQuals === 'object'
+    ? Object.values(rawQuals).flat()
+    : [];
 
   const {
     register,
