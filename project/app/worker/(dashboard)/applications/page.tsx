@@ -36,11 +36,15 @@ import { applicationsApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 
-const statusConfig: Record<ApplicationStatus, { label: string; color: string; icon: typeof Clock }> = {
-  applied: { label: 'Applied', color: 'bg-muted text-muted-foreground', icon: Clock },
-  accepted: { label: 'Accepted', color: 'bg-success/10 text-success', icon: CheckCircle2 },
-  rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive', icon: XCircle },
-  withdrawn: { label: 'Withdrawn', color: 'bg-muted text-muted-foreground', icon: Ban },
+const statusConfig: Record<string, { label: string; color: string; icon: typeof Clock }> = {
+  applied: { label: 'Applied', color: 'bg-blue-50 text-blue-700 border-blue-200', icon: Clock },
+  resume_viewed: { label: 'Resume Viewed', color: 'bg-purple-50 text-purple-700 border-purple-200', icon: Eye },
+  shortlisted: { label: 'Shortlisted', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+  accepted: { label: 'Shortlisted', color: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: CheckCircle2 },
+  interview: { label: 'Selected for Interview', color: 'bg-indigo-50 text-indigo-700 border-indigo-200', icon: CheckCircle2 },
+  not_shortlisted: { label: 'Not Shortlisted', color: 'bg-rose-50 text-rose-700 border-rose-200', icon: XCircle },
+  rejected: { label: 'Not Shortlisted', color: 'bg-rose-50 text-rose-700 border-rose-200', icon: XCircle },
+  withdrawn: { label: 'Withdrawn', color: 'bg-slate-100 text-slate-500 border-slate-200', icon: Ban },
 };
 
 function ApplicationTimeline({ application }: { application: Application }) {
@@ -111,7 +115,7 @@ function ApplicationCard({ application }: { application: Application }) {
             </div>
           </div>
         </div>
-        <Badge variant="outline" className={cn('shrink-0', config.color)}>{config.label}</Badge>
+        <Badge variant="outline" className={cn('shrink-0 font-bold px-3 py-1', config.color)}>{config.label}</Badge>
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -157,8 +161,19 @@ export default function WorkerApplicationsPage() {
   const applications: Application[] = applicationsQuery.data ?? [];
   const { isLoading } = applicationsQuery;
 
-  const filteredApps = applications.filter((app) => activeTab === 'all' || app.status === activeTab);
-  const count = (status: ApplicationStatus) => applications.filter((app) => app.status === status).length;
+  const filteredApps = applications.filter((app) => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'shortlisted') return app.status === 'shortlisted' || app.status === 'accepted';
+    if (activeTab === 'not_shortlisted') return app.status === 'not_shortlisted' || app.status === 'rejected';
+    return app.status === activeTab;
+  });
+
+  const count = (tabKey: string) => applications.filter((app) => {
+    if (tabKey === 'all') return true;
+    if (tabKey === 'shortlisted') return app.status === 'shortlisted' || app.status === 'accepted';
+    if (tabKey === 'not_shortlisted') return app.status === 'not_shortlisted' || app.status === 'rejected';
+    return app.status === tabKey;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -166,10 +181,12 @@ export default function WorkerApplicationsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="flex h-auto flex-wrap gap-1 bg-card p-1">
-          <TabsTrigger value="all" className="gap-1.5">All<Badge variant="secondary" className="text-xs">{applications.length}</Badge></TabsTrigger>
+          <TabsTrigger value="all" className="gap-1.5">All<Badge variant="secondary" className="text-xs">{count('all')}</Badge></TabsTrigger>
           <TabsTrigger value="applied" className="gap-1.5">Applied<Badge variant="secondary" className="text-xs">{count('applied')}</Badge></TabsTrigger>
-          <TabsTrigger value="accepted" className="gap-1.5">Accepted<Badge variant="secondary" className="text-xs">{count('accepted')}</Badge></TabsTrigger>
-          <TabsTrigger value="rejected" className="gap-1.5">Rejected<Badge variant="secondary" className="text-xs">{count('rejected')}</Badge></TabsTrigger>
+          <TabsTrigger value="resume_viewed" className="gap-1.5">Resume Viewed<Badge variant="secondary" className="text-xs">{count('resume_viewed')}</Badge></TabsTrigger>
+          <TabsTrigger value="shortlisted" className="gap-1.5">Shortlisted<Badge variant="secondary" className="text-xs">{count('shortlisted')}</Badge></TabsTrigger>
+          <TabsTrigger value="interview" className="gap-1.5">Selected for Interview<Badge variant="secondary" className="text-xs">{count('interview')}</Badge></TabsTrigger>
+          <TabsTrigger value="not_shortlisted" className="gap-1.5">Not Shortlisted<Badge variant="secondary" className="text-xs">{count('not_shortlisted')}</Badge></TabsTrigger>
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">

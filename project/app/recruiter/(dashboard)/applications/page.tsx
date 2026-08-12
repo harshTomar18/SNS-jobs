@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  Clock
+  Clock,
+  UserCheck
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -56,31 +57,42 @@ export default function RecruiterApplicationsPage() {
   // Detail Dialog state
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [localStatuses, setLocalStatuses] = useState<Record<string, ApplicationStatus>>({});
 
   const applicationsQuery = useQuery({ queryKey: ['recruiter-applications'], queryFn: applicationsApi.recruiterList });
-  const applications = useMemo<Application[]>(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
+  const rawApps = useMemo<Application[]>(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
+
+  const applications = useMemo<Application[]>(() => {
+    if (Object.keys(localStatuses).length === 0) return rawApps;
+    return rawApps.map(app => {
+      if (localStatuses[app.id]) {
+        return { ...app, status: localStatuses[app.id] };
+      }
+      return app;
+    });
+  }, [rawApps, localStatuses]);
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status, notes }: { id: string; status: ApplicationStatus; notes?: string }) => 
       applicationsApi.updateStatus(id, status, notes),
     onSuccess: (updatedApp) => {
       toast.success('Application status updated');
-      // Immediately update the cache with the returned data so UI reflects the change
       queryClient.setQueryData(['recruiter-applications'], (old: Application[] | undefined) => {
         if (!old) return old;
         return old.map(app => app.id === updatedApp.id ? updatedApp : app);
       });
-      // Also refetch in background for full consistency
       queryClient.invalidateQueries({ queryKey: ['recruiter-applications'] });
-      // If dialog is open, update selected application with fresh data
-      if (selectedApp && selectedApp.id === updatedApp.id) {
-        setSelectedApp(updatedApp);
-      }
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update application')),
   });
 
   const updateStatus = (id: string, status: ApplicationStatus, notes?: string) => {
+    // 1. Instantly update local state overlay for 0ms visual update!
+    setLocalStatuses(prev => ({ ...prev, [id]: status }));
+    if (selectedApp && selectedApp.id === id) {
+      setSelectedApp(prev => prev ? { ...prev, status } : prev);
+    }
+    // 2. Persist status to backend in background
     statusMutation.mutate({ id, status, notes });
   };
 
@@ -105,8 +117,10 @@ export default function RecruiterApplicationsPage() {
   const counts = {
     all: applications.length,
     applied: applications.filter((app) => app.status === 'applied').length,
-    accepted: applications.filter((app) => app.status === 'accepted').length,
-    rejected: applications.filter((app) => app.status === 'rejected').length,
+    accepted: applications.filter((app) => app.status === 'accepted' || app.status === 'shortlisted').length,
+    rejected: applications.filter((app) => app.status === 'rejected' || app.status === 'not_shortlisted').length,
+    interview: applications.filter((app) => app.status === 'interview').length,
+    resume_viewed: applications.filter((app) => app.status === 'resume_viewed').length,
   };
 
   // Check if an application is in a terminal state (no further status changes allowed)
@@ -183,8 +197,10 @@ export default function RecruiterApplicationsPage() {
         {[
           { value: 'all', label: 'All Applications', count: counts.all },
           { value: 'applied', label: 'In Review', count: counts.applied },
-          { value: 'accepted', label: 'Accepted', count: counts.accepted },
-          { value: 'rejected', label: 'Rejected', count: counts.rejected }
+          { value: 'accepted', label: 'Shortlisted', count: counts.accepted },
+          { value: 'rejected', label: 'Not Shortlisted', count: counts.rejected },
+          { value: 'interview', label: 'Selected for Interview', count: counts.interview },
+          { value: 'resume_viewed', label: 'Resume Viewed', count: counts.resume_viewed }
         ].map(tab => (
           <button
             key={tab.value}
@@ -225,8 +241,10 @@ export default function RecruiterApplicationsPage() {
             >
               <option value="all">All Status</option>
               <option value="applied">In Review</option>
-              <option value="accepted">Accepted</option>
-              <option value="rejected">Rejected</option>
+              <option value="accepted">Shortlisted</option>
+              <option value="rejected">Not Shortlisted</option>
+              <option value="interview">Selected for Interview</option>
+              <option value="resume_viewed">Resume Viewed</option>
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -313,12 +331,18 @@ export default function RecruiterApplicationsPage() {
                   <td className="px-6 py-4 text-center">
                     <Badge variant="outline" className={cn(
                       "capitalize font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm inline-block tracking-wider",
-                      app.status === 'accepted' && "bg-green-50 text-green-600",
+                      (app.status === 'accepted' || app.status === 'shortlisted') && "bg-emerald-50 text-emerald-700",
                       app.status === 'applied' && "bg-blue-50/70 text-blue-600",
-                      app.status === 'rejected' && "bg-red-50 text-red-600",
+                      (app.status === 'rejected' || app.status === 'not_shortlisted') && "bg-red-50 text-red-600",
+                      app.status === 'interview' && "bg-indigo-50 text-indigo-700",
+                      app.status === 'resume_viewed' && "bg-amber-50 text-amber-700",
                       app.status === 'withdrawn' && "bg-slate-100 text-slate-400"
                     )}>
-                      {app.status === 'applied' ? 'IN REVIEW' : app.status.toUpperCase()}
+                      {app.status === 'accepted' || app.status === 'shortlisted' ? 'SHORTLISTED' :
+                       app.status === 'rejected' || app.status === 'not_shortlisted' ? 'NOT SHORTLISTED' :
+                       app.status === 'interview' ? 'SELECTED FOR INTERVIEW' :
+                       app.status === 'resume_viewed' ? 'RESUME VIEWED' :
+                       app.status === 'applied' ? 'IN REVIEW' : app.status.toUpperCase()}
                     </Badge>
                   </td>
                   <td className="px-6 py-4 text-center">
@@ -328,7 +352,7 @@ export default function RecruiterApplicationsPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-52">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => { setSelectedApp(app); setIsDetailsOpen(true); }}>
                           <Eye className="mr-2 h-4 w-4 text-slate-400" /> View Application
@@ -341,11 +365,17 @@ export default function RecruiterApplicationsPage() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'accepted')} disabled={isTerminal(app.status)}>
-                          <CheckCircle2 className="mr-2 h-4 w-4 text-green-500" /> Accept
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'accepted')}>
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Shortlist
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'rejected')} disabled={isTerminal(app.status)} className="text-red-600 focus:text-red-700">
-                          <XCircle className="mr-2 h-4 w-4" /> Reject
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'rejected')} className="text-red-600 focus:text-red-700">
+                          <XCircle className="mr-2 h-4 w-4" /> Not Shortlist
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'interview')}>
+                          <UserCheck className="mr-2 h-4 w-4 text-indigo-500" /> Selected for Interview
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'resume_viewed')}>
+                          <FileText className="mr-2 h-4 w-4 text-amber-500" /> Resume Viewed
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -466,19 +496,33 @@ export default function RecruiterApplicationsPage() {
                   size="sm" 
                   variant="outline" 
                   onClick={() => updateStatus(selectedApp.id, 'accepted')}
-                  disabled={isTerminal(selectedApp.status)}
-                  className="border-green-200 text-green-600 hover:bg-green-50/50 hover:text-green-700 font-bold rounded-lg"
+                  className="border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 font-bold rounded-lg"
                 >
-                  <CheckCircle2 className="mr-1.5 h-4 w-4" /> Accept
+                  <CheckCircle2 className="mr-1.5 h-4 w-4 text-emerald-600" /> Shortlist
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
                   onClick={() => updateStatus(selectedApp.id, 'rejected')}
-                  disabled={isTerminal(selectedApp.status)}
-                  className="border-red-200 text-red-600 hover:bg-red-50/50 hover:text-red-700 font-bold rounded-lg"
+                  className="border-red-200 text-red-600 hover:bg-red-50/50 font-bold rounded-lg"
                 >
-                  <XCircle className="mr-1.5 h-4 w-4" /> Reject
+                  <XCircle className="mr-1.5 h-4 w-4 text-red-600" /> Not Shortlist
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => updateStatus(selectedApp.id, 'interview')}
+                  className="border-indigo-200 text-indigo-700 hover:bg-indigo-50/50 font-bold rounded-lg"
+                >
+                  <UserCheck className="mr-1.5 h-4 w-4 text-indigo-600" /> Selected for Interview
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => updateStatus(selectedApp.id, 'resume_viewed')}
+                  className="border-amber-200 text-amber-700 hover:bg-amber-50/50 font-bold rounded-lg"
+                >
+                  <FileText className="mr-1.5 h-4 w-4 text-amber-600" /> Resume Viewed
                 </Button>
                 {selectedApp.resumeUrl && (
                   <Button size="sm" variant="outline" className="font-bold border-slate-200 rounded-lg ml-auto" asChild>

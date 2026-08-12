@@ -4,7 +4,11 @@ export type ApplicationStatus =
   | 'applied'
   | 'accepted'
   | 'rejected'
-  | 'withdrawn';
+  | 'withdrawn'
+  | 'shortlisted'
+  | 'not_shortlisted'
+  | 'interview'
+  | 'resume_viewed';
 
 export interface User {
   id: string;

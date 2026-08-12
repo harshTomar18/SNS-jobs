@@ -21,7 +21,8 @@ import {
   Search,
   X,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Check
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,16 @@ const ASSETS_OPTIONS = [
   'PAN CARD',
   'LAPTOP',
 ];
+
+const QUAL_CATEGORY_LABELS: Record<string, string> = {
+  TEN: '10th Pass',
+  TWELVE: '12th Pass',
+  DIPLOMA: 'Diploma',
+  GRADUATE: 'Graduate',
+  POST_GRADUATE: 'Post Graduate',
+  ANY: 'Other / Any',
+};
+const QUAL_CATEGORY_ORDER = ['TEN', 'TWELVE', 'DIPLOMA', 'GRADUATE', 'POST_GRADUATE', 'ANY'];
 
 const schema = z.object({
   title: z.string().min(2, 'Job title is required'),
@@ -96,10 +107,19 @@ const formatWage = (min: number, max: number) => {
   return `₹${min.toLocaleString()} - ₹${max.toLocaleString()} LPA`;
 };
 
+const EMPTY_ARRAY: any[] = [];
+
 export default function CreateJobPage() {
   const router = useRouter();
   const [skillSearch, setSkillSearch] = useState('');
   const [qualSearch, setQualSearch] = useState('');
+  const [selectedQualLevel, setSelectedQualLevel] = useState<string>('ALL');
+
+  const [jobRoleSearch, setJobRoleSearch] = useState('');
+  const [isJobRoleOpen, setIsJobRoleOpen] = useState(false);
+
+  const [industrySearch, setIndustrySearch] = useState('');
+  const [isIndustryOpen, setIsIndustryOpen] = useState(false);
 
   const [selectedState, setSelectedState] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
@@ -114,35 +134,27 @@ export default function CreateJobPage() {
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
 
-  const { data: states = [], isLoading: isLoadingStates } = useQuery<string[]>({
+  const { data: statesData, isLoading: isLoadingStates } = useQuery<string[]>({
     queryKey: ['master', 'locations', 'states'],
     queryFn: () => masterDataApi.getStates(),
   });
+  const states = statesData ?? EMPTY_ARRAY;
 
-  const { data: cities = [], isLoading: isLoadingCities } = useQuery<string[]>({
+  const { data: citiesData, isLoading: isLoadingCities } = useQuery<string[]>({
     queryKey: ['master', 'locations', 'cities', selectedState],
     queryFn: () => masterDataApi.getCities(selectedState),
     enabled: !!selectedState,
   });
+  const cities = citiesData ?? EMPTY_ARRAY;
 
-  const { data: localities = [], isLoading: isLoadingLocalities } = useQuery<BackendLocation[]>({
+  const { data: localitiesData, isLoading: isLoadingLocalities } = useQuery<BackendLocation[]>({
     queryKey: ['master', 'locations', 'localities', selectedCity, selectedState],
     queryFn: () => masterDataApi.getLocalities(selectedCity, selectedState),
     enabled: !!selectedCity && !!selectedState,
   });
+  const localities = localitiesData ?? EMPTY_ARRAY;
 
-  useEffect(() => {
-    setStateInput(selectedState);
-  }, [selectedState]);
 
-  useEffect(() => {
-    setCityInput(selectedCity);
-  }, [selectedCity]);
-
-  useEffect(() => {
-    const loc = localities.find((l: BackendLocation) => String(l.id) === selectedLocalityId);
-    setLocalityInput(loc ? loc.locality : '');
-  }, [selectedLocalityId, localities]);
 
   const filteredStates = states.filter((s: string) => {
     if (!stateInput || stateInput === selectedState) return true;
@@ -153,12 +165,13 @@ export default function CreateJobPage() {
     return c.toLowerCase().includes(cityInput.toLowerCase());
   });
   const filteredLocalities = localities.filter((l: BackendLocation) => {
-    const loc = localities.find((loc: BackendLocation) => String(loc.id) === selectedLocalityId);
+    const loc = localities.find((locItem: BackendLocation) => String(locItem.id) === selectedLocalityId);
     if (!localityInput || (loc && l.locality === loc.locality)) return true;
     return l.locality.toLowerCase().includes(localityInput.toLowerCase());
   });
 
   const handleStateChange = (state: string) => {
+    if (state === selectedState) return;
     setSelectedState(state);
     setStateInput(state);
     setSelectedCity('');
@@ -169,6 +182,7 @@ export default function CreateJobPage() {
   };
 
   const handleCityChange = (city: string) => {
+    if (city === selectedCity) return;
     setSelectedCity(city);
     setCityInput(city);
     setSelectedLocalityId('');
@@ -177,6 +191,7 @@ export default function CreateJobPage() {
   };
 
   const handleLocalityChange = (locationId: string) => {
+    if (locationId === selectedLocalityId) return;
     setSelectedLocalityId(locationId);
     const loc = localities.find((l: BackendLocation) => String(l.id) === locationId);
     setLocalityInput(loc ? loc.locality : '');
@@ -189,26 +204,32 @@ export default function CreateJobPage() {
   const skillsQuery = useQuery({ queryKey: ['master', 'skills'], queryFn: () => masterDataApi.raw('skills') });
   const qualificationsQuery = useQuery({ queryKey: ['master', 'qualifications'], queryFn: () => masterDataApi.raw('qualifications') });
   
-  const industries: MasterRawItem[] = industriesQuery.data ?? [];
-  const locations: MasterRawItem[] = locationsQuery.data ?? [];
-  const jobRoles: MasterRawItem[] = jobRolesQuery.data ?? [];
-  const skills: MasterRawItem[] = Array.isArray(skillsQuery.data) ? skillsQuery.data : [];
+  const industries: MasterRawItem[] = industriesQuery.data ?? EMPTY_ARRAY;
+  const locations: MasterRawItem[] = locationsQuery.data ?? EMPTY_ARRAY;
+  const jobRoles: MasterRawItem[] = jobRolesQuery.data ?? EMPTY_ARRAY;
+  const skills: MasterRawItem[] = Array.isArray(skillsQuery.data) ? skillsQuery.data : EMPTY_ARRAY;
   const rawQuals = qualificationsQuery.data;
-  const qualifications: MasterRawItem[] = Array.isArray(rawQuals)
-    ? rawQuals
-    : rawQuals && typeof rawQuals === 'object'
-    ? Object.values(rawQuals).flat()
-    : [];
+  const qualifications: MasterRawItem[] = useMemo(() => {
+    return Array.isArray(rawQuals)
+      ? rawQuals
+      : rawQuals && typeof rawQuals === 'object'
+      ? Object.values(rawQuals).flat()
+      : EMPTY_ARRAY;
+  }, [rawQuals]);
 
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
+      title: '',
+      wageMin: 0,
+      wageMax: 0,
       skillIds: [],
       qualificationIds: [],
       benefitNames: [],
@@ -234,12 +255,16 @@ export default function CreateJobPage() {
 
   const publishMutation = useMutation({
     mutationFn: async (data: FormData) => {
+      const selectedRole = jobRoles.find((r: any) => String(r.id) === data.jobRoleId);
+      const roleName = selectedRole && 'name' in selectedRole ? selectedRole.name : (jobRoleSearch || data.title);
+
       const job = await jobsApi.create({
         title: data.title,
         description: data.description,
         industryId: Number(data.industryId),
         locationId: Number(data.locationId),
         jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
+        jobRoleName: roleName,
         skillIds: data.skillIds.map(Number),
         qualificationIds: data.qualificationIds.map(Number),
         wageMin: data.wageMin,
@@ -269,10 +294,23 @@ export default function CreateJobPage() {
   });
 
   const toggleId = (field: 'skillIds' | 'qualificationIds', id: string) => {
-    const current = field === 'skillIds' ? selectedSkillIds : selectedQualificationIds;
-    setValue(field, current.includes(id) ? current.filter((item) => item !== id) : [...current, id], {
-      shouldValidate: true,
-    });
+    const current: string[] = getValues(field) || [];
+    const updated = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+    setValue(field, updated, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+  };
+
+  const toggleBenefit = (benefit: string) => {
+    const current: string[] = getValues('benefitNames') || [];
+    const isChecked = current.includes(benefit);
+    const updated = isChecked ? current.filter((b) => b !== benefit) : [...current, benefit];
+    setValue('benefitNames', updated, { shouldDirty: true, shouldTouch: true });
+  };
+
+  const toggleAsset = (asset: string) => {
+    const current: string[] = getValues('assetNames') || [];
+    const isChecked = current.includes(asset);
+    const updated = isChecked ? current.filter((a) => a !== asset) : [...current, asset];
+    setValue('assetNames', updated, { shouldDirty: true, shouldTouch: true });
   };
 
   const selectedLocationName = useMemo(() => {
@@ -297,11 +335,11 @@ export default function CreateJobPage() {
 
   const skillSuggestions = useMemo(() => {
     const selectedSet = new Set(selectedSkillIds);
-    const query = skillSearch.toLowerCase();
+    const query = skillSearch.trim().toLowerCase();
+    if (!query) return [];
     return skills.filter(skill => {
       const id = String(skill.id);
       if (selectedSet.has(id)) return false;
-      if (!query) return true;
       const name = 'name' in skill ? skill.name : '';
       return name.toLowerCase().includes(query);
     });
@@ -309,15 +347,26 @@ export default function CreateJobPage() {
 
   const qualSuggestions = useMemo(() => {
     const selectedSet = new Set(selectedQualificationIds);
-    const query = qualSearch.toLowerCase();
+    const query = qualSearch.trim().toLowerCase();
+    
     return qualifications.filter(q => {
       const id = String(q.id);
       if (selectedSet.has(id)) return false;
-      if (!query) return true;
-      const name = 'name' in q ? q.name : '';
-      return name.toLowerCase().includes(query);
+
+      // Level filter matching candidate side categories
+      if (selectedQualLevel !== 'ALL') {
+        const level = (q as any).level || '';
+        if (level.toUpperCase() !== selectedQualLevel.toUpperCase()) {
+          return false;
+        }
+      }
+
+      if (!query && selectedQualLevel === 'ALL') return false;
+
+      const name = 'name' in q ? (q.name || '') : '';
+      return !query || name.toLowerCase().includes(query);
     });
-  }, [qualifications, selectedQualificationIds, qualSearch]);
+  }, [qualifications, selectedQualificationIds, qualSearch, selectedQualLevel]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8 pb-12">
@@ -329,7 +378,17 @@ export default function CreateJobPage() {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit((data) => publishMutation.mutate(data))}>
+      <form onSubmit={handleSubmit(
+        (data) => publishMutation.mutate(data),
+        (errors) => {
+          const firstKey = Object.keys(errors)[0];
+          const errObj = errors[firstKey as keyof typeof errors];
+          const message = errObj && 'message' in errObj && typeof errObj.message === 'string'
+            ? errObj.message
+            : `Please complete the required field: ${firstKey}`;
+          toast.error(message);
+        }
+      )}>
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column: Form Sections stacked */}
           <div className="lg:col-span-2 space-y-6">
@@ -347,16 +406,44 @@ export default function CreateJobPage() {
               </div>
               
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <Label className="text-slate-700 font-extrabold text-xs">Job Role</Label>
-                  <Select onValueChange={(value) => setValue('jobRoleId', value)}>
-                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Select job role" /></SelectTrigger>
-                    <SelectContent>
-                      {jobRoles.map((role) => (
-                        <SelectItem key={role.id} value={String(role.id)}>{'name' in role ? role.name : String(role.id)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Type to search job role..."
+                      className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                      value={jobRoleSearch}
+                      onChange={(e) => {
+                        setJobRoleSearch(e.target.value);
+                        setIsJobRoleOpen(true);
+                      }}
+                      onFocus={() => setIsJobRoleOpen(true)}
+                      onBlur={() => setTimeout(() => setIsJobRoleOpen(false), 200)}
+                    />
+                    <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                  </div>
+                  {isJobRoleOpen && (
+                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                      {jobRoles
+                        .filter((role: any) => !jobRoleSearch || (role.name || '').toLowerCase().includes(jobRoleSearch.toLowerCase()))
+                        .map((role: any) => (
+                          <button
+                            key={role.id}
+                            type="button"
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onClick={() => {
+                              setValue('jobRoleId', String(role.id));
+                              setJobRoleSearch(role.name || String(role.id));
+                              setIsJobRoleOpen(false);
+                            }}
+                          >
+                            {'name' in role ? role.name : String(role.id)}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -368,7 +455,7 @@ export default function CreateJobPage() {
                 {/* 5. Working Days */}
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Working Days *</Label>
-                  <Select defaultValue="5" onValueChange={(val) => setValue('workingDays', Number(val))}>
+                  <Select value={String(formData.workingDays ?? 5)} onValueChange={(val) => setValue('workingDays', Number(val), { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="5">5 days working</SelectItem>
@@ -380,7 +467,7 @@ export default function CreateJobPage() {
                 {/* 8. Gender */}
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Gender Requirement *</Label>
-                  <Select defaultValue="ANY" onValueChange={(val: 'ANY' | 'MALE' | 'FEMALE') => setValue('gender', val)}>
+                  <Select value={formData.gender || 'ANY'} onValueChange={(val: 'ANY' | 'MALE' | 'FEMALE') => setValue('gender', val, { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="ANY">ANY</SelectItem>
@@ -398,10 +485,10 @@ export default function CreateJobPage() {
                 <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <Checkbox
                     id="freshersOnly"
-                    checked={watch('freshersOnly')}
+                    checked={formData.freshersOnly}
                     onCheckedChange={(checked) => {
                       const isChecked = Boolean(checked);
-                      setValue('freshersOnly', isChecked);
+                      setValue('freshersOnly', isChecked, { shouldValidate: true });
                       if (isChecked) {
                         setValue('minExperienceYears', 0);
                         setValue('maxExperienceYears', 0);
@@ -413,7 +500,7 @@ export default function CreateJobPage() {
                   </label>
                 </div>
 
-                {!watch('freshersOnly') && (
+                {!formData.freshersOnly && (
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
                       <Label htmlFor="minExperienceYears" className="text-slate-500 font-bold text-xs">Minimum Experience (Years)</Label>
@@ -437,16 +524,44 @@ export default function CreateJobPage() {
               </div>
               <div className="space-y-4">
                 {/* Industry Selection */}
-                <div className="space-y-2 max-w-md">
+                <div className="space-y-2 max-w-md relative">
                   <Label className="text-slate-700 font-extrabold text-xs">Industry *</Label>
-                  <Select onValueChange={(value) => setValue('industryId', value, { shouldValidate: true })}>
-                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue placeholder="Select industry" /></SelectTrigger>
-                    <SelectContent>
-                      {industries.map((industry) => (
-                        <SelectItem key={industry.id} value={String(industry.id)}>{'name' in industry ? industry.name : String(industry.id)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Type to search industry..."
+                      className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                      value={industrySearch}
+                      onChange={(e) => {
+                        setIndustrySearch(e.target.value);
+                        setIsIndustryOpen(true);
+                      }}
+                      onFocus={() => setIsIndustryOpen(true)}
+                      onBlur={() => setTimeout(() => setIsIndustryOpen(false), 200)}
+                    />
+                    <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                  </div>
+                  {isIndustryOpen && (
+                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                      {industries
+                        .filter((ind: any) => !industrySearch || (ind.name || '').toLowerCase().includes(industrySearch.toLowerCase()))
+                        .map((ind: any) => (
+                          <button
+                            key={ind.id}
+                            type="button"
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onClick={() => {
+                              setValue('industryId', String(ind.id), { shouldValidate: true });
+                              setIndustrySearch(ind.name || String(ind.id));
+                              setIsIndustryOpen(false);
+                            }}
+                          >
+                            {'name' in ind ? ind.name : String(ind.id)}
+                          </button>
+                        ))}
+                    </div>
+                  )}
                   {errors.industryId && <p className="text-xs text-red-500 font-bold">{errors.industryId.message}</p>}
                 </div>
 
@@ -474,10 +589,10 @@ export default function CreateJobPage() {
                           onBlur={() => {
                             setTimeout(() => {
                               setIsStateOpen(false);
-                              const matched = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase());
+                              const matched = states.find((s: string) => s.toLowerCase() === stateInput.trim().toLowerCase());
                               if (matched) {
                                 handleStateChange(matched);
-                              } else {
+                              } else if (selectedState) {
                                 setStateInput(selectedState);
                               }
                             }, 200);
@@ -528,10 +643,10 @@ export default function CreateJobPage() {
                           onBlur={() => {
                             setTimeout(() => {
                               setIsCityOpen(false);
-                              const matched = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase());
+                              const matched = cities.find((c: string) => c.toLowerCase() === cityInput.trim().toLowerCase());
                               if (matched) {
                                 handleCityChange(matched);
-                              } else {
+                              } else if (selectedCity) {
                                 setCityInput(selectedCity);
                               }
                             }, 200);
@@ -582,10 +697,10 @@ export default function CreateJobPage() {
                           onBlur={() => {
                             setTimeout(() => {
                               setIsLocalityOpen(false);
-                              const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase());
+                              const matched = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.trim().toLowerCase());
                               if (matched) {
                                 handleLocalityChange(String(matched.id));
-                              } else {
+                              } else if (selectedLocalityId) {
                                 const activeLoc = localities.find((l: BackendLocation) => String(l.id) === selectedLocalityId);
                                 setLocalityInput(activeLoc ? activeLoc.locality : '');
                               }
@@ -670,29 +785,34 @@ export default function CreateJobPage() {
                 </div>
 
                 {/* Suggestions List */}
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
-                  {skillSuggestions.length > 0 ? (
-                    skillSuggestions.map((skill) => {
-                      const id = String(skill.id);
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => toggleId('skillIds', id)}
-                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300"
-                        >
-                          + {'name' in skill ? skill.name : id}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <span className="text-[10px] text-slate-400 italic">No matching skills found.</span>
-                  )}
-                </div>
+                {skillSearch.trim() !== '' && (
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
+                    {skillSuggestions.length > 0 ? (
+                      skillSuggestions.map((skill) => {
+                        const id = String(skill.id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onClick={() => {
+                              toggleId('skillIds', id);
+                              setSkillSearch('');
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300"
+                          >
+                            + {'name' in skill ? skill.name : id}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] text-slate-400 italic">No matching skills found.</span>
+                    )}
+                  </div>
+                )}
               </div>
               <Separator className="my-2 bg-slate-50" />
               <div className="space-y-3">
-                <Label className="text-slate-700 font-extrabold text-xs">Qualifications</Label>
+                <Label className="text-slate-700 font-extrabold text-xs">Qualifications Required</Label>
 
                 {/* Render Selected Qualifications as dismissible badges */}
                 {selectedQualificationIds.length > 0 && (
@@ -719,12 +839,46 @@ export default function CreateJobPage() {
                   </div>
                 )}
 
+                {/* Candidate-side Qualification Level Filter Buttons */}
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] text-slate-400 font-bold uppercase block">Filter by Level</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedQualLevel('ALL')}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-bold transition-all border',
+                        selectedQualLevel === 'ALL'
+                          ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                      )}
+                    >
+                      All Levels
+                    </button>
+                    {QUAL_CATEGORY_ORDER.map((catKey) => (
+                      <button
+                        key={catKey}
+                        type="button"
+                        onClick={() => setSelectedQualLevel(catKey)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-lg text-xs font-bold transition-all border',
+                          selectedQualLevel === catKey
+                            ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                        )}
+                      >
+                        {QUAL_CATEGORY_LABELS[catKey] || catKey}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Search Input Box */}
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search and add qualifications..."
+                    placeholder={`Search ${selectedQualLevel !== 'ALL' ? QUAL_CATEGORY_LABELS[selectedQualLevel] || selectedQualLevel : 'qualifications'}...`}
                     value={qualSearch}
                     onChange={(e) => setQualSearch(e.target.value)}
                     className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
@@ -732,23 +886,36 @@ export default function CreateJobPage() {
                 </div>
 
                 {/* Suggestions List */}
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
                   {qualSuggestions.length > 0 ? (
                     qualSuggestions.map((qualification: any) => {
                       const id = String(qualification.id);
+                      const isSelected = selectedQualificationIds.includes(id);
                       return (
                         <button
                           key={id}
                           type="button"
-                          onClick={() => toggleId('qualificationIds', id)}
-                          className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300"
+                          onClick={() => {
+                            toggleId('qualificationIds', id);
+                          }}
+                          className={cn(
+                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
+                            isSelected
+                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                          )}
                         >
-                          + {'name' in qualification ? qualification.name : id}
+                          {isSelected ? '✓ ' : '+ '}
+                          {'name' in qualification ? qualification.name : id}
                         </button>
                       );
                     })
                   ) : (
-                    <span className="text-[10px] text-slate-400 italic">No matching qualifications found.</span>
+                    <span className="text-[10px] text-slate-400 italic py-1">
+                      {selectedQualLevel !== 'ALL' || qualSearch.trim() !== ''
+                        ? 'No matching qualifications found for this level.'
+                        : 'Select a qualification level above or type to search...'}
+                    </span>
                   )}
                 </div>
               </div>
@@ -764,7 +931,7 @@ export default function CreateJobPage() {
               {/* Salary Period Select */}
               <div className="space-y-2 max-w-xs">
                 <Label className="text-slate-700 font-extrabold text-xs">Salary Type *</Label>
-                <Select defaultValue="monthly" onValueChange={(val: 'monthly' | 'annual' | 'daily') => setValue('wageType', val)}>
+                <Select value={formData.wageType || 'monthly'} onValueChange={(val: 'monthly' | 'annual' | 'daily') => setValue('wageType', val, { shouldValidate: true })}>
                   <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monthly">PER MONTH SALARY</SelectItem>
@@ -777,14 +944,14 @@ export default function CreateJobPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="wageMin" className="text-slate-700 font-extrabold text-xs">
-                    Minimum Wage ({watch('wageType') === 'daily' ? 'Per Day' : watch('wageType') === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Minimum Wage ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMin" type="number" placeholder="25000" {...register('wageMin')} className="rounded-xl border-slate-200" />
                   {errors.wageMin && <p className="text-xs text-red-500 font-bold">{errors.wageMin.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="wageMax" className="text-slate-700 font-extrabold text-xs">
-                    Maximum Wage ({watch('wageType') === 'daily' ? 'Per Day' : watch('wageType') === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Maximum Wage ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMax" type="number" placeholder="40000" {...register('wageMax')} className="rounded-xl border-slate-200" />
                   {errors.wageMax && <p className="text-xs text-red-500 font-bold">{errors.wageMax.message}</p>}
@@ -793,7 +960,7 @@ export default function CreateJobPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Shift *</Label>
-                  <Select defaultValue="day" onValueChange={(value: 'day' | 'night' | 'rotational') => setValue('shiftType', value)}>
+                  <Select value={formData.shiftType || 'day'} onValueChange={(value: 'day' | 'night' | 'rotational') => setValue('shiftType', value, { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="day">Day Shift</SelectItem>
@@ -804,7 +971,7 @@ export default function CreateJobPage() {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Job Type *</Label>
-                  <Select defaultValue="full-time" onValueChange={(value: 'full-time' | 'part-time' | 'contract') => setValue('jobType', value)}>
+                  <Select value={formData.jobType || 'full-time'} onValueChange={(value: 'full-time' | 'part-time' | 'contract') => setValue('jobType', value, { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="full-time">Full Time</SelectItem>
@@ -824,26 +991,25 @@ export default function CreateJobPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {BENEFITS_OPTIONS.map((benefit) => {
-                  const current = watch('benefitNames') || [];
-                  const isChecked = current.includes(benefit);
+                  const isChecked = (formData.benefitNames || []).includes(benefit);
                   return (
                     <div
                       key={benefit}
-                      onClick={() => {
-                        setValue(
-                          'benefitNames',
-                          isChecked ? current.filter((b) => b !== benefit) : [...current, benefit]
-                        );
-                      }}
+                      onClick={() => toggleBenefit(benefit)}
                       className={cn(
-                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all',
+                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all select-none',
                         isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
                       )}
                     >
-                      <Checkbox id={`benefit-${benefit}`} checked={isChecked} />
-                      <label htmlFor={`benefit-${benefit}`} className="text-xs font-bold cursor-pointer">
+                      <div className={cn(
+                        'h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-all',
+                        isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                      )}>
+                        {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                      </div>
+                      <span className="text-xs font-bold">
                         {benefit}
-                      </label>
+                      </span>
                     </div>
                   );
                 })}
@@ -858,26 +1024,25 @@ export default function CreateJobPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {ASSETS_OPTIONS.map((asset) => {
-                  const current = watch('assetNames') || [];
-                  const isChecked = current.includes(asset);
+                  const isChecked = (formData.assetNames || []).includes(asset);
                   return (
                     <div
                       key={asset}
-                      onClick={() => {
-                        setValue(
-                          'assetNames',
-                          isChecked ? current.filter((a) => a !== asset) : [...current, asset]
-                        );
-                      }}
+                      onClick={() => toggleAsset(asset)}
                       className={cn(
-                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all',
+                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all select-none',
                         isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
                       )}
                     >
-                      <Checkbox id={`asset-${asset}`} checked={isChecked} />
-                      <label htmlFor={`asset-${asset}`} className="text-xs font-bold cursor-pointer">
+                      <div className={cn(
+                        'h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-all',
+                        isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                      )}>
+                        {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                      </div>
+                      <span className="text-xs font-bold">
                         {asset}
-                      </label>
+                      </span>
                     </div>
                   );
                 })}
