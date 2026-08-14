@@ -6,12 +6,21 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DataTable, Column } from '@/components/data-table';
 import { PageHeader } from '@/components/page-header';
-import { jobsApi, JobWithMeta } from '@/lib/scn-api';
+import { adminApi, jobsApi, JobWithMeta } from '@/lib/scn-api';
 import { formatSalary, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 export default function AdminJobsPage() {
-  const jobsQuery = useQuery({ queryKey: ['admin-jobs'], queryFn: jobsApi.list });
+  const jobsQuery = useQuery({
+    queryKey: ['admin-jobs-oversight'],
+    queryFn: async () => {
+      try {
+        return await adminApi.getAdminJobs();
+      } catch (e) {
+        return await jobsApi.list();
+      }
+    },
+  });
   const jobs: JobWithMeta[] = jobsQuery.data ?? [];
 
   const columns: Column<JobWithMeta>[] = [
@@ -30,6 +39,16 @@ export default function AdminJobsPage() {
     { key: 'salaryMin', header: 'Salary', render: (row) => formatSalary(row.salaryMin, row.salaryMax) },
     { key: 'openings', header: 'Openings', sortable: true },
     {
+      key: 'applicationsCount',
+      header: 'Applications',
+      sortable: true,
+      render: (row) => (
+        <Badge variant="secondary" className="font-semibold">
+          {row.applicationsCount || 0} Applied
+        </Badge>
+      ),
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (row) => (
@@ -47,7 +66,7 @@ export default function AdminJobsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Jobs" description="Manage all job postings on the platform" />
+      <PageHeader title="Jobs Oversight" description="Manage and oversee all job postings and candidate application tallies on the platform" />
       <Card className="p-6">
         <DataTable data={jobs} columns={columns} searchable searchKeys={['title', 'companyName', 'location']} />
       </Card>

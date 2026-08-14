@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Mail, Phone, Plus, Search, Trash2, User, Lock, Check } from 'lucide-react';
+import { Mail, Phone, Plus, Search, Trash2, User, Lock, Check, Eye, EyeOff, KeyRound, Briefcase } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,9 +42,24 @@ export default function AdminRecruitersPage() {
   const [editMode, setEditMode] = useState(false);
   const [selectedRecruiterId, setSelectedRecruiterId] = useState('');
   const [recruiterToDelete, setRecruiterToDelete] = useState<RecruiterView | null>(null);
+  
+  // Password visibility states
+  const [showCreatePassword, setShowCreatePassword] = useState(false);
+  const [showResetPasswordToggle, setShowResetPasswordToggle] = useState(false);
+  const [resetRecruiterTarget, setResetRecruiterTarget] = useState<RecruiterView | null>(null);
+  const [newResetPassword, setNewResetPassword] = useState('');
+  const [fullDetailRecruiterId, setFullDetailRecruiterId] = useState<string | null>(null);
+
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', industryIds: [] as number[] });
+  
   const recruitersQuery = useQuery({ queryKey: ['admin-recruiters'], queryFn: adminApi.recruiters });
   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
+  const fullRecruiterQuery = useQuery({
+    queryKey: ['admin-recruiter-full', fullDetailRecruiterId],
+    queryFn: () => (fullDetailRecruiterId ? adminApi.getRecruiterFull(fullDetailRecruiterId) : null),
+    enabled: Boolean(fullDetailRecruiterId),
+  });
+
   const recruiters = useMemo<RecruiterView[]>(() => recruitersQuery.data ?? [], [recruitersQuery.data]);
   const industries = useMemo<MasterRawItem[]>(() => industriesQuery.data ?? [], [industriesQuery.data]);
 
@@ -68,6 +83,19 @@ export default function AdminRecruitersPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-recruiters'] });
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update recruiter')),
+  });
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: () => {
+      if (!resetRecruiterTarget || !newResetPassword) throw new Error('Password required');
+      return adminApi.resetRecruiterPassword(resetRecruiterTarget.id, newResetPassword);
+    },
+    onSuccess: () => {
+      toast.success(`Password reset successfully for ${resetRecruiterTarget?.name}`);
+      setResetRecruiterTarget(null);
+      setNewResetPassword('');
+    },
+    onError: (error) => toast.error(getApiErrorMessage(error, 'Could not reset password')),
   });
 
   const statusMutation = useMutation({
@@ -117,7 +145,7 @@ export default function AdminRecruitersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Recruiter Management"
-        description="Create, manage, and oversee recruiter accounts"
+        description="Create, manage, reset credentials, and oversee recruiter accounts"
         action={<Button onClick={() => {
           setEditMode(false);
           setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
@@ -153,7 +181,7 @@ export default function AdminRecruitersPage() {
                     <Badge variant="outline" className={cn('mt-1', recruiter.status === 'active' ? 'border-success/20 bg-success/5 text-success' : 'bg-muted text-muted-foreground')}>
                       {recruiter.status}
                     </Badge>
-                  <Button variant="link" className="text-xs h-6 px-0 mt-1" onClick={() => {
+                    <Button variant="link" className="text-xs h-6 px-0 mt-1" onClick={() => {
                       setEditMode(true);
                       setSelectedRecruiterId(recruiter.id);
                       setForm({ name: recruiter.name, email: recruiter.email, phone: recruiter.phone || '', password: '', industryIds: recruiter.industryIds });
@@ -180,26 +208,50 @@ export default function AdminRecruitersPage() {
             </div>
 
             <div className="mt-4 border-t border-border pt-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-xs text-muted-foreground">Jobs Posted</p>
                   <p className="text-lg font-semibold">{recruiter.jobsPosted}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={() => setRecruiterToDelete(recruiter)}
-                  aria-label={`Delete ${recruiter.name}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1"
+                    onClick={() => {
+                      setResetRecruiterTarget(recruiter);
+                      setNewResetPassword('');
+                    }}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    Reset Password
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setRecruiterToDelete(recruiter)}
+                    aria-label={`Delete ${recruiter.name}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-xs text-muted-foreground"
+                onClick={() => setFullDetailRecruiterId(recruiter.id)}
+              >
+                View Posted Jobs & Stats
+              </Button>
             </div>
           </Card>
         ))}
       </div>
 
+      {/* Recruiter Create / Edit Modal with Show Password Toggle */}
       <Dialog open={showCreate} onOpenChange={handleClose}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editMode ? 'Edit Recruiter' : 'Create New Recruiter'}</DialogTitle></DialogHeader>
@@ -232,7 +284,21 @@ export default function AdminRecruitersPage() {
                   <Label>Temporary Password <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} type="password" placeholder="Minimum 6 characters" required className="pl-10" />
+                    <Input
+                      value={form.password}
+                      onChange={(event) => setForm({ ...form, password: event.target.value })}
+                      type={showCreatePassword ? 'text' : 'password'}
+                      placeholder="Minimum 6 characters"
+                      required
+                      className="pl-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCreatePassword((prev) => !prev)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showCreatePassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
               )}
@@ -269,6 +335,101 @@ export default function AdminRecruitersPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Recruiter Password Reset Dialog with Show Password Toggle */}
+      <Dialog open={Boolean(resetRecruiterTarget)} onOpenChange={(open) => !open && setResetRecruiterTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              Reset Recruiter Password
+            </DialogTitle>
+            <DialogDescription>
+              Set a new login password for <strong>{resetRecruiterTarget?.name}</strong> ({resetRecruiterTarget?.email}). Old password is not required.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type={showResetPasswordToggle ? 'text' : 'password'}
+                  placeholder="Enter new password (min 6 characters)"
+                  value={newResetPassword}
+                  onChange={(e) => setNewResetPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowResetPasswordToggle((prev) => !prev)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showResetPasswordToggle ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetRecruiterTarget(null)}>Cancel</Button>
+            <Button
+              onClick={() => resetPasswordMutation.mutate()}
+              disabled={resetPasswordMutation.isPending || !newResetPassword || newResetPassword.length < 6}
+            >
+              {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recruiter Full Detail Oversight Dialog */}
+      <Dialog open={Boolean(fullDetailRecruiterId)} onOpenChange={(open) => !open && setFullDetailRecruiterId(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Briefcase className="h-5 w-5 text-primary" />
+              Recruiter Platform Detail & Posted Jobs
+            </DialogTitle>
+          </DialogHeader>
+
+          {fullRecruiterQuery.isLoading ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">Loading recruiter details & posted jobs...</div>
+          ) : fullRecruiterQuery.data ? (
+            <div className="space-y-4 pt-2">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h3 className="font-bold text-lg">{fullRecruiterQuery.data.recruiter.name}</h3>
+                  <p className="text-sm text-muted-foreground">{fullRecruiterQuery.data.recruiter.email}</p>
+                </div>
+                <Badge variant="outline">{fullRecruiterQuery.data.jobs?.length || 0} Total Jobs Posted</Badge>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold">Posted Jobs Oversight</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {fullRecruiterQuery.data.jobs?.map((job: any) => (
+                    <div key={job.id} className="rounded-lg border border-border p-3 flex items-center justify-between text-xs">
+                      <div>
+                        <p className="font-medium text-sm">{job.title}</p>
+                        <p className="text-muted-foreground">{job.headcountRequired} Openings</p>
+                      </div>
+                      <Badge variant="outline">{job.status}</Badge>
+                    </div>
+                  ))}
+                  {(!fullRecruiterQuery.data.jobs || fullRecruiterQuery.data.jobs.length === 0) && (
+                    <p className="text-xs text-muted-foreground">No jobs posted yet by this recruiter.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-sm text-muted-foreground">No recruiter record details found.</div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Recruiter Alert */}
       <AlertDialog open={!!recruiterToDelete} onOpenChange={(open) => !open && setRecruiterToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

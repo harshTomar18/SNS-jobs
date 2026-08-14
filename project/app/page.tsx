@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { jobsApi, JobWithMeta } from "@/lib/scn-api";
-import { trustedCompanies, topIndustries, popularLocations, testimonials, faqs as FAQS } from "@/lib/marketing-data";
+import { trustedCompanies, testimonials, faqs as FAQS } from "@/lib/marketing-data";
 import {
   Search, MapPin, ArrowRight, CheckCircle2, Star, ChevronDown, Menu, X,
   Sun, Moon, Factory, HeartPulse, Truck, ShoppingBag, UtensilsCrossed,
@@ -52,17 +52,33 @@ const iconMap: Record<string, any> = {
 };
 
 /* ------------------------------------------------------------------ */
-/*  Content                                                            */
+/*  Content & Data                                                     */
 /* ------------------------------------------------------------------ */
-const BOARD_ROWS = [
-  ["Machine Operator", "Tata Autocomp", "Pune"],
-  ["Staff Nurse", "Apollo Care", "Lucknow"],
-  ["Warehouse Lead", "Delhivery", "Gurugram"],
-  ["Store Manager", "Reliance Retail", "Jaipur"],
-  ["Front Desk Exec.", "Taj Hotels", "Mumbai"],
-  ["Frontend Developer", "Zeta Labs", "Noida"],
-  ["Field Technician", "BSES", "Delhi NCR"],
-  ["QA Inspector", "Havells", "Patna"],
+const HERO_SLIDES = [
+  {
+    id: 1,
+    image: "/images/hero-1.png",
+    badge: "NOW HIRING",
+    title: "Tech & Software Engineering",
+    subtitle: "Frontend, Backend, Cloud & Product Leads",
+    location: "Bengaluru • Noida • Hyderabad",
+  },
+  {
+    id: 2,
+    image: "/images/hero-2.png",
+    badge: "HEALTHCARE OPPORTUNITIES",
+    title: "Medical & Nursing Professionals",
+    subtitle: "Staff Nurses, ICU Specialists & Technicians",
+    location: "Mumbai • Lucknow • Delhi NCR",
+  },
+  {
+    id: 3,
+    image: "/images/hero-3.png",
+    badge: "IMMEDIATE JOINING",
+    title: "Supply Chain & Manufacturing",
+    subtitle: "Warehouse Shift Leads, Operators & Technicians",
+    location: "Pune • Gurugram • Jaipur",
+  },
 ];
 
 const FALLBACK_JOBS = [
@@ -72,6 +88,28 @@ const FALLBACK_JOBS = [
   { id: '4', title: "Store Manager", company_name: "Reliance Retail", location: "Jaipur", employment_type: "Full-time", salary_range: "₹4–6.5L", category: "Retail", created_at: "3d ago" },
   { id: '5', title: "CNC Machine Operator", company_name: "Tata Autocomp", location: "Pune", employment_type: "Full-time", salary_range: "₹2.8–4L", category: "Manufacturing", created_at: "6h ago" },
   { id: '6', title: "Front Office Executive", company_name: "Taj Hotels", location: "Mumbai", employment_type: "Full-time", salary_range: "₹3–4.5L", category: "Hospitality", created_at: "1d ago" },
+];
+
+const TOP_INDUSTRIES_WITH_BG = [
+  { name: "Technology & IT", icon: "Laptop2", bg: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80" },
+  { name: "Healthcare & Pharma", icon: "HeartPulse", bg: "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80" },
+  { name: "Logistics & Supply Chain", icon: "Truck", bg: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80" },
+  { name: "Retail & E-Commerce", icon: "ShoppingBag", bg: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80" },
+  { name: "Manufacturing", icon: "Factory", bg: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80" },
+  { name: "Hospitality & Tourism", icon: "UtensilsCrossed", bg: "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80" },
+  { name: "Banking & Finance", icon: "Landmark", bg: "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=800&q=80" },
+  { name: "Education & EdTech", icon: "GraduationCap", bg: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=800&q=80" },
+];
+
+const TOP_CITIES_WITH_BG = [
+  { name: "Mumbai", state: "Maharashtra", bg: "https://images.unsplash.com/photo-1570168007204-dfb528c6958f?auto=format&fit=crop&w=800&q=80" },
+  { name: "Bengaluru", state: "Karnataka", bg: "https://images.unsplash.com/photo-1596176530529-78163a4f7af2?auto=format&fit=crop&w=800&q=80" },
+  { name: "Delhi NCR", state: "Delhi", bg: "https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=800&q=80" },
+  { name: "Hyderabad", state: "Telangana", bg: "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=800&q=80" },
+  { name: "Pune", state: "Maharashtra", bg: "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?auto=format&fit=crop&w=800&q=80" },
+  { name: "Jaipur", state: "Rajasthan", bg: "https://images.unsplash.com/photo-1477587458883-47145ed94245?auto=format&fit=crop&w=800&q=80" },
+  { name: "Chennai", state: "Tamil Nadu", bg: "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80" },
+  { name: "Kolkata", state: "West Bengal", bg: "https://images.unsplash.com/photo-1558431382-27e303142255?auto=format&fit=crop&w=800&q=80" },
 ];
 
 const STATS = [
@@ -89,7 +127,7 @@ const STEPS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Helpers / small hooks                                              */
+/*  Helpers & Hooks                                                    */
 /* ------------------------------------------------------------------ */
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null);
@@ -154,42 +192,130 @@ function formatStat(n: number, compact?: boolean) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Flap board (signature element)                                     */
+/*  Hero Image Slider Component                                        */
 /* ------------------------------------------------------------------ */
-function FlapRow({ row, pal }: { row: number, pal: any }) {
-  const [idx, setIdx] = useState(row);
-  const [flipKey, setFlipKey] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setIdx((row + Math.floor(Math.random() * 3)) % BOARD_ROWS.length);
-      setFlipKey((k) => k + 1);
-    }, 2600 + row * 400);
-    return () => clearInterval(t);
-  }, [row]);
-  const [title, company, loc] = BOARD_ROWS[idx];
-  return (
-    <div className="flap-row" style={{ borderColor: "#2A2D5C" }}>
-      <div key={flipKey} className="flap-content">
-        <span className="flap-title">{title}</span>
-        <span className="flap-meta">{company} · {loc}</span>
-      </div>
-      <span className="flap-dot" />
-    </div>
-  );
-}
+function HeroSlider({ pal }: { pal: any }) {
+  const [activeSlide, setActiveSlide] = useState(0);
 
-function LiveBoard({ pal }: { pal: any }) {
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="board" style={{ background: pal.boardBg }}>
-      <div className="board-head">
-        <span className="board-head-label">
-          <span className="live-dot" /> LIVE BOARD
-        </span>
-        <span className="board-head-time">NOW HIRING</span>
-      </div>
-      <div className="board-body">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <FlapRow key={i} row={i} pal={pal} />
+    <div
+      style={{
+        position: "relative",
+        borderRadius: 24,
+        overflow: "hidden",
+        height: 380,
+        boxShadow: "0 30px 60px -20px rgba(16,18,53,0.45)",
+        border: `1px solid ${pal.border}`,
+        background: pal.surfaceAlt,
+      }}
+    >
+      {HERO_SLIDES.map((s, idx) => (
+        <div
+          key={s.id}
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: idx === activeSlide ? 1 : 0,
+            transform: idx === activeSlide ? "scale(1)" : "scale(1.05)",
+            transition: "opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1)",
+            pointerEvents: idx === activeSlide ? "auto" : "none",
+          }}
+        >
+          <img
+            src={s.image}
+            alt={s.title}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "linear-gradient(180deg, rgba(16,18,53,0.15) 0%, rgba(16,18,53,0.88) 100%)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              padding: 28,
+            }}
+          >
+            <span
+              className="mono"
+              style={{
+                display: "inline-block",
+                padding: "5px 12px",
+                borderRadius: 999,
+                background: BRAND.amber,
+                color: BRAND.ink,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                alignSelf: "flex-start",
+                marginBottom: 10,
+              }}
+            >
+              {s.badge}
+            </span>
+            <h3 className="disp" style={{ color: "#fff", fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.25 }}>
+              {s.title}
+            </h3>
+            <p style={{ color: "#E5E7EB", fontSize: 13.5, marginTop: 6, marginBottom: 6 }}>{s.subtitle}</p>
+            <span style={{ color: BRAND.teal, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
+              <MapPin size={13} /> {s.location}
+            </span>
+          </div>
+        </div>
+      ))}
+
+      {/* Prev / Next controls */}
+      <button
+        onClick={() => setActiveSlide((prev) => (prev - 1 + HERO_SLIDES.length) % HERO_SLIDES.length)}
+        aria-label="Previous slide"
+        style={{
+          position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+          width: 36, height: 36, borderRadius: "50%", background: "rgba(16,18,53,0.6)",
+          border: "1px solid rgba(255,255,255,0.25)", color: "#fff", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10,
+          backdropFilter: "blur(4px)",
+        }}
+      >
+        ‹
+      </button>
+      <button
+        onClick={() => setActiveSlide((prev) => (prev + 1) % HERO_SLIDES.length)}
+        aria-label="Next slide"
+        style={{
+          position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+          width: 36, height: 36, borderRadius: "50%", background: "rgba(16,18,53,0.6)",
+          border: "1px solid rgba(255,255,255,0.25)", color: "#fff", cursor: "pointer",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10,
+          backdropFilter: "blur(4px)",
+        }}
+      >
+        ›
+      </button>
+
+      {/* Indicator dots */}
+      <div style={{ position: "absolute", bottom: 14, right: 24, display: "flex", gap: 6, zIndex: 10 }}>
+        {HERO_SLIDES.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setActiveSlide(i)}
+            style={{
+              width: i === activeSlide ? 22 : 7,
+              height: 7,
+              borderRadius: 4,
+              background: i === activeSlide ? BRAND.amber : "rgba(255,255,255,0.45)",
+              border: "none",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+            }}
+          />
         ))}
       </div>
     </div>
@@ -265,85 +391,6 @@ export default function SCNJobsLanding() {
           to { transform: translateX(-50%); }
         }
 
-        /* Flap board */
-        .board {
-          border-radius: 20px;
-          padding: 18px;
-          box-shadow: 0 30px 60px -20px rgba(16,18,53,0.45);
-          border: 1px solid #2A2D5C;
-        }
-        .board-head {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 4px 8px 14px 8px;
-          border-bottom: 1px solid #2A2D5C;
-          margin-bottom: 10px;
-        }
-        .board-head-label {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.14em;
-          color: #F3F2EC;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-weight: 600;
-        }
-        .board-head-time {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 11px;
-          letter-spacing: 0.14em;
-          color: ${BRAND.amber};
-          font-weight: 600;
-        }
-        .live-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: ${BRAND.teal};
-          box-shadow: 0 0 0 0 rgba(20,184,166,0.7);
-          animation: pulse-dot 1.8s infinite;
-        }
-        @keyframes pulse-dot {
-          0% { box-shadow: 0 0 0 0 rgba(20,184,166,0.55); }
-          70% { box-shadow: 0 0 0 7px rgba(20,184,166,0); }
-          100% { box-shadow: 0 0 0 0 rgba(20,184,166,0); }
-        }
-        .flap-row {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 12px 8px;
-          border-bottom: 1px solid #21244a;
-          overflow: hidden;
-          height: 46px;
-        }
-        .flap-row:last-child { border-bottom: none; }
-        .flap-content {
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-          animation: flap-in 0.5s cubic-bezier(.2,.8,.2,1);
-          transform-origin: top center;
-        }
-        @keyframes flap-in {
-          0% { transform: rotateX(90deg); opacity: 0; }
-          60% { transform: rotateX(0deg); opacity: 1; }
-          100% { transform: rotateX(0deg); opacity: 1; }
-        }
-        .flap-title {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 13px;
-          font-weight: 600;
-          color: #F3F2EC;
-          letter-spacing: 0.01em;
-        }
-        .flap-meta {
-          font-family: 'IBM Plex Mono', monospace;
-          font-size: 10.5px;
-          color: #8E92BB;
-        }
-        .flap-dot { width: 5px; height: 5px; border-radius: 50%; background: ${BRAND.amber}; flex-shrink: 0; }
-
         /* Cards */
         .job-card {
           transition: transform 0.35s cubic-bezier(.22,1,.36,1), box-shadow 0.35s ease, border-color 0.35s ease;
@@ -353,15 +400,53 @@ export default function SCNJobsLanding() {
           box-shadow: 0 24px 48px -20px rgba(16,18,53,0.25);
           border-color: ${BRAND.teal};
         }
-        .industry-card {
-          transition: transform 0.3s cubic-bezier(.22,1,.36,1), border-color 0.3s ease, background 0.3s ease;
+
+        /* Smooth Slide-up Hover Card for Industry & Cities */
+        .hover-slide-card {
+          position: relative;
+          overflow: hidden;
+          border-radius: 20px;
+          height: 220px;
+          cursor: pointer;
+          border: 1px solid ${pal.border};
+          box-shadow: 0 10px 30px -15px rgba(0,0,0,0.1);
+          transition: border-color 0.35s ease, box-shadow 0.35s ease;
         }
-        .industry-card:hover {
-          transform: translateY(-4px);
+        .hover-slide-card:hover {
           border-color: ${BRAND.amber};
+          box-shadow: 0 20px 40px -15px rgba(16,18,53,0.3);
         }
-        .icon-wrap { transition: transform 0.35s cubic-bezier(.22,1,.36,1), background 0.35s ease; }
-        .industry-card:hover .icon-wrap { transform: scale(1.08) rotate(-4deg); }
+        .hover-slide-card .bg-img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.65s cubic-bezier(.22,1,.36,1), filter 0.65s ease;
+        }
+        .hover-slide-card:hover .bg-img {
+          transform: scale(1.12);
+        }
+        .hover-slide-card .card-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(16,18,53,0.15) 0%, rgba(16,18,53,0.88) 100%);
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          padding: 22px;
+          transition: background 0.4s ease;
+        }
+        .hover-slide-card:hover .card-overlay {
+          background: linear-gradient(180deg, rgba(16,18,53,0.35) 0%, rgba(16,18,53,0.95) 100%);
+        }
+        .hover-slide-card .slide-up-body {
+          transform: translateY(28px);
+          transition: transform 0.45s cubic-bezier(.22,1,.36,1);
+        }
+        .hover-slide-card:hover .slide-up-body {
+          transform: translateY(0);
+        }
 
         .cta-btn {
           transition: transform 0.25s cubic-bezier(.22,1,.36,1), box-shadow 0.25s ease, background 0.25s ease;
@@ -434,8 +519,8 @@ export default function SCNJobsLanding() {
             {[
               { label: "Featured Jobs", href: "#featured" },
               { label: "Industries", href: "#industries" },
+              { label: "Cities", href: "#cities" },
               { label: "How it Works", href: "#how-it-works" },
-              { label: "Testimonials", href: "#testimonials" },
               { label: "FAQ", href: "#faq" },
             ].map((l) => (
               <a key={l.label} href={l.href} className="nav-link" style={navLink}>{l.label}</a>
@@ -487,8 +572,8 @@ export default function SCNJobsLanding() {
             {[
               { label: "Featured Jobs", href: "#featured" },
               { label: "Industries", href: "#industries" },
+              { label: "Cities", href: "#cities" },
               { label: "How it Works", href: "#how-it-works" },
-              { label: "Testimonials", href: "#testimonials" },
               { label: "FAQ", href: "#faq" },
             ].map((l) => (
               <a key={l.label} href={l.href} style={{ color: pal.text, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>{l.label}</a>
@@ -505,7 +590,7 @@ export default function SCNJobsLanding() {
         `}</style>
       </header>
 
-      {/* ---------------- HERO ---------------- */}
+      {/* ---------------- SECTION 1: HERO & SLIDER ---------------- */}
       <section style={{ position: "relative", overflow: "hidden", paddingTop: 64, paddingBottom: 88 }}>
         <div className="hero-glow" />
         <div className="container" style={{ position: "relative", display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 56, alignItems: "center" }}>
@@ -519,7 +604,7 @@ export default function SCNJobsLanding() {
                 }}
               >
                 <span style={{ width: 6, height: 6, borderRadius: "50%", background: BRAND.teal }} />
-                Trusted by 3,500+ top companies
+                Trusted by 3,500+ top hiring partners
               </div>
             </Reveal>
             <Reveal delay={80}>
@@ -531,7 +616,7 @@ export default function SCNJobsLanding() {
             </Reveal>
             <Reveal delay={160}>
               <p style={{ fontSize: 17, color: pal.textMuted, maxWidth: 480, marginTop: 22, lineHeight: 1.6 }}>
-                The modern job portal connecting talent with opportunity. Search thousands of jobs, track applications, and get hired — all in one place.
+                The modern recruitment suite connecting top candidates with verified recruiters. Discover hand-picked jobs and get hired today.
               </p>
             </Reveal>
 
@@ -546,7 +631,7 @@ export default function SCNJobsLanding() {
                 <div style={{ flex: 1.2, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
                   <Search size={17} color={pal.textMuted} />
                   <input 
-                    placeholder="Job title or keyword" 
+                    placeholder="Job title or skill" 
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
                     style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 14.5, color: pal.text }} 
@@ -585,8 +670,8 @@ export default function SCNJobsLanding() {
           </div>
 
           <Reveal delay={200}>
-            <div className="float-slow">
-              <LiveBoard pal={pal} />
+            <div>
+              <HeroSlider pal={pal} />
             </div>
           </Reveal>
         </div>
@@ -604,16 +689,38 @@ export default function SCNJobsLanding() {
       {/* ---------------- MARQUEE ---------------- */}
       <section style={{ padding: "26px 0", borderTop: `1px solid ${pal.border}`, borderBottom: `1px solid ${pal.border}`, background: pal.surfaceAlt, overflow: "hidden" }}>
         <p style={{ textAlign: "center", fontSize: 12.5, fontWeight: 600, letterSpacing: "0.1em", color: pal.textMuted, marginBottom: 18, textTransform: "uppercase" }}>
-          Trusted by leading companies worldwide
+          Trusted by leading employers across India
         </p>
         <div style={{ maskImage: "linear-gradient(90deg, transparent, black 10%, black 90%, transparent)" }}>
           <div className="marquee-track">
-            {[...Array(2)].map((_, dup) => (
-              <div key={dup} style={{ display: "flex", gap: 64, paddingRight: 64 }}>
+            {[...Array(3)].map((_, dup) => (
+              <div key={dup} style={{ display: "flex", gap: 36, paddingRight: 36, alignItems: "center" }}>
                 {trustedCompanies.map((c) => (
-                  <span key={c.name} className="disp" style={{ fontSize: 20, fontWeight: 700, color: pal.textMuted, whiteSpace: "nowrap", opacity: 0.75 }}>
-                    {c.name}
-                  </span>
+                  <div
+                    key={c.name}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "8px 18px",
+                      borderRadius: 14,
+                      background: pal.surface,
+                      border: `1px solid ${pal.border}`,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {c.logo ? (
+                      <img src={c.logo} alt={c.name} style={{ width: 28, height: 28, borderRadius: 8, objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: BRAND.amber, color: BRAND.ink, fontWeight: 800, fontSize: 13, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        {c.name[0]}
+                      </div>
+                    )}
+                    <span className="disp" style={{ fontSize: 15, fontWeight: 700, color: pal.text }}>
+                      {c.name}
+                    </span>
+                  </div>
                 ))}
               </div>
             ))}
@@ -621,19 +728,14 @@ export default function SCNJobsLanding() {
         </div>
       </section>
 
-      {/* ---------------- FEATURED JOBS ---------------- */}
+      {/* ---------------- SECTION 2: HAND-PICKED OPPORTUNITIES (View all / pages removed) ---------------- */}
       <section id="featured" className="container" style={{ padding: "96px 24px 20px" }}>
         <Reveal>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, marginBottom: 40 }}>
-            <div>
-              <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>FEATURED JOBS</span>
-              <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8, letterSpacing: "-0.01em" }}>
-                Hand-picked opportunities
-              </h2>
-            </div>
-            <Link href="/jobs" style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 700, fontSize: 14, color: BRAND.indigo, textDecoration: "none" }}>
-              View all jobs <ArrowRight size={15} />
-            </Link>
+          <div style={{ marginBottom: 40 }}>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>FEATURED JOBS</span>
+            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8, letterSpacing: "-0.01em" }}>
+              Hand-picked opportunities
+            </h2>
           </div>
         </Reveal>
 
@@ -657,7 +759,7 @@ export default function SCNJobsLanding() {
                     {(j.company_name || j.company || 'S')[0]}
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: BRAND.amberDeep, background: `${BRAND.amber}1f`, padding: "4px 10px", borderRadius: 999 }}>
-                    {j.category || j.tag}
+                    {j.category || j.tag || 'Hot Role'}
                   </span>
                 </div>
                 <h3 className="disp" style={{ fontSize: 17.5, fontWeight: 700, marginTop: 16, marginBottom: 4 }}>{j.title}</h3>
@@ -669,7 +771,7 @@ export default function SCNJobsLanding() {
                 </div>
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${pal.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 12.5, fontWeight: 600, color: pal.textMuted }}>{j.employment_type || j.type}</span>
-                  <Link href={`/jobs/${j.id || ''}`} style={{ fontSize: 13, fontWeight: 700, color: BRAND.teal, textDecoration: "none" }}>Apply →</Link>
+                  <Link href="/worker/register" style={{ fontSize: 13, fontWeight: 700, color: BRAND.teal, textDecoration: "none" }}>Apply →</Link>
                 </div>
               </div>
             </Reveal>
@@ -678,7 +780,7 @@ export default function SCNJobsLanding() {
         <style>{`@media (max-width: 900px) { .jobs-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 620px) { .jobs-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
-      {/* ---------------- INDUSTRIES ---------------- */}
+      {/* ---------------- SECTION 3: INDUSTRIES (Count removed, BG images + Smooth Slide-Up Hover) ---------------- */}
       <section id="industries" className="container" style={{ padding: "96px 24px 20px" }}>
         <Reveal>
           <div style={{ textAlign: "center", marginBottom: 44 }}>
@@ -688,61 +790,72 @@ export default function SCNJobsLanding() {
             </h2>
           </div>
         </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="industries-grid">
-          {topIndustries.slice(0, 8).map((ind, i) => {
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }} className="industries-grid">
+          {TOP_INDUSTRIES_WITH_BG.map((ind, i) => {
             const Icon = iconMap[ind.icon] || Laptop2;
             return (
               <Reveal key={ind.name} delay={i * 50}>
-                <div
-                  className="industry-card"
-                  style={{ border: `1px solid ${pal.border}`, borderRadius: 16, padding: 22, background: pal.surface, cursor: "pointer" }}
-                >
-                  <div
-                    className="icon-wrap"
-                    style={{ width: 42, height: 42, borderRadius: 11, background: `${BRAND.indigo}17`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}
-                  >
-                    <Icon size={19} color={BRAND.indigo} />
+                <div className="hover-slide-card">
+                  <img src={ind.bg} alt={ind.name} className="bg-img" />
+                  <div className="card-overlay">
+                    <div className="slide-up-body">
+                      <div
+                        style={{
+                          width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.2)",
+                          backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center",
+                          marginBottom: 12, border: "1px solid rgba(255,255,255,0.3)",
+                        }}
+                      >
+                        <Icon size={20} color="#fff" />
+                      </div>
+                      <h3 className="disp" style={{ color: "#fff", fontSize: 16.5, fontWeight: 700, margin: 0 }}>{ind.name}</h3>
+                    </div>
                   </div>
-                  <h3 className="disp" style={{ fontSize: 15.5, fontWeight: 700, marginBottom: 4 }}>{ind.name}</h3>
-                  <p className="mono" style={{ fontSize: 12.5, color: pal.textMuted }}>{ind.jobs} jobs</p>
                 </div>
               </Reveal>
             );
           })}
         </div>
-        <style>{`@media (max-width: 900px) { .industries-grid { grid-template-columns: 1fr 1fr !important; } }`}</style>
+        <style>{`@media (max-width: 900px) { .industries-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 520px) { .industries-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
-      {/* ---------------- LOCATIONS ---------------- */}
-      <section className="container" style={{ padding: "96px 24px 20px" }}>
+      {/* ---------------- SECTION 4: TOP CITIES (Page numbers removed, Image cards layout) ---------------- */}
+      <section id="cities" className="container" style={{ padding: "96px 24px 20px" }}>
         <Reveal>
           <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>POPULAR LOCATIONS</span>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>POPULAR CITIES</span>
             <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
               Discover jobs in top cities across India
             </h2>
           </div>
         </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }} className="locations-grid">
-          {popularLocations.slice(0, 8).map((loc, i) => (
-            <Reveal key={loc.name} delay={i * 40}>
-              <div
-                className="chip-hover"
-                style={{
-                  border: `1px solid ${pal.border}`, borderRadius: 14, padding: "16px 18px", background: pal.surface,
-                  display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <MapPin size={15} color={BRAND.amberDeep} />
-                  <span style={{ fontWeight: 600, fontSize: 14 }}>{loc.name}</span>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }} className="cities-grid">
+          {TOP_CITIES_WITH_BG.map((city, i) => (
+            <Reveal key={city.name} delay={i * 40}>
+              <div className="hover-slide-card">
+                <img src={city.bg} alt={city.name} className="bg-img" />
+                <div className="card-overlay">
+                  <div className="slide-up-body">
+                    <span
+                      style={{
+                        fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
+                        color: BRAND.amber, background: "rgba(16,18,53,0.7)", padding: "3px 8px", borderRadius: 4,
+                        display: "inline-block", marginBottom: 8,
+                      }}
+                    >
+                      {city.state}
+                    </span>
+                    <h3 className="disp" style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                      <MapPin size={16} color={BRAND.amber} /> {city.name}
+                    </h3>
+                  </div>
                 </div>
-                <span className="mono" style={{ fontSize: 11.5, color: pal.textMuted }}>{loc.jobs.toLocaleString("en-IN")}</span>
               </div>
             </Reveal>
           ))}
         </div>
-        <style>{`@media (max-width: 760px) { .locations-grid { grid-template-columns: 1fr 1fr !important; } }`}</style>
+        <style>{`@media (max-width: 900px) { .cities-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 520px) { .cities-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
       {/* ---------------- HOW IT WORKS ---------------- */}
@@ -799,7 +912,7 @@ export default function SCNJobsLanding() {
           <div style={{ textAlign: "center", marginBottom: 48 }}>
             <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>TESTIMONIALS</span>
             <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              Loved by workers &amp; recruiters
+              Loved by candidates &amp; recruiters
             </h2>
           </div>
         </Reveal>
@@ -916,7 +1029,7 @@ export default function SCNJobsLanding() {
             Ready to find your next opportunity?
           </h2>
           <p style={{ fontSize: 15.5, color: pal.textMuted, maxWidth: 480, margin: "0 auto 32px" }}>
-            Join millions of workers and recruiters on SCN Jobs. It's free to get started.
+            Join thousands of candidates and recruiters on SCN Jobs. It's free to get started.
           </p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/worker/register" className="cta-btn" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: BRAND.amber, color: BRAND.ink, fontWeight: 700, fontSize: 14.5, padding: "13px 26px", borderRadius: 12, textDecoration: "none" }}>
@@ -945,7 +1058,7 @@ export default function SCNJobsLanding() {
               </p>
             </div>
             {[
-              { h: "For Workers", items: ["Browse Jobs", "Create Profile", "Login", "Career Resources"] },
+              { h: "For Candidates", items: ["Browse Jobs", "Create Profile", "Login", "Career Resources"] },
               { h: "For Recruiters", items: ["Post a Job", "Search Candidates", "Recruiter Login", "Pricing"] },
               { h: "Company", items: ["About Us", "Careers", "Blog", "Contact"] },
             ].map((col) => (

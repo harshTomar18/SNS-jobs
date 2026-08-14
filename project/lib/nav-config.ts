@@ -12,13 +12,13 @@ export const recruiterNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/recruiter/dashboard', icon: LayoutDashboard },
   { label: 'Jobs', href: '/recruiter/jobs', icon: Briefcase },
   { label: 'Applications', href: '/recruiter/applications', icon: FileText },
-  { label: 'Worker Search', href: '/recruiter/workers', icon: Search },
+  { label: 'Candidate Search', href: '/recruiter/workers', icon: Search },
 ];
 
 export const adminNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Recruiters', href: '/admin/recruiters', icon: User },
-  { label: 'Workers', href: '/admin/workers', icon: Briefcase },
+  { label: 'Candidates', href: '/admin/workers', icon: Briefcase },
   { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
   { label: 'Master Data', href: '/admin/master-data', icon: FileText },
 ];

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
-import { Plus, Building2, MapPin, Code, Languages, Briefcase, Award } from 'lucide-react';
+import { Plus, Building2, MapPin, Code, Languages, Briefcase, Award, Gift, Box, Upload } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,7 @@ import { MasterResource, masterDataApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { BulkMasterDataImportModal } from '@/components/admin/bulk-master-data-import-modal';
 
 const tabs: { id: MasterResource; label: string; icon: typeof Building2 }[] = [
   { id: 'industries', label: 'Industries', icon: Building2 },
@@ -31,14 +32,18 @@ const tabs: { id: MasterResource; label: string; icon: typeof Building2 }[] = [
   { id: 'job-roles', label: 'Job Roles', icon: Briefcase },
   { id: 'languages', label: 'Languages', icon: Languages },
   { id: 'qualifications', label: 'Qualifications', icon: Award },
+  { id: 'benefits', label: 'Benefits', icon: Gift },
+  { id: 'assets', label: 'Assets', icon: Box },
 ];
 
 export default function MasterDataPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<MasterResource>('industries');
   const [showCreate, setShowCreate] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [editingItem, setEditingItem] = useState<MasterDataItem | null>(null);
   const [form, setForm] = useState({ name: '', level: 'general', state: '', city: '', locality: '' });
+
   const queries = useQueries({
     queries: tabs.map((tab) => ({
       queryKey: ['master', tab.id],
@@ -46,7 +51,6 @@ export default function MasterDataPage() {
     })),
   });
   const data = Object.fromEntries(tabs.map((tab, index) => [tab.id, queries[index].data ?? []])) as Record<MasterResource, MasterDataItem[]>;
-  const currentData = data[activeTab] || [];
   const currentTab = tabs.find((tab) => tab.id === activeTab)!;
 
   const saveMutation = useMutation({
@@ -117,8 +121,19 @@ export default function MasterDataPage() {
     <div className="space-y-6">
       <PageHeader
         title="Master Data Management"
-        description="Manage platform-wide reference data"
-        action={<Button onClick={() => { setEditingItem(null); setShowCreate(true); }}><Plus className="mr-2 h-4 w-4" />Add {currentTab.label.replace(/s$/, '')}</Button>}
+        description="Manage platform-wide reference data, benefits, assets, and locations"
+        action={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowBulkModal(true)}>
+              <Upload className="mr-2 h-4 w-4" />
+              Bulk Import {currentTab.label}
+            </Button>
+            <Button onClick={() => { setEditingItem(null); setShowCreate(true); }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add {currentTab.label.replace(/s$/, '')}
+            </Button>
+          </div>
+        }
       />
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MasterResource)}>
@@ -148,15 +163,26 @@ export default function MasterDataPage() {
         ))}
       </Tabs>
 
+      <BulkMasterDataImportModal
+        open={showBulkModal}
+        onOpenChange={setShowBulkModal}
+        resource={activeTab}
+        resourceLabel={currentTab.label}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['master', activeTab] });
+          queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+        }}
+      />
+
       <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) setEditingItem(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} {currentTab.label.replace(/s$/, '')}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             {activeTab === 'locations' ? (
               <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2"><Label>State</Label><Input value={form.state} onChange={(event) => setForm({ ...form, state: event.target.value })} /></div>
-                <div className="space-y-2"><Label>City</Label><Input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></div>
-                <div className="space-y-2"><Label>Locality</Label><Input value={form.locality} onChange={(event) => setForm({ ...form, locality: event.target.value })} /></div>
+                <div className="space-y-2"><Label>State</Label><Input value={form.state} onChange={(event) => setForm({ ...form, state: event.target.value })} placeholder="e.g. Maharashtra" /></div>
+                <div className="space-y-2"><Label>City</Label><Input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} placeholder="e.g. Mumbai" /></div>
+                <div className="space-y-2"><Label>Locality</Label><Input value={form.locality} onChange={(event) => setForm({ ...form, locality: event.target.value })} placeholder="e.g. Andheri" /></div>
               </div>
             ) : (
               <>
@@ -167,7 +193,7 @@ export default function MasterDataPage() {
                 {activeTab === 'qualifications' && (
                   <div className="space-y-2">
                     <Label>Level</Label>
-                    <Input value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })} />
+                    <Input value={form.level} onChange={(event) => setForm({ ...form, level: event.target.value })} placeholder="TEN, TWELVE, DIPLOMA, GRADUATE, or POST_GRADUATE" />
                   </div>
                 )}
               </>

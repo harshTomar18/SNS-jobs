@@ -926,6 +926,47 @@ export const adminApi = {
     const endpoint = active ? 'reactivate' : 'deactivate';
     return toRecruiter(await apiPatch<BackendRecruiter>(`/admin/recruiters/${id}/${endpoint}`));
   },
+  async resetRecruiterPassword(id: string, password: string) {
+    return await apiPatch<{ message?: string; recruiter?: BackendRecruiter }>(`/admin/recruiters/${id}/password`, { password });
+  },
+  async getRecruiterFull(id: string) {
+    return await apiGet<{ recruiter: BackendRecruiter; jobs: BackendJob[]; stats: any }>(`/admin/recruiters/${id}/full`);
+  },
+  async getWorkerFull(id: string) {
+    const res = await apiGet<BackendWorkerProfile>(`/admin/workers/${id}/full`);
+    return toWorkerProfile(res);
+  },
+  async getAdminJobs() {
+    const jobs = await apiGet<BackendJob[]>('/admin/jobs');
+    return jobs.map(toJob);
+  },
+  async getJobStats(id: string) {
+    return await apiGet<{ job: BackendJob; applicationsCount: number; applicationsByStatus: Record<string, number>; applicants: any[] }>(`/admin/jobs/${id}/stats`);
+  },
+  async bulkCreateLocations(items: { state: string; city: string; locality: string }[]) {
+    const results = await Promise.allSettled(
+      items.map((item) => masterDataApi.create('locations', item))
+    );
+    return results;
+  },
+  async bulkCreateCandidates(candidates: { name: string; email: string; phone: string; experienceYears?: number; city?: string; state?: string; skills?: string[]; resumeUrl?: string }[]) {
+    const results = await Promise.allSettled(
+      candidates.map(async (c) => {
+        try {
+          const res = await authApi.registerWorker({
+            name: c.name,
+            email: c.email,
+            phone: c.phone || '9999999999',
+            password: 'Candidate@1234',
+          });
+          return res;
+        } catch (e) {
+          throw e;
+        }
+      })
+    );
+    return results;
+  },
 };
 
 let cachedAllLocations: Promise<BackendLocation[]> | null = null;

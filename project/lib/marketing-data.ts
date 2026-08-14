@@ -1,10 +1,10 @@
 export const trustedCompanies = [
-  { name: 'SCN Jobs', logo: '' },
-  { name: 'Manufacturing', logo: '' },
-  { name: 'Healthcare', logo: '' },
-  { name: 'Logistics', logo: '' },
-  { name: 'Retail', logo: '' },
-  { name: 'Hospitality', logo: '' },
+  { name: 'Tata Group', logo: '/images/logos/tata.png' },
+  { name: 'Reliance Industries', logo: '/images/logos/reliance.png' },
+  { name: 'Apollo Care', logo: '/images/logos/apollo.png' },
+  { name: 'Delhivery Express', logo: '/images/logos/delhivery.png' },
+  { name: 'Taj Hotels', logo: '/images/logos/tata.png' },
+  { name: 'Zeta Tech', logo: '/images/logos/reliance.png' },
 ];
 
 export const topIndustries = [

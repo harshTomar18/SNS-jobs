@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total Recruiters" value={stats?.totalRecruiters || 0} icon={Users} color="primary" delay={0} />
-        <StatCard label="Total Workers" value={(stats?.totalWorkers || 0).toLocaleString()} icon={Users} color="accent" delay={0.05} />
+        <StatCard label="Total Candidates" value={(stats?.totalWorkers || 0).toLocaleString()} icon={Users} color="accent" delay={0.05} />
         <StatCard label="Total Jobs" value={(stats?.totalJobs || 0).toLocaleString()} icon={Briefcase} color="warning" delay={0.1} />
         <StatCard label="Total Applications" value={(stats?.totalApplications || 0).toLocaleString()} icon={FileText} color="success" delay={0.15} />
       </div>
@@ -46,7 +46,7 @@ export default function AdminDashboardPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="font-semibold">Recent Workers</h3>
+            <h3 className="font-semibold">Recent Candidates</h3>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/admin/workers">View all<ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
             </Button>
@@ -69,7 +69,7 @@ export default function AdminDashboardPage() {
                 </Badge>
               </div>
             ))}
-            {recentWorkers.length === 0 && <p className="text-sm text-muted-foreground">No workers found.</p>}
+            {recentWorkers.length === 0 && <p className="text-sm text-muted-foreground">No candidates found.</p>}
           </div>
         </Card>
 
