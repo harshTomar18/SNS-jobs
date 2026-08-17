@@ -551,57 +551,9 @@ export default function WorkerOnboardingPage() {
                   </div>
                 </div>
 
-                {/* Department / Function & Industry Row */}
+                {/* Industry & Department / Function Row (Industry First, Department Second) */}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  {/* Department / Function */}
-                  <div className="space-y-2 relative">
-                    <Label>Department / Function</Label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        autoComplete="off"
-                        placeholder="Search or type department (e.g. Software Engineering)..."
-                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
-                        value={deptInput}
-                        onChange={(e) => {
-                          setDeptInput(e.target.value);
-                          setIsDeptOpen(true);
-                          setValue('departmentName', e.target.value);
-                        }}
-                        onFocus={() => setIsDeptOpen(true)}
-                        onBlur={() => setTimeout(() => setIsDeptOpen(false), 200)}
-                      />
-                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
-                    </div>
-                    {isDeptOpen && (
-                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                        {functionsQuery.isLoading ? (
-                          <div className="flex items-center justify-center p-2.5">
-                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                          </div>
-                        ) : filteredFunctions.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
-                        ) : (
-                          filteredFunctions.map((fn: BackendLookup) => (
-                            <button
-                              key={fn.id}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => {
-                                setDeptInput(fn.name);
-                                setValue('departmentName', fn.name);
-                                setIsDeptOpen(false);
-                              }}
-                            >
-                              {fn.name}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Industry */}
+                  {/* 1. Industry (First) */}
                   <div className="space-y-2 relative">
                     <Label>Industry</Label>
                     <div className="relative">
@@ -642,6 +594,57 @@ export default function WorkerOnboardingPage() {
                               }}
                             >
                               {ind.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 2. Department / Function (Second - Enabled when Industry is filled) */}
+                  <div className="space-y-2 relative">
+                    <Label>Department / Function</Label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        disabled={!indInput.trim()}
+                        placeholder={indInput.trim() ? "Search or type department (e.g. Software Engineering)..." : "Select Industry first"}
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-100/50 cursor-pointer disabled:cursor-not-allowed"
+                        value={deptInput}
+                        onChange={(e) => {
+                          setDeptInput(e.target.value);
+                          setIsDeptOpen(true);
+                          setValue('departmentName', e.target.value);
+                        }}
+                        onFocus={() => {
+                          if (indInput.trim()) setIsDeptOpen(true);
+                        }}
+                        onBlur={() => setTimeout(() => setIsDeptOpen(false), 200)}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isDeptOpen && indInput.trim() && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                        {functionsQuery.isLoading ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : filteredFunctions.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
+                        ) : (
+                          filteredFunctions.map((fn: BackendLookup) => (
+                            <button
+                              key={fn.id}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => {
+                                setDeptInput(fn.name);
+                                setValue('departmentName', fn.name);
+                                setIsDeptOpen(false);
+                              }}
+                            >
+                              {fn.name}
                             </button>
                           ))
                         )}

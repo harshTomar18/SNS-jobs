@@ -396,9 +396,15 @@ export default function WorkerProfilePage() {
                 <p className="text-slate-400 font-bold text-[10px] leading-normal max-w-[200px]">Add more details to reach <span className="text-blue-600">All-Star</span> status.</p>
               </Card>
 
-              {(profile.dob || profile.maritalStatus || profile.category || profile.jobPreference || profile.expectedSalaryMin || profile.expectedSalaryMax) && (
+              {(profile.department || profile.departmentName || profile.dob || profile.maritalStatus || profile.category || profile.jobPreference || profile.expectedSalaryMin || profile.expectedSalaryMax) && (
                 <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-3">
                   <h3 className="font-extrabold text-slate-800 text-xs border-b border-slate-50 pb-2.5">Personal & Preference Details</h3>
+                  {(profile.department || profile.departmentName) && (
+                    <div className="flex justify-between text-xs">
+                      <span className="font-bold text-slate-400">Department / Function</span>
+                      <span className="font-extrabold text-indigo-700">{profile.department || profile.departmentName}</span>
+                    </div>
+                  )}
                   {(profile.expectedSalaryMin > 0 || profile.expectedSalaryMax > 0) && (
                     <div className="flex justify-between text-xs">
                       <span className="font-bold text-slate-400">Expected Salary</span>
@@ -493,6 +499,7 @@ export default function WorkerProfilePage() {
                           </Select>
                         </div>
                         <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Job Preference</Label><Input placeholder="e.g. Full Time, Remote" value={form.jobPreference} className="rounded-xl border-slate-200 text-xs" onChange={e => setForm({ ...form, jobPreference: e.target.value })} /></div>
+                        <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Department / Function</Label><Input placeholder="e.g. Software Engineering" value={form.departmentName} className="rounded-xl border-slate-200 text-xs" onChange={e => setForm({ ...form, departmentName: e.target.value })} /></div>
                       </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
