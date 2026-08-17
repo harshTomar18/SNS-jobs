@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText, X, Loader2, Search } from 'lucide-react';
+import { Briefcase, Check, ChevronLeft, ChevronRight, GraduationCap, MapPin, User as UserIcon, FileText, X, Loader2, Search, Plus, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -71,6 +71,15 @@ const QUAL_CATEGORY_LABELS: Record<string, string> = {
 
 const QUAL_CATEGORY_ORDER = ['TEN', 'TWELVE', 'DIPLOMA', 'GRADUATE', 'POST_GRADUATE', 'ANY'];
 
+export interface EducationEntryItem {
+  qualificationId: number;
+  qualificationName: string;
+  level: string;
+  levelLabel: string;
+  institute: string;
+  passoutYear: number;
+}
+
 export default function WorkerOnboardingPage() {
   const router = useRouter();
   const { user, updateUser } = useAuth();
@@ -108,11 +117,52 @@ export default function WorkerOnboardingPage() {
   const [isQualOpen, setIsQualOpen] = useState(false);
   const [selectedQualLevel, setSelectedQualLevel] = useState<string>('');
 
+  const [educationList, setEducationList] = useState<EducationEntryItem[]>([]);
+
   const qualGroupsQuery = useQuery<Record<string, BackendLookup[]>>({
     queryKey: ['master', 'qualifications', 'grouped'],
     queryFn: () => workerApi.getQualificationsGrouped(),
   });
   const qualGroups: Record<string, BackendLookup[]> = qualGroupsQuery.data || {};
+
+  const handleAddEducation = () => {
+    const qualIdStr = watch('qualificationId');
+    const instituteVal = watch('institute');
+    const passoutYearVal = watch('passoutYear');
+
+    if (!selectedQualLevel || !qualIdStr || !instituteVal || !passoutYearVal) {
+      toast.error('Please select Qualification Level, Specific Qualification, Institute Name, and Year of Passing before adding.');
+      return;
+    }
+
+    const qualObj = (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+      .find((q: any) => String(q.id) === String(qualIdStr));
+
+    const qualName = qualObj ? (qualObj.name || String(qualObj.id)) : qualSearch || 'Qualification';
+
+    const newItem: EducationEntryItem = {
+      qualificationId: Number(qualIdStr),
+      qualificationName: qualName,
+      level: selectedQualLevel,
+      levelLabel: QUAL_CATEGORY_LABELS[selectedQualLevel] || selectedQualLevel,
+      institute: instituteVal,
+      passoutYear: Number(passoutYearVal),
+    };
+
+    setEducationList((prev) => [...prev, newItem]);
+    
+    // Clear temporary inputs for next entry
+    setSelectedQualLevel('');
+    setQualSearch('');
+    setValue('qualificationId', '');
+    setValue('institute', '');
+    setValue('passoutYear', undefined as any);
+    toast.success(`Added ${newItem.levelLabel} qualification`);
+  };
+
+  const handleRemoveEducation = (index: number) => {
+    setEducationList((prev) => prev.filter((_, idx) => idx !== index));
+  };
 
   const functionsQuery = useQuery({ queryKey: ['master', 'functions'], queryFn: () => masterDataApi.raw('functions') });
   const rawFunctionsData = functionsQuery.data;
@@ -267,12 +317,34 @@ export default function WorkerOnboardingPage() {
         noticePeriodDays: data.workingStatus === 'SERVING_NOTICE' ? (data.noticePeriodDays || undefined) : undefined,
       });
 
-      // 2. Add education if provided
-      if (data.qualificationId && data.institute && data.passoutYear) {
+      // 2. Add all education items (multiple qualifications supported)
+      const allEducationItems = [...educationList];
+      
+      const currentQualId = data.qualificationId;
+      const currentInstitute = data.institute;
+      const currentPassoutYear = data.passoutYear;
+      if (selectedQualLevel && currentQualId && currentInstitute && currentPassoutYear) {
+        const qualObj = (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+          .find((q: any) => String(q.id) === String(currentQualId));
+        const qualName = qualObj ? (qualObj.name || String(qualObj.id)) : qualSearch || 'Qualification';
+
+        allEducationItems.push({
+          qualificationId: Number(currentQualId),
+          qualificationName: qualName,
+          level: selectedQualLevel,
+          levelLabel: QUAL_CATEGORY_LABELS[selectedQualLevel] || selectedQualLevel,
+          institute: currentInstitute,
+          passoutYear: Number(currentPassoutYear),
+        });
+      }
+
+      for (const edu of allEducationItems) {
         await workerApi.addEducation({
-          qualificationId: Number(data.qualificationId),
-          institute: data.institute,
-          passoutYear: data.passoutYear,
+          qualificationId: edu.qualificationId,
+          qualificationName: edu.qualificationName,
+          level: edu.level,
+          institute: edu.institute,
+          passoutYear: edu.passoutYear,
         });
       }
 
@@ -701,90 +773,143 @@ export default function WorkerOnboardingPage() {
             )}
 
             {currentStep === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-                <h2 className="text-xl font-semibold">Education (Optional)</h2>
-                
-                {/* 1. Qualification Level */}
-                <div className="space-y-2">
-                  <Label>Qualification Level</Label>
-                  <Select
-                    value={selectedQualLevel}
-                    onValueChange={(lvl) => {
-                      setSelectedQualLevel(lvl);
-                      setValue('qualificationId', '');
-                      setQualSearch('');
-                    }}
-                  >
-                    <SelectTrigger><SelectValue placeholder="Select Level (10th, 12th, Graduate, Diploma, etc.)" /></SelectTrigger>
-                    <SelectContent>
-                      {QUAL_CATEGORY_ORDER.map((catKey) => (
-                        <SelectItem key={catKey} value={catKey}>
-                          {QUAL_CATEGORY_LABELS[catKey] || catKey}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">Education (Optional)</h2>
+                  <span className="text-xs text-muted-foreground font-semibold">Add multiple (10th, 12th, Diploma, Graduate, etc.)</span>
                 </div>
 
-                {/* 2. Specific Qualification Dropdown with Search */}
-                {selectedQualLevel && (
-                  <div className="space-y-2 relative">
-                    <Label>Specific Qualification</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
-                      <Input
-                        placeholder={`Type to search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
-                        value={qualSearch}
-                        onChange={(e) => {
-                          setQualSearch(e.target.value);
-                          setIsQualOpen(true);
-                        }}
-                        onFocus={() => setIsQualOpen(true)}
-                        className="pl-9 font-medium"
-                      />
+                {/* List of Added Qualifications */}
+                {educationList.length > 0 && (
+                  <div className="space-y-2.5 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                    <h3 className="text-xs font-bold text-slate-800 flex items-center justify-between">
+                      <span>Added Qualifications ({educationList.length}):</span>
+                      <span className="text-[10px] text-blue-600 font-semibold">Ready to save</span>
+                    </h3>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {educationList.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-3 p-3 bg-white border border-slate-200 rounded-xl text-xs shadow-sm">
+                          <div className="space-y-0.5 min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-extrabold text-[10px] uppercase border border-blue-200/60 shrink-0">
+                                {item.levelLabel}
+                              </span>
+                              <span className="font-extrabold text-slate-800 truncate">{item.qualificationName}</span>
+                            </div>
+                            <p className="text-slate-500 font-semibold text-[11px] mt-0.5">{item.institute} • Passed in {item.passoutYear}</p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0"
+                            onClick={() => handleRemoveEducation(idx)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                    {isQualOpen && (
-                      <div className="absolute left-0 right-0 top-[68px] z-50 max-h-52 overflow-y-auto space-y-1 border rounded-md p-2 border-border bg-popover text-popover-foreground shadow-xl">
-                        {qualGroupsQuery.isLoading ? (
-                          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
-                        ) : !(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel)).filter((q: any) => !qualSearch || (q.name || '').toLowerCase().includes(qualSearch.toLowerCase())).length ? (
-                          <p className="text-xs text-muted-foreground text-center py-3">No matching qualifications found.</p>
-                        ) : (
-                          (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
-                            .filter((q: any) => {
-                              if (!qualSearch) return true;
-                              const name = 'name' in q ? q.name : String(q.id);
-                              return name.toLowerCase().includes(qualSearch.toLowerCase());
-                            })
-                            .map((q: any) => (
-                              <button
-                                key={q.id}
-                                type="button"
-                                onClick={() => {
-                                  setValue('qualificationId', String(q.id));
-                                  setQualSearch(q.name || String(q.id));
-                                  setIsQualOpen(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                                  watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
-                                }`}
-                              >
-                                {'name' in q ? q.name : String(q.id)}
-                              </button>
-                            ))
-                        )}
-                      </div>
-                    )}
                   </div>
                 )}
+                
+                <div className="space-y-4 p-4 border border-slate-200/70 rounded-2xl bg-white/60">
+                  <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                    {educationList.length > 0 ? 'Add Another Qualification' : 'Qualification Details'}
+                  </h3>
 
-                <div className="space-y-2">
-                  <Label>Institute Name</Label>
-                  <Input {...register('institute')} placeholder="e.g. University of Mumbai" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Year of Passing</Label>
-                  <Input type="number" {...register('passoutYear')} placeholder="e.g. 2020" />
+                  {/* 1. Qualification Level */}
+                  <div className="space-y-2">
+                    <Label>Qualification Level</Label>
+                    <Select
+                      value={selectedQualLevel}
+                      onValueChange={(lvl) => {
+                        setSelectedQualLevel(lvl);
+                        setValue('qualificationId', '');
+                        setQualSearch('');
+                      }}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select Level (10th, 12th, Diploma, Graduate, etc.)" /></SelectTrigger>
+                      <SelectContent>
+                        {QUAL_CATEGORY_ORDER.map((catKey) => (
+                          <SelectItem key={catKey} value={catKey}>
+                            {QUAL_CATEGORY_LABELS[catKey] || catKey}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 2. Specific Qualification Dropdown with Search */}
+                  {selectedQualLevel && (
+                    <div className="space-y-2 relative">
+                      <Label>Specific Qualification</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground z-10" />
+                        <Input
+                          placeholder={`Type to search ${QUAL_CATEGORY_LABELS[selectedQualLevel] || 'qualification'}...`}
+                          value={qualSearch}
+                          onChange={(e) => {
+                            setQualSearch(e.target.value);
+                            setIsQualOpen(true);
+                          }}
+                          onFocus={() => setIsQualOpen(true)}
+                          className="pl-9 font-medium"
+                        />
+                      </div>
+                      {isQualOpen && (
+                        <div className="absolute left-0 right-0 top-[68px] z-50 max-h-52 overflow-y-auto space-y-1 border rounded-md p-2 border-border bg-popover text-popover-foreground shadow-xl">
+                          {qualGroupsQuery.isLoading ? (
+                            <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
+                          ) : !(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel)).filter((q: any) => !qualSearch || (q.name || '').toLowerCase().includes(qualSearch.toLowerCase())).length ? (
+                            <p className="text-xs text-muted-foreground text-center py-3">No matching qualifications found.</p>
+                          ) : (
+                            (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+                              .filter((q: any) => {
+                                if (!qualSearch) return true;
+                                const name = 'name' in q ? q.name : String(q.id);
+                                return name.toLowerCase().includes(qualSearch.toLowerCase());
+                              })
+                              .map((q: any) => (
+                                <button
+                                  key={q.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setValue('qualificationId', String(q.id));
+                                    setQualSearch(q.name || String(q.id));
+                                    setIsQualOpen(false);
+                                  }}
+                                  className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${
+                                    watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
+                                  }`}
+                                >
+                                  {'name' in q ? q.name : String(q.id)}
+                                </button>
+                              ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>Institute Name</Label>
+                    <Input {...register('institute')} placeholder="e.g. University of Mumbai" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Year of Passing</Label>
+                    <Input type="number" {...register('passoutYear')} placeholder="e.g. 2020" />
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddEducation}
+                    className="w-full border-blue-200 bg-blue-50/50 text-blue-700 hover:bg-blue-100 font-bold rounded-xl text-xs py-2.5 flex items-center justify-center gap-2 mt-2 shadow-sm"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Qualification (10th, 12th, Diploma, Graduate, etc.)
+                  </Button>
                 </div>
               </div>
             )}
