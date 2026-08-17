@@ -236,16 +236,6 @@ export default function AdminRecruitersPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-2 text-xs text-muted-foreground"
-                onClick={() => setFullDetailRecruiterId(recruiter.id)}
-              >
-                View Posted Jobs & Stats
-              </Button>
             </div>
           </Card>
         ))}
