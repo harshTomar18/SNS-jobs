@@ -88,6 +88,7 @@ export default function WorkerOnboardingPage() {
   const [cityInput, setCityInput] = useState('');
   const [isCityOpen, setIsCityOpen] = useState(false);
 
+  const [isWhatsapp, setIsWhatsapp] = useState<boolean>(true);
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
 
@@ -361,16 +362,50 @@ export default function WorkerOnboardingPage() {
                     {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
                   </div>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Primary Phone Number *</Label>
-                    <Input {...register('phone')} readOnly className="bg-muted cursor-not-allowed opacity-75" />
-                    {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-1.5 p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl">
+                    <Label className="text-xs font-bold text-slate-800">Is primary phone number your WhatsApp number?</Label>
+                    <div className="flex items-center gap-6 pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                        <input
+                          type="radio"
+                          name="isWhatsapp"
+                          checked={isWhatsapp === true}
+                          onChange={() => {
+                            setIsWhatsapp(true);
+                            setValue('alternatePhone', '');
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        Yes (WhatsApp is same)
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                        <input
+                          type="radio"
+                          name="isWhatsapp"
+                          checked={isWhatsapp === false}
+                          onChange={() => setIsWhatsapp(false)}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                        />
+                        No (Add alternate number)
+                      </label>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Alternate Phone Number (Optional)</Label>
-                    <Input placeholder="e.g. 9876543210" {...register('alternatePhone')} />
-                    {errors.alternatePhone && <p className="text-xs text-destructive">{errors.alternatePhone.message}</p>}
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Primary Phone Number *</Label>
+                      <Input {...register('phone')} readOnly className="bg-muted cursor-not-allowed opacity-75" />
+                      {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                    </div>
+
+                    {!isWhatsapp && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <Label>Alternate Phone Number (Optional)</Label>
+                        <Input placeholder="e.g. 9876543210" {...register('alternatePhone')} />
+                        {errors.alternatePhone && <p className="text-xs text-destructive">{errors.alternatePhone.message}</p>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
