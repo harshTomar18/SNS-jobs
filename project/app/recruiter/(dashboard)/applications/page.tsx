@@ -14,7 +14,14 @@ import {
   ChevronRight,
   ChevronDown,
   Clock,
-  UserCheck
+  UserCheck,
+  Phone,
+  Mail,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Award,
+  Globe
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,11 +41,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/empty-state';
-import { Application, ApplicationStatus } from '@/lib/types';
+import { Application, ApplicationStatus, WorkerProfile } from '@/lib/types';
 import { getInitials } from '@/lib/format';
-import { applicationsApi } from '@/lib/scn-api';
+import { applicationsApi, adminApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -54,13 +67,50 @@ export default function RecruiterApplicationsPage() {
 
   // Selected applications checkboxes state
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  // Detail Dialog state
+  
+  // Detail Dialog state (Application View)
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [localStatuses, setLocalStatuses] = useState<Record<string, ApplicationStatus>>({});
 
+  // Candidate Profile Sheet state (Worker Profile View)
+  const [selectedCandidateApp, setSelectedCandidateApp] = useState<Application | null>(null);
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [isWorkerSheetOpen, setIsWorkerSheetOpen] = useState(false);
+
   const applicationsQuery = useQuery({ queryKey: ['recruiter-applications'], queryFn: applicationsApi.recruiterList });
   const rawApps = useMemo<Application[]>(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
+
+  // Worker Detail Query for Candidate Profile Drawer
+  const workerDetailQuery = useQuery({
+    queryKey: ['candidate-worker-full', selectedWorkerId],
+    queryFn: () => adminApi.getWorkerFull(selectedWorkerId!),
+    enabled: !!selectedWorkerId && isWorkerSheetOpen,
+  });
+  const fetchedWorkerProfile: WorkerProfile | null = workerDetailQuery.data ?? null;
+
+  const workerProfile: WorkerProfile | null = useMemo(() => {
+    if (fetchedWorkerProfile) return fetchedWorkerProfile;
+    if (selectedCandidateApp?.workerProfile) return selectedCandidateApp.workerProfile;
+    if (selectedCandidateApp) {
+      return {
+        id: selectedCandidateApp.workerId,
+        name: selectedCandidateApp.workerName,
+        headline: selectedCandidateApp.workerHeadline || 'Worker Profile',
+        city: selectedCandidateApp.workerCity || 'Location not specified',
+        experienceYears: selectedCandidateApp.workerExperienceYears || 0,
+        totalExperienceMonths: (selectedCandidateApp.workerExperienceYears || 0) * 12,
+        profilePhotoUrl: selectedCandidateApp.workerAvatar,
+        resumeUrl: selectedCandidateApp.resumeUrl,
+        summary: selectedCandidateApp.coverLetter || '',
+        skills: [],
+        languages: [],
+        experience: [],
+        education: []
+      } as any;
+    }
+    return null;
+  }, [fetchedWorkerProfile, selectedCandidateApp]);
 
   const applications = useMemo<Application[]>(() => {
     if (Object.keys(localStatuses).length === 0) return rawApps;
@@ -87,13 +137,23 @@ export default function RecruiterApplicationsPage() {
   });
 
   const updateStatus = (id: string, status: ApplicationStatus, notes?: string) => {
-    // 1. Instantly update local state overlay for 0ms visual update!
     setLocalStatuses(prev => ({ ...prev, [id]: status }));
     if (selectedApp && selectedApp.id === id) {
       setSelectedApp(prev => prev ? { ...prev, status } : prev);
     }
-    // 2. Persist status to backend in background
     statusMutation.mutate({ id, status, notes });
+  };
+
+  const isStatusMatch = (appStatus: string, target: string) => {
+    if (target === 'all') return true;
+    if (target === 'applied') return appStatus === 'applied';
+    if (target === 'accepted') return appStatus === 'accepted';
+    if (target === 'rejected') return appStatus === 'rejected';
+    if (target === 'shortlisted') return appStatus === 'shortlisted' || appStatus === 'accepted';
+    if (target === 'notshortlisted') return appStatus === 'notshortlisted' || appStatus === 'not_shortlisted' || appStatus === 'rejected';
+    if (target === 'selected_for_interview') return appStatus === 'selected_for_interview' || appStatus === 'interview';
+    if (target === 'resume_viewed') return appStatus === 'resume_viewed';
+    return appStatus === target;
   };
 
   // Filter application dates based on Time dropdown
@@ -101,44 +161,29 @@ export default function RecruiterApplicationsPage() {
     if (timeFilter === 'all') return true;
     const appliedTime = new Date(appliedAt).getTime();
     const now = Date.now();
-    if (timeFilter === 'day') {
-      return now - appliedTime <= 24 * 60 * 60 * 1000;
-    }
-    if (timeFilter === 'week') {
-      return now - appliedTime <= 7 * 24 * 60 * 60 * 1000;
-    }
-    if (timeFilter === 'month') {
-      return now - appliedTime <= 30 * 24 * 60 * 60 * 1000;
-    }
+    if (timeFilter === 'day') return now - appliedTime <= 24 * 60 * 60 * 1000;
+    if (timeFilter === 'week') return now - appliedTime <= 7 * 24 * 60 * 60 * 1000;
+    if (timeFilter === 'month') return now - appliedTime <= 30 * 24 * 60 * 60 * 1000;
     return true;
   };
 
   // Total Category Counts
   const counts = {
     all: applications.length,
-    applied: applications.filter((app) => app.status === 'applied').length,
-    accepted: applications.filter((app) => app.status === 'accepted' || app.status === 'shortlisted').length,
-    rejected: applications.filter((app) => app.status === 'rejected' || app.status === 'not_shortlisted').length,
-    interview: applications.filter((app) => app.status === 'interview').length,
-    resume_viewed: applications.filter((app) => app.status === 'resume_viewed').length,
+    applied: applications.filter((app) => isStatusMatch(app.status, 'applied')).length,
+    shortlisted: applications.filter((app) => isStatusMatch(app.status, 'shortlisted')).length,
+    notshortlisted: applications.filter((app) => isStatusMatch(app.status, 'notshortlisted')).length,
+    selected_for_interview: applications.filter((app) => isStatusMatch(app.status, 'selected_for_interview')).length,
+    resume_viewed: applications.filter((app) => isStatusMatch(app.status, 'resume_viewed')).length,
   };
-
-  // Check if an application is in a terminal state (no further status changes allowed)
-  const isTerminal = (status: string) => status === 'accepted' || status === 'rejected';
 
   // Filter logic
   const filteredApps = useMemo(() => {
     return applications.filter((app) => {
-      // Tab selection filter
-      if (activeTab !== 'all' && app.status !== activeTab) return false;
-      
-      // Secondary dropdown status filter (if selected)
-      if (statusFilter !== 'all' && app.status !== statusFilter) return false;
-
-      // Time filter
+      if (activeTab !== 'all' && !isStatusMatch(app.status, activeTab)) return false;
+      if (statusFilter !== 'all' && !isStatusMatch(app.status, statusFilter)) return false;
       if (!filterByTime(app.appliedAt)) return false;
 
-      // Text search query
       if (search) {
         const query = search.toLowerCase();
         const matchesName = app.workerName.toLowerCase().includes(query);
@@ -158,7 +203,6 @@ export default function RecruiterApplicationsPage() {
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const paginatedApps = filteredApps.slice(startIndex, endIndex);
 
-  // Checkbox interactions
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedIds(paginatedApps.map(a => a.id));
@@ -179,6 +223,28 @@ export default function RecruiterApplicationsPage() {
     return new Date(dateString).toLocaleDateString([], { month: 'short', day: '2-digit' });
   };
 
+  const handleOpenCandidateProfile = (app: Application) => {
+    setSelectedCandidateApp(app);
+    setSelectedWorkerId(app.workerId);
+    setIsWorkerSheetOpen(true);
+  };
+
+  const renderStatusBadge = (status: ApplicationStatus) => {
+    if (status === 'shortlisted' || status === 'accepted') {
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SHORTLISTED</Badge>;
+    }
+    if (status === 'notshortlisted' || status === 'not_shortlisted' || status === 'rejected') {
+      return <Badge variant="outline" className="bg-red-50 text-red-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">NOT SHORTLISTED</Badge>;
+    }
+    if (status === 'selected_for_interview' || status === 'interview') {
+      return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SELECTED FOR INTERVIEW</Badge>;
+    }
+    if (status === 'resume_viewed') {
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">RESUME VIEWED</Badge>;
+    }
+    return <Badge variant="outline" className="bg-blue-50/70 text-blue-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">IN REVIEW</Badge>;
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header Container */}
@@ -192,14 +258,14 @@ export default function RecruiterApplicationsPage() {
         </Badge>
       </div>
 
-      {/* Tabs list (Matches mockup categories) */}
+      {/* Tabs list */}
       <div className="border-b border-slate-100 flex items-center overflow-x-auto gap-2 pb-1">
         {[
           { value: 'all', label: 'All Applications', count: counts.all },
           { value: 'applied', label: 'In Review', count: counts.applied },
-          { value: 'accepted', label: 'Shortlisted', count: counts.accepted },
-          { value: 'rejected', label: 'Not Shortlisted', count: counts.rejected },
-          { value: 'interview', label: 'Selected for Interview', count: counts.interview },
+          { value: 'shortlisted', label: 'Shortlisted', count: counts.shortlisted },
+          { value: 'notshortlisted', label: 'Not Shortlisted', count: counts.notshortlisted },
+          { value: 'selected_for_interview', label: 'Selected for Interview', count: counts.selected_for_interview },
           { value: 'resume_viewed', label: 'Resume Viewed', count: counts.resume_viewed }
         ].map(tab => (
           <button
@@ -223,7 +289,7 @@ export default function RecruiterApplicationsPage() {
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Search by name, job, or ID"
+            placeholder="Search by candidate name, job, or ID"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
@@ -240,10 +306,10 @@ export default function RecruiterApplicationsPage() {
               className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300 w-full sm:w-auto"
             >
               <option value="all">All Status</option>
-              <option value="applied">In Review</option>
-              <option value="accepted">Shortlisted</option>
-              <option value="rejected">Not Shortlisted</option>
-              <option value="interview">Selected for Interview</option>
+              <option value="applied">In Review (Applied)</option>
+              <option value="shortlisted">Shortlisted</option>
+              <option value="notshortlisted">Not Shortlisted</option>
+              <option value="selected_for_interview">Selected for Interview</option>
               <option value="resume_viewed">Resume Viewed</option>
             </select>
             <ChevronDown className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
@@ -301,15 +367,21 @@ export default function RecruiterApplicationsPage() {
                     />
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10 border border-slate-100">
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer group"
+                      onClick={() => handleOpenCandidateProfile(app)}
+                      title="Click to view candidate profile"
+                    >
+                      <Avatar className="h-10 w-10 border border-slate-100 group-hover:border-indigo-400 transition-all shadow-sm">
                         <AvatarImage src={app.workerAvatar} alt={app.workerName} />
-                        <AvatarFallback className="text-xs bg-indigo-50 text-indigo-600 font-bold">
+                        <AvatarFallback className="text-xs bg-indigo-50 text-indigo-600 font-bold group-hover:bg-indigo-100">
                           {getInitials(app.workerName)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col text-left">
-                        <span className="font-bold text-slate-800 text-sm leading-tight">{app.workerName}</span>
+                        <span className="font-bold text-slate-800 text-sm leading-tight group-hover:text-indigo-600 transition-colors underline-offset-2 group-hover:underline">
+                          {app.workerName}
+                        </span>
                         <span className="text-[11px] text-slate-400 font-semibold mt-0.5">{app.workerHeadline || 'Worker Profile'}</span>
                       </div>
                     </div>
@@ -329,21 +401,7 @@ export default function RecruiterApplicationsPage() {
                     <span className="text-sm font-bold text-slate-700">{app.workerCity || 'Location not specified'}</span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <Badge variant="outline" className={cn(
-                      "capitalize font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm inline-block tracking-wider",
-                      (app.status === 'accepted' || app.status === 'shortlisted') && "bg-emerald-50 text-emerald-700",
-                      app.status === 'applied' && "bg-blue-50/70 text-blue-600",
-                      (app.status === 'rejected' || app.status === 'not_shortlisted') && "bg-red-50 text-red-600",
-                      app.status === 'interview' && "bg-indigo-50 text-indigo-700",
-                      app.status === 'resume_viewed' && "bg-amber-50 text-amber-700",
-                      app.status === 'withdrawn' && "bg-slate-100 text-slate-400"
-                    )}>
-                      {app.status === 'accepted' || app.status === 'shortlisted' ? 'SHORTLISTED' :
-                       app.status === 'rejected' || app.status === 'not_shortlisted' ? 'NOT SHORTLISTED' :
-                       app.status === 'interview' ? 'SELECTED FOR INTERVIEW' :
-                       app.status === 'resume_viewed' ? 'RESUME VIEWED' :
-                       app.status === 'applied' ? 'IN REVIEW' : app.status.toUpperCase()}
-                    </Badge>
+                    {renderStatusBadge(app.status)}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <DropdownMenu>
@@ -352,10 +410,13 @@ export default function RecruiterApplicationsPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-52">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuLabel>Status & Profile</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleOpenCandidateProfile(app)}>
+                          <Eye className="mr-2 h-4 w-4 text-indigo-500" /> View Candidate Profile
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => { setSelectedApp(app); setIsDetailsOpen(true); }}>
-                          <Eye className="mr-2 h-4 w-4 text-slate-400" /> View Application
+                          <FileText className="mr-2 h-4 w-4 text-slate-400" /> View Application
                         </DropdownMenuItem>
                         {app.resumeUrl && (
                           <DropdownMenuItem asChild>
@@ -365,13 +426,13 @@ export default function RecruiterApplicationsPage() {
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'accepted')}>
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'shortlisted')}>
                           <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-500" /> Shortlist
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'rejected')} className="text-red-600 focus:text-red-700">
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'notshortlisted')} className="text-red-600 focus:text-red-700">
                           <XCircle className="mr-2 h-4 w-4" /> Not Shortlist
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'interview')}>
+                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'selected_for_interview')}>
                           <UserCheck className="mr-2 h-4 w-4 text-indigo-500" /> Selected for Interview
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => updateStatus(app.id, 'resume_viewed')}>
@@ -415,7 +476,6 @@ export default function RecruiterApplicationsPage() {
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               {Array.from({ length: totalPages }).map((_, idx) => {
-                // simple ellipsis display logic if there are many pages
                 if (totalPages > 6 && idx !== 0 && idx !== totalPages - 1 && Math.abs(currentPage - (idx + 1)) > 1) {
                   if (idx + 1 === 2 || idx + 1 === totalPages - 1) {
                     return <span key={idx} className="text-slate-400 text-xs px-1 select-none">...</span>;
@@ -449,8 +509,205 @@ export default function RecruiterApplicationsPage() {
           </div>
         )}
       </Card>
+          {/* Candidate Profile Sheet (Opened when Candidate Name / Avatar is clicked) */}
+      <Sheet open={isWorkerSheetOpen} onOpenChange={setIsWorkerSheetOpen}>
+        <SheetContent side="right" className="h-full overflow-y-auto bg-white border-l border-slate-100 shadow-xl p-6 sm:max-w-xl w-3/4 md:w-[540px]">
+          <SheetHeader className="text-left border-b border-slate-50 pb-4 mb-4">
+            <SheetTitle className="text-lg font-bold text-slate-800">Worker Profile Details</SheetTitle>
+          </SheetHeader>
 
-      {/* Details Dialog */}
+          {workerDetailQuery.isLoading ? (
+            <div className="flex items-center justify-center p-12 text-slate-400 text-xs font-semibold">
+              Loading profile details...
+            </div>
+          ) : workerProfile ? (
+            <div className="space-y-6 mt-2 text-left">
+              {/* Header Avatar Card */}
+              <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
+                <Avatar className="h-16 w-16 border border-indigo-100 shadow-sm shrink-0">
+                  <AvatarImage src={workerProfile.profilePhotoUrl} alt={workerProfile.name} />
+                  <AvatarFallback className="text-lg font-bold bg-indigo-50 text-indigo-600">
+                    {getInitials(workerProfile.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="text-base font-extrabold text-slate-800 leading-tight">{workerProfile.name}</h3>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{workerProfile.headline || workerProfile.departmentName || 'Worker Profile'}</p>
+                  <p className="text-xs text-slate-500 font-semibold mt-1">
+                    {[
+                      workerProfile.city,
+                      workerProfile.totalExperienceMonths !== undefined
+                        ? `${Math.floor(workerProfile.totalExperienceMonths / 12)} Years Exp`
+                        : workerProfile.experienceYears !== undefined
+                          ? `${workerProfile.experienceYears} Years Exp`
+                          : null
+                    ].filter(Boolean).join(' • ') || 'Location not specified'}
+                  </p>
+                  {(workerProfile.phone || workerProfile.alternatePhone) && (
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-600 font-medium">
+                      {workerProfile.phone && <span>Phone: {workerProfile.phone}</span>}
+                      {workerProfile.alternatePhone && <span>Alt: {workerProfile.alternatePhone}</span>}
+                    </div>
+                  )}
+                </div>
+                {workerProfile.resumeUrl && (
+                  <Button size="sm" variant="outline" className="border-slate-200 font-bold rounded-xl shadow-sm text-xs shrink-0" asChild>
+                    <a href={workerProfile.resumeUrl} target="_blank" rel="noreferrer">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Resume
+                    </a>
+                  </Button>
+                )}
+              </div>
+
+              {/* PROFESSIONAL SUMMARY */}
+              <div className="text-left">
+                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">PROFESSIONAL SUMMARY</span>
+                <div className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 min-h-[44px]">
+                  {workerProfile.summary || 'No professional summary provided.'}
+                </div>
+              </div>
+
+              {/* Grid Specifications */}
+              <div className="grid grid-cols-2 gap-4 text-left border-t border-b border-slate-100 py-4">
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">EXPERIENCE</span>
+                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">
+                    {workerProfile.totalExperienceMonths !== undefined && workerProfile.totalExperienceMonths > 0
+                      ? `${Math.floor(workerProfile.totalExperienceMonths / 12)} Years`
+                      : workerProfile.experienceYears !== undefined
+                        ? `${workerProfile.experienceYears} Years`
+                        : '0 Years'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">SALARY BRACKET</span>
+                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">
+                    {workerProfile.expectedSalaryMin || workerProfile.expectedSalaryMax
+                      ? `₹${((workerProfile.expectedSalaryMin || 0) / 100000).toFixed(0)}L - ₹${((workerProfile.expectedSalaryMax || 0) / 100000).toFixed(0)}L`
+                      : '₹0L - ₹0L'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">AVAILABILITY</span>
+                  <p className="font-extrabold text-slate-700 text-sm mt-0.5 capitalize">
+                    {workerProfile.availability ? workerProfile.availability.toLowerCase().replace('-', ' ') : 'Immediate'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">LOCATION</span>
+                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">{workerProfile.city || workerProfile.state || 'N/A'}</p>
+                </div>
+              </div>
+
+              {/* TECHNICAL SKILLS */}
+              {workerProfile.skills && workerProfile.skills.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">TECHNICAL SKILLS</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {workerProfile.skills.map((skill, idx) => (
+                      <Badge key={idx} variant="secondary" className="bg-indigo-50 text-indigo-700 border-none font-bold text-xs py-1 px-3 rounded-full">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Languages & Proficiency Badges */}
+              {((workerProfile.languageDetails && workerProfile.languageDetails.length > 0) || (workerProfile.languages && workerProfile.languages.length > 0)) && (
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Languages Known</span>
+                  <div className="flex flex-wrap gap-2">
+                    {workerProfile.languageDetails?.map((lang, idx) => (
+                      <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-xs py-1 px-3 rounded-full flex items-center gap-1.5">
+                        <Globe className="h-3 w-3 text-indigo-500" />
+                        <span>{lang.name}</span>
+                        {lang.proficiency && (
+                          <span className="bg-indigo-100 text-indigo-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
+                            {lang.proficiency}
+                          </span>
+                        )}
+                      </Badge>
+                    ))}
+                    {(!workerProfile.languageDetails || workerProfile.languageDetails.length === 0) && workerProfile.languages?.map((lang, idx) => (
+                      <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-xs py-1 px-3 rounded-full">
+                        {lang}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Technical Skills */}
+              {workerProfile.skills && workerProfile.skills.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Skills</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {workerProfile.skills.map((skill, idx) => (
+                      <Badge key={idx} variant="secondary" className="bg-indigo-50 text-indigo-700 border-none font-bold text-xs py-1 px-2.5 rounded-full">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Work Experience History */}
+              {workerProfile.experience && workerProfile.experience.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Work Experience</span>
+                  <div className="space-y-2.5">
+                    {workerProfile.experience.map((exp: any) => (
+                      <div key={exp.id || exp.jobTitle} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-slate-800 text-xs">{exp.jobTitle}</h4>
+                          <span className="text-[10px] font-semibold text-slate-400">{exp.fromDate} - {exp.isCurrent ? 'Present' : exp.toDate || ''}</span>
+                        </div>
+                        <p className="text-xs font-semibold text-slate-600 flex items-center gap-1">
+                          <Briefcase className="h-3 w-3 text-slate-400" /> {exp.companyName}
+                        </p>
+                        {(exp.departmentName || exp.industryName) && (
+                          <p className="text-[11px] text-slate-400 font-medium">
+                            {[exp.departmentName, exp.industryName].filter(Boolean).join(' • ')}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {workerProfile.education && workerProfile.education.length > 0 && (
+                <div>
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Education</span>
+                  <div className="space-y-2">
+                    {workerProfile.education.map((edu: any) => (
+                      <div key={edu.id || edu.qualificationName} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-slate-800 text-xs">{edu.qualificationName || edu.qualification?.name}</h4>
+                          {edu.passoutYear && <span className="text-[10px] font-semibold text-slate-400">{edu.passoutYear}</span>}
+                        </div>
+                        {edu.institute && (
+                          <p className="text-xs font-semibold text-slate-600 flex items-center gap-1">
+                            <GraduationCap className="h-3 w-3 text-slate-400" /> {edu.institute}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-slate-400 text-xs font-semibold">
+              Candidate profile details unavailable.
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Application Detail Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl bg-white border border-slate-100 rounded-2xl shadow-xl p-6">
           <DialogHeader>
@@ -460,26 +717,22 @@ export default function RecruiterApplicationsPage() {
           {selectedApp && (
             <div className="space-y-6 mt-4">
               {/* Profile overview card */}
-              <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-xl">
-                <Avatar className="h-16 w-16 border-2 border-indigo-100">
+              <div 
+                className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-xl text-left cursor-pointer hover:border-indigo-200 transition-all group"
+                onClick={() => { setIsDetailsOpen(false); handleOpenCandidateProfile(selectedApp); }}
+              >
+                <Avatar className="h-16 w-16 border-2 border-indigo-100 shadow-sm">
                   <AvatarImage src={selectedApp.workerAvatar} alt={selectedApp.workerName} />
                   <AvatarFallback className="text-lg font-bold bg-indigo-50 text-indigo-600">{getInitials(selectedApp.workerName)}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 text-left">
-                  <h3 className="text-base font-extrabold text-slate-800 leading-tight">{selectedApp.workerName}</h3>
+                <div className="flex-1">
+                  <h3 className="text-base font-extrabold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{selectedApp.workerName}</h3>
                   <p className="text-xs text-slate-400 font-semibold mt-0.5">{selectedApp.workerHeadline || 'Worker Profile'}</p>
                   <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1">
                     <MapPinIcon /> {selectedApp.workerCity || 'Location not specified'} • {selectedApp.workerExperienceYears} Years Experience
                   </p>
                 </div>
-                <Badge variant="outline" className={cn(
-                  "capitalize font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm",
-                  selectedApp.status === 'accepted' && "bg-green-50 text-green-600",
-                  selectedApp.status === 'applied' && "bg-blue-50/70 text-blue-600",
-                  selectedApp.status === 'rejected' && "bg-red-50 text-red-600"
-                )}>
-                  {selectedApp.status === 'applied' ? 'IN REVIEW' : selectedApp.status.toUpperCase()}
-                </Badge>
+                {renderStatusBadge(selectedApp.status)}
               </div>
 
               {/* Cover Letter */}
@@ -495,7 +748,7 @@ export default function RecruiterApplicationsPage() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'accepted')}
+                  onClick={() => updateStatus(selectedApp.id, 'shortlisted')}
                   className="border-emerald-200 text-emerald-700 hover:bg-emerald-50/50 font-bold rounded-lg"
                 >
                   <CheckCircle2 className="mr-1.5 h-4 w-4 text-emerald-600" /> Shortlist
@@ -503,7 +756,7 @@ export default function RecruiterApplicationsPage() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'rejected')}
+                  onClick={() => updateStatus(selectedApp.id, 'notshortlisted')}
                   className="border-red-200 text-red-600 hover:bg-red-50/50 font-bold rounded-lg"
                 >
                   <XCircle className="mr-1.5 h-4 w-4 text-red-600" /> Not Shortlist
@@ -511,7 +764,7 @@ export default function RecruiterApplicationsPage() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'interview')}
+                  onClick={() => updateStatus(selectedApp.id, 'selected_for_interview')}
                   className="border-indigo-200 text-indigo-700 hover:bg-indigo-50/50 font-bold rounded-lg"
                 >
                   <UserCheck className="mr-1.5 h-4 w-4 text-indigo-600" /> Selected for Interview
@@ -542,7 +795,7 @@ export default function RecruiterApplicationsPage() {
                       <Clock className="h-4 w-4 text-slate-400 mt-0.5" />
                       <div className="flex-1">
                         <p className="font-bold text-slate-700 capitalize leading-tight">
-                          {event.label === 'applied' ? 'Applied (In Review)' : event.label === 'accepted' ? 'Accepted' : event.label}
+                          {event.label === 'applied' ? 'Applied (In Review)' : event.label}
                         </p>
                         {event.description && <p className="text-slate-500 font-medium mt-1">{event.description}</p>}
                         <p className="text-[10px] text-slate-400 font-medium mt-1">

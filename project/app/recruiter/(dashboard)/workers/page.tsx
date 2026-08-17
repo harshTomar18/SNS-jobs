@@ -84,7 +84,7 @@ export default function RecruiterWorkerSearchPage() {
       <div className="flex flex-row items-center justify-between flex-wrap gap-4 border-b border-slate-50 pb-6">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Worker Search</h1>
-          <p className="text-slate-400 text-sm font-semibold mt-1">Find candidates that match your assigned industries</p>
+          <p className="text-slate-400 text-sm font-semibold mt-1">Find workers that match your assigned industries</p>
         </div>
         <Badge variant="outline" className="bg-slate-100/80 text-slate-500 text-[10px] font-extrabold px-3 py-1.5 rounded-full border-none shadow-sm">
           {filteredWorkers.length.toLocaleString()} FOUND
@@ -223,7 +223,7 @@ export default function RecruiterWorkerSearchPage() {
       <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <SheetContent side="right" className="h-full overflow-y-auto bg-white border-l border-slate-100 shadow-xl p-6 sm:max-w-xl w-3/4 md:w-[500px]">
           <SheetHeader className="text-left border-b border-slate-50 pb-4 mb-4">
-            <SheetTitle className="text-lg font-bold text-slate-800">Candidate Profile Details</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-slate-800">Worker Profile Details</SheetTitle>
           </SheetHeader>
           
           {selectedWorker && (

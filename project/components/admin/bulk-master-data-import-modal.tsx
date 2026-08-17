@@ -153,7 +153,7 @@ export function BulkMasterDataImportModal({
               };
             } else {
               const keys = Object.keys(row);
-              const nameKey = keys.find((k) => /name|title|industry|skill|role|language|benefit|asset/i.test(k)) || keys[0];
+              const nameKey = keys.find((k) => /name|title|industry|function|skill|role|language|benefit|asset/i.test(k)) || keys[0];
               const name = String(row[nameKey] || '').trim();
               const isValid = Boolean(name);
               return {
@@ -191,6 +191,8 @@ export function BulkMasterDataImportModal({
       csvContent = 'Name,Level\n10th Pass,TEN\n12th Pass,TWELVE\nDiploma in Engineering,DIPLOMA\nBachelor of Technology,GRADUATE\nMaster of Business Administration,POST_GRADUATE';
     } else if (resource === 'industries') {
       csvContent = 'Name\nInformation Technology & Services\nHealthcare & Pharmaceuticals\nBanking & Financial Services\nManufacturing & Industrial\nRetail & E-commerce';
+    } else if (resource === 'functions') {
+      csvContent = 'Name\nMarketing & Communication\nBFSI, Investments & Trading\nSoftware Engineering\nHuman Resources\nSales & Business Development';
     } else if (resource === 'skills') {
       csvContent = 'Name\nReact.js\nNode.js\nPython\nProject Management\nData Analysis\nCustomer Service';
     } else if (resource === 'job-roles') {

@@ -93,15 +93,6 @@ export default function RecruiterDashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {/* Calendar Picker Card */}
-          <div className="flex items-center gap-4 bg-white border border-slate-100 rounded-2xl px-5 py-3 shadow-sm select-none">
-            <Calendar className="h-5 w-5 text-slate-400" />
-            <div className="flex flex-col text-left">
-              <span className="text-[10px] text-slate-400 font-bold leading-none uppercase">Last</span>
-              <span className="text-slate-700 text-sm font-extrabold leading-tight mt-0.5">30 days</span>
-            </div>
-            <ChevronDown className="h-4 w-4 text-slate-400 ml-2" />
-          </div>
 
           {/* Find Workers link */}
           <Link 

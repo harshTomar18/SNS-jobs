@@ -67,8 +67,10 @@ const QUAL_CATEGORY_LABELS: Record<string, string> = {
 const QUAL_CATEGORY_ORDER = ['TEN', 'TWELVE', 'DIPLOMA', 'GRADUATE', 'POST_GRADUATE', 'ANY'];
 
 const schema = z.object({
-  title: z.string().min(2, 'Job title is required'),
+  jobRoleName: z.string().min(2, 'Job role / title is required'),
   industryId: z.string().min(1, 'Industry is required'),
+  functionId: z.string().optional(),
+  functionName: z.string().optional(),
   locationId: z.string().min(1, 'Location is required'),
   jobRoleId: z.string().optional(),
   skillIds: z.array(z.string()).default([]),
@@ -77,6 +79,7 @@ const schema = z.object({
   wageMax: z.coerce.number().min(0, 'Maximum salary must be positive'),
   wageType: z.enum(['monthly', 'annual', 'daily']).default('monthly'),
   workingDays: z.coerce.number().min(1).max(7).default(5),
+  workingStatus: z.string().optional(),
   gender: z.enum(['ANY', 'MALE', 'FEMALE']).default('ANY'),
   freshersOnly: z.boolean().default(false),
   shiftType: z.enum(['day', 'night', 'rotational']),
@@ -87,8 +90,8 @@ const schema = z.object({
   benefitNames: z.array(z.string()).default([]),
   assetNames: z.array(z.string()).default([]),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  responsibilities: z.string().min(2, 'Add at least one responsibility'),
-  requirements: z.string().min(2, 'Add at least one requirement'),
+  responsibilities: z.string().optional(),
+  requirements: z.string().optional(),
   benefits: z.string().optional(),
 });
 
@@ -117,6 +120,9 @@ export default function CreateJobPage() {
 
   const [jobRoleSearch, setJobRoleSearch] = useState('');
   const [isJobRoleOpen, setIsJobRoleOpen] = useState(false);
+
+  const [functionSearch, setFunctionSearch] = useState('');
+  const [isFunctionOpen, setIsFunctionOpen] = useState(false);
 
   const [industrySearch, setIndustrySearch] = useState('');
   const [isIndustryOpen, setIsIndustryOpen] = useState(false);
@@ -153,8 +159,6 @@ export default function CreateJobPage() {
     enabled: !!selectedCity && !!selectedState,
   });
   const localities = localitiesData ?? EMPTY_ARRAY;
-
-
 
   const filteredStates = states.filter((s: string) => {
     if (!stateInput || stateInput === selectedState) return true;
@@ -199,12 +203,14 @@ export default function CreateJobPage() {
   };
 
   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
+  const functionsQuery = useQuery({ queryKey: ['master', 'functions'], queryFn: () => masterDataApi.raw('functions') });
   const locationsQuery = useQuery({ queryKey: ['master', 'locations'], queryFn: () => masterDataApi.raw('locations') });
   const jobRolesQuery = useQuery({ queryKey: ['master', 'job-roles'], queryFn: () => masterDataApi.raw('job-roles') });
   const skillsQuery = useQuery({ queryKey: ['master', 'skills'], queryFn: () => masterDataApi.raw('skills') });
   const qualificationsQuery = useQuery({ queryKey: ['master', 'qualifications'], queryFn: () => masterDataApi.raw('qualifications') });
-  
+
   const industries: MasterRawItem[] = industriesQuery.data ?? EMPTY_ARRAY;
+  const functions: MasterRawItem[] = functionsQuery.data ?? EMPTY_ARRAY;
   const locations: MasterRawItem[] = locationsQuery.data ?? EMPTY_ARRAY;
   const jobRoles: MasterRawItem[] = jobRolesQuery.data ?? EMPTY_ARRAY;
   const skills: MasterRawItem[] = Array.isArray(skillsQuery.data) ? skillsQuery.data : EMPTY_ARRAY;
@@ -213,8 +219,8 @@ export default function CreateJobPage() {
     return Array.isArray(rawQuals)
       ? rawQuals
       : rawQuals && typeof rawQuals === 'object'
-      ? Object.values(rawQuals).flat()
-      : EMPTY_ARRAY;
+        ? Object.values(rawQuals).flat()
+        : EMPTY_ARRAY;
   }, [rawQuals]);
 
   const {
@@ -227,7 +233,10 @@ export default function CreateJobPage() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: '',
+      jobRoleName: '',
+      functionId: '',
+      functionName: '',
+      workingStatus: 'IMMEDIATE_JOINER',
       wageMin: 0,
       wageMax: 0,
       skillIds: [],
@@ -243,8 +252,8 @@ export default function CreateJobPage() {
       maxExperienceYears: undefined,
       shiftType: 'day',
       jobType: 'full-time',
-      responsibilities: 'Own day-to-day responsibilities for the role',
-      requirements: 'Relevant experience or qualification for the role',
+      responsibilities: '',
+      requirements: '',
       benefits: '',
     },
   });
@@ -256,21 +265,28 @@ export default function CreateJobPage() {
   const publishMutation = useMutation({
     mutationFn: async (data: FormData) => {
       const selectedRole = jobRoles.find((r: any) => String(r.id) === data.jobRoleId);
-      const roleName = selectedRole && 'name' in selectedRole ? selectedRole.name : (jobRoleSearch || data.title);
+      const roleName = data.jobRoleName || (selectedRole && 'name' in selectedRole ? selectedRole.name : jobRoleSearch);
+      const selectedIndustry = industries.find((i: any) => String(i.id) === data.industryId);
+      const indName = selectedIndustry && 'name' in selectedIndustry ? selectedIndustry.name : industrySearch;
+      const selectedFunction = functions.find((f: any) => String(f.id) === data.functionId);
+      const funcName = data.functionName || (selectedFunction && 'name' in selectedFunction ? selectedFunction.name : functionSearch);
 
       const job = await jobsApi.create({
-        title: data.title,
+        jobRoleName: roleName,
         description: data.description,
         industryId: Number(data.industryId),
+        industryName: indName || undefined,
+        functionId: data.functionId ? Number(data.functionId) : undefined,
+        functionName: funcName || undefined,
         locationId: Number(data.locationId),
         jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
-        jobRoleName: roleName,
         skillIds: data.skillIds.map(Number),
         qualificationIds: data.qualificationIds.map(Number),
         wageMin: data.wageMin,
         wageMax: data.wageMax,
         wageType: data.wageType,
         workingDays: data.workingDays,
+        workingStatus: data.workingStatus || undefined,
         gender: data.gender,
         freshersOnly: data.freshersOnly,
         shiftType: data.shiftType,
@@ -348,7 +364,7 @@ export default function CreateJobPage() {
   const qualSuggestions = useMemo(() => {
     const selectedSet = new Set(selectedQualificationIds);
     const query = qualSearch.trim().toLowerCase();
-    
+
     return qualifications.filter(q => {
       const id = String(q.id);
       if (selectedSet.has(id)) return false;
@@ -392,31 +408,27 @@ export default function CreateJobPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Left Column: Form Sections stacked */}
           <div className="lg:col-span-2 space-y-6">
-            
+
             {/* Card 1: Basic Details */}
             <Card className="p-6 border border-slate-100 rounded-2xl shadow-sm text-left bg-white space-y-4">
               <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-sm border-b border-slate-50 pb-3">
                 <Briefcase className="h-5 w-5" />
                 <span>1. Basic Details</span>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-700 font-extrabold text-xs">Job Title *</Label>
-                <Input id="title" placeholder="e.g. Senior Frontend Engineer" {...register('title')} className="rounded-xl border-slate-200" />
-                {errors.title && <p className="text-xs text-red-500 font-bold">{errors.title.message}</p>}
-              </div>
-              
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="space-y-2 relative">
-                  <Label className="text-slate-700 font-extrabold text-xs">Job Role</Label>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {/* Job Role Name / Title */}
+                <div className="space-y-2 relative sm:col-span-2 lg:col-span-2">
+                  <Label className="text-slate-700 font-extrabold text-xs">Job Role / Title *</Label>
                   <div className="relative">
                     <input
                       type="text"
                       autoComplete="off"
-                      placeholder="Type to search job role..."
+                      placeholder="Type or select job role (e.g. Backend Developer)..."
                       className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                       value={jobRoleSearch}
                       onChange={(e) => {
                         setJobRoleSearch(e.target.value);
+                        setValue('jobRoleName', e.target.value, { shouldValidate: true });
                         setIsJobRoleOpen(true);
                       }}
                       onFocus={() => setIsJobRoleOpen(true)}
@@ -435,6 +447,7 @@ export default function CreateJobPage() {
                             className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
                             onClick={() => {
                               setValue('jobRoleId', String(role.id));
+                              setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
                               setJobRoleSearch(role.name || String(role.id));
                               setIsJobRoleOpen(false);
                             }}
@@ -444,15 +457,60 @@ export default function CreateJobPage() {
                         ))}
                     </div>
                   )}
+                  {errors.jobRoleName && <p className="text-xs text-red-500 font-bold">{errors.jobRoleName.message}</p>}
                 </div>
 
+                {/* Headcount */}
                 <div className="space-y-2">
                   <Label htmlFor="headcountRequired" className="text-slate-700 font-extrabold text-xs">Headcount *</Label>
                   <Input id="headcountRequired" type="number" min={1} {...register('headcountRequired')} className="rounded-xl border-slate-200" />
                   {errors.headcountRequired && <p className="text-xs text-red-500 font-bold">{errors.headcountRequired.message}</p>}
                 </div>
 
-                {/* 5. Working Days */}
+                {/* Function / Department Searchable Dropdown */}
+                <div className="space-y-2 relative">
+                  <Label className="text-slate-700 font-extrabold text-xs">Department / Function</Label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Type or select function (e.g. Marketing, Software Engineering)..."
+                      className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                      value={functionSearch}
+                      onChange={(e) => {
+                        setFunctionSearch(e.target.value);
+                        setValue('functionName', e.target.value);
+                        setIsFunctionOpen(true);
+                      }}
+                      onFocus={() => setIsFunctionOpen(true)}
+                      onBlur={() => setTimeout(() => setIsFunctionOpen(false), 200)}
+                    />
+                    <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                  </div>
+                  {isFunctionOpen && (
+                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                      {functions
+                        .filter((func: any) => !functionSearch || (func.name || '').toLowerCase().includes(functionSearch.toLowerCase()))
+                        .map((func: any) => (
+                          <button
+                            key={func.id}
+                            type="button"
+                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onClick={() => {
+                              setValue('functionId', String(func.id));
+                              setValue('functionName', func.name || String(func.id));
+                              setFunctionSearch(func.name || String(func.id));
+                              setIsFunctionOpen(false);
+                            }}
+                          >
+                            {'name' in func ? func.name : String(func.id)}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Working Days */}
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Working Days *</Label>
                   <Select value={String(formData.workingDays ?? 5)} onValueChange={(val) => setValue('workingDays', Number(val), { shouldValidate: true })}>
@@ -464,7 +522,7 @@ export default function CreateJobPage() {
                   </Select>
                 </div>
 
-                {/* 8. Gender */}
+                {/* Gender */}
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-extrabold text-xs">Gender Requirement *</Label>
                   <Select value={formData.gender || 'ANY'} onValueChange={(val: 'ANY' | 'MALE' | 'FEMALE') => setValue('gender', val, { shouldValidate: true })}>
@@ -476,12 +534,25 @@ export default function CreateJobPage() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Working Status */}
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-extrabold text-xs">Working Status</Label>
+                  <Select value={formData.workingStatus || 'IMMEDIATE_JOINER'} onValueChange={(val) => setValue('workingStatus', val, { shouldValidate: true })}>
+                    <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="IMMEDIATE_JOINER">Immediate Joiner</SelectItem>
+                      <SelectItem value="SERVING_NOTICE">Serving Notice</SelectItem>
+                      <SelectItem value="ANY">Any Status</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* 7. Required Experience */}
               <div className="space-y-3 border-t border-slate-50 pt-3">
                 <Label className="text-slate-700 font-extrabold text-xs">Experience Requirement *</Label>
-                
+
                 <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
                   <Checkbox
                     id="freshersOnly"
@@ -754,8 +825,8 @@ export default function CreateJobPage() {
                       const skill = skills.find((s) => String(s.id) === id);
                       const name = skill && 'name' in skill ? skill.name : id;
                       return (
-                        <Badge 
-                          key={id} 
+                        <Badge
+                          key={id}
                           className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
                         >
                           {name}
@@ -821,8 +892,8 @@ export default function CreateJobPage() {
                       const qualification = qualifications.find((q) => String(q.id) === id);
                       const name = qualification && 'name' in qualification ? qualification.name : id;
                       return (
-                        <Badge 
-                          key={id} 
+                        <Badge
+                          key={id}
                           className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
                         >
                           {name}
@@ -927,7 +998,7 @@ export default function CreateJobPage() {
                 <IndianRupee className="h-5 w-5" />
                 <span>4. Salary, Shifts & Types</span>
               </div>
-              
+
               {/* Salary Period Select */}
               <div className="space-y-2 max-w-xs">
                 <Label className="text-slate-700 font-extrabold text-xs">Salary Type *</Label>
@@ -1083,20 +1154,20 @@ export default function CreateJobPage() {
           {/* Right Column: Sticky Live Preview & Action panel */}
           <div className="space-y-6">
             <div className="lg:sticky lg:top-24 space-y-6">
-              
+
               {/* Card A: Interactive Live Preview */}
               <Card className="p-6 border border-slate-100 rounded-2xl shadow-sm bg-white text-left space-y-4">
                 <div className="flex items-center gap-2 text-indigo-600 font-extrabold text-xs border-b border-slate-50 pb-3">
                   <Eye className="h-4 w-4" />
                   <span>Job Listing Live Preview</span>
                 </div>
-                
+
                 <div className="space-y-3.5 pt-1">
                   <span className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] px-2 py-0.5 rounded uppercase tracking-wider">
                     {formData.jobType}
                   </span>
                   <h3 className="text-xl font-extrabold text-slate-800 leading-tight">
-                    {formData.title || 'Job Title Title'}
+                    {formData.jobRoleName || 'Job Role / Title'}
                   </h3>
 
                   <div className="space-y-2 text-xs text-slate-500 font-semibold border-t border-b border-slate-50 py-3.5">
@@ -1162,17 +1233,17 @@ export default function CreateJobPage() {
                   <p className="text-xs text-slate-400 font-semibold mt-1">Make sure you have completed the details. Once published, your listing goes live instantly on SCN Jobs.</p>
                 </div>
                 <div className="flex flex-col gap-2 pt-2">
-                  <Button 
-                    type="submit" 
-                    disabled={publishMutation.isPending} 
+                  <Button
+                    type="submit"
+                    disabled={publishMutation.isPending}
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl py-3 text-xs shadow-md shadow-indigo-100 hover:shadow-indigo-200 transition-all h-auto flex items-center justify-center gap-1.5"
                   >
                     <Rocket className="h-4 w-4" />
                     {publishMutation.isPending ? 'Publishing...' : 'Publish Job'}
                   </Button>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => router.push('/recruiter/jobs')}
                     className="w-full border-slate-200 hover:bg-slate-50 hover:text-slate-700 text-slate-500 font-bold rounded-xl py-3 text-xs h-auto shadow-sm"
                   >

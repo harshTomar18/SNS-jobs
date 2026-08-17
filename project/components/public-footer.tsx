@@ -25,19 +25,19 @@ const footerSections = [
   {
     title: 'Company',
     links: [
-      { label: 'About Us', href: '/' },
+      { label: 'About Us', href: '/about' },
       { label: 'Careers', href: '/jobs' },
-      { label: 'Blog', href: '/' },
-      { label: 'Contact', href: '/' },
+      { label: 'Blog', href: '/about' },
+      { label: 'Contact', href: '/about' },
     ],
   },
   {
     title: 'Legal',
     links: [
-      { label: 'Privacy Policy', href: '/' },
-      { label: 'Terms of Service', href: '/' },
-      { label: 'Cookie Policy', href: '/' },
-      { label: 'GDPR', href: '/' },
+      { label: 'Privacy Policy', href: '/privacy' },
+      { label: 'Terms of Service', href: '/terms' },
+      { label: 'Cookie Policy', href: '/terms' },
+      { label: 'GDPR', href: '/privacy' },
     ],
   },
 ];

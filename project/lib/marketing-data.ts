@@ -1,10 +1,23 @@
 export const trustedCompanies = [
-  { name: 'Tata Group', logo: '/images/logos/tata.png' },
-  { name: 'Reliance Industries', logo: '/images/logos/reliance.png' },
-  { name: 'Apollo Care', logo: '/images/logos/apollo.png' },
-  { name: 'Delhivery Express', logo: '/images/logos/delhivery.png' },
-  { name: 'Taj Hotels', logo: '/images/logos/tata.png' },
-  { name: 'Zeta Tech', logo: '/images/logos/reliance.png' },
+  { name: 'ESSELL Engineering', logo: '' },
+  { name: 'Mediways Vaccine', logo: '' },
+  { name: 'Athens Life Sciences', logo: '' },
+  { name: 'KRISHNA GEARS', logo: '' },
+  { name: 'Star Health', logo: '' },
+  { name: 'Gem Mines', logo: '' },
+  { name: 'IDT', logo: '' },
+  { name: 'Charming Trim', logo: '' },
+  { name: 'Zepto', logo: '' },
+  { name: 'Amazon', logo: '' },
+  { name: 'Urban Company', logo: '' },
+  { name: 'KENBAR AUTO', logo: '' },
+  { name: 'Palin Technologies', logo: '' },
+  { name: 'PRIME TOOLS', logo: '' },
+  { name: 'CIRCULAR SUPPLY', logo: '' },
+  { name: 'SPIRE HOSPITAL', logo: '' },
+  { name: 'Easy Solar', logo: '' },
+  { name: 'Nimbus group', logo: '' },
+  { name: 'Airtel', logo: '' },
 ];
 
 export const topIndustries = [
@@ -52,10 +65,10 @@ export const testimonials = [
 ];
 
 export const faqs = [
-  { q: 'How do I create a worker account?', a: 'Create an account, verify your phone number with OTP, and complete your profile to start applying for jobs.' },
-  { q: 'Is SCN Jobs free for workers?', a: 'Yes. Workers can create a profile, search jobs, apply, and track application status.' },
+  { q: 'How do I create a candidate account?', a: 'Create an account, verify your phone number with OTP, and complete your profile to start applying for jobs.' },
+  { q: 'Is SCN Jobs free for candidate?', a: 'Yes. Workers can create a profile, search jobs, apply, and track application status.' },
   { q: 'How do recruiters post jobs?', a: 'Recruiters sign in, open Job Management, and publish jobs using the guided job creation form.' },
   { q: 'Can I track application status?', a: 'Yes. Worker dashboards show live application status updates from recruiters.' },
-  { q: 'How does candidate search work?', a: 'Recruiters can search workers by skills, city, and assigned industry categories.' },
+  { q: 'How does Recruiters search candidate?', a: 'Recruiters can search candidates by skills, city, and assigned industry categories.' },
   { q: 'Is the app mobile responsive?', a: 'Yes. The web application is responsive and can be deployed immediately as a browser-based product.' },
 ];

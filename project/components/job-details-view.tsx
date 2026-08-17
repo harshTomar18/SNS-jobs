@@ -311,12 +311,9 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
             </div>
           </div>
 
-          {/* Right Logo & Link Column */}
+          {/* Right Logo Column */}
           <div className="flex flex-col items-end gap-2.5 shrink-0">
             <CompanyLogo name={job.companyName} className="h-14 w-14 sm:h-16 sm:w-16 rounded-2xl shrink-0" />
-            <button type="button" className="text-[11px] sm:text-xs font-bold text-blue-600 hover:underline whitespace-nowrap">
-              Send me jobs like this
-            </button>
           </div>
         </div>
 
@@ -344,16 +341,6 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
           ) : (
             <div className="flex items-center gap-3 shrink-0 ml-auto">
               <Button
-                variant="outline"
-                onClick={() => {
-                  setSaved(!saved);
-                  if (!saved) toast.success('Job saved successfully');
-                }}
-                className="rounded-full font-bold px-7 py-2.5 border-blue-600 text-blue-600 hover:bg-blue-50 text-xs"
-              >
-                {saved ? 'Saved' : 'Save'}
-              </Button>
-              <Button
                 onClick={handleApply}
                 disabled={applyMutation.isPending || hasApplied}
                 className="rounded-full font-bold px-9 py-2.5 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-100 text-xs"
@@ -363,13 +350,6 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
             </div>
           )}
         </div>
-
-        {!isRecruiter && (
-          <div className="flex items-center gap-2 pt-1 text-xs text-slate-600 font-semibold text-left">
-            <input type="checkbox" defaultChecked className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4 shrink-0" />
-            <span>Follow {job.companyName} as you apply to stay updated</span>
-          </div>
-        )}
       </Card>
 
       {/* 2. Job Highlights & Match Score Card (Matching Image 2) */}
@@ -488,17 +468,6 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
               </Badge>
             ))}
           </div>
-        </div>
-
-        {/* Image 3 Footer Share & Report */}
-        <div className="flex items-center justify-between pt-6 border-t border-slate-100 text-xs font-bold text-slate-400">
-          <div className="flex items-center gap-3">
-            <span>Share job:</span>
-            <button type="button" className="hover:text-blue-600">Facebook</button>
-            <button type="button" className="hover:text-blue-600">X</button>
-            <button type="button" className="hover:text-blue-600">LinkedIn</button>
-          </div>
-          <button type="button" className="text-blue-600 hover:underline">Report this job</button>
         </div>
       </Card>
     </div>

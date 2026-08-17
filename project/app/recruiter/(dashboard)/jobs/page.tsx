@@ -146,14 +146,6 @@ export default function RecruiterJobsPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button 
-            variant="outline" 
-            onClick={handleExportCSV} 
-            className="border-slate-200 hover:bg-slate-50 hover:text-slate-700 text-slate-600 font-extrabold rounded-xl px-4 py-2.5 text-xs h-auto flex items-center gap-1.5 shadow-sm"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-5 py-3 text-xs shadow-md shadow-indigo-100 hover:shadow-indigo-200 transition-all h-auto">
             <Link href="/recruiter/jobs/new">
               <span className="font-extrabold mr-1 text-sm">+</span> Create Job
@@ -200,17 +192,6 @@ export default function RecruiterJobsPage() {
               className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
             />
           </div>
-
-          {/* Filters Toggles */}
-          <Button variant="outline" className="border-slate-200 hover:bg-slate-50 text-slate-500 font-bold rounded-xl px-3 py-2 text-xs h-auto flex items-center gap-1.5 shadow-sm">
-            <SlidersHorizontal className="h-4 w-4" />
-            Filters
-          </Button>
-
-          {/* Settings Slider Trigger */}
-          <Button variant="outline" size="icon" className="border-slate-200 hover:bg-slate-50 text-slate-500 rounded-xl h-9 w-9 shadow-sm">
-            <Settings className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

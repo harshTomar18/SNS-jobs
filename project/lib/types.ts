@@ -6,7 +6,9 @@ export type ApplicationStatus =
   | 'rejected'
   | 'withdrawn'
   | 'shortlisted'
+  | 'notshortlisted'
   | 'not_shortlisted'
+  | 'selected_for_interview'
   | 'interview'
   | 'resume_viewed';
 
@@ -92,6 +94,7 @@ export interface Application {
   workerCity?: string;
   workerExperienceYears?: number;
   workerHeadline?: string;
+  workerProfile?: WorkerProfile;
 }
 
 export interface ApplicationTimelineEvent {
@@ -103,12 +106,21 @@ export interface ApplicationTimelineEvent {
   actor: string;
 }
 
+export interface WorkerLanguageDetail {
+  id?: number;
+  name: string;
+  proficiency?: string;
+}
+
 export interface WorkerProfile {
   id: string;
   userId: string;
   fullName: string;
   email: string;
   phone: string;
+  alternatePhone?: string;
+  department?: string;
+  departmentId?: number;
   avatarUrl?: string;
   resumeUrl?: string;
   headline: string;
@@ -118,6 +130,7 @@ export interface WorkerProfile {
   skills: string[];
   languages: string[];
   languageIds: number[];
+  languageDetails?: WorkerLanguageDetail[];
   preferredIndustries: string[];
   preferredLocations: string[];
   preferredLocationDetails?: { id: number; label: string }[];
@@ -157,6 +170,10 @@ export interface WorkExperience {
   endDate?: string;
   current: boolean;
   description: string;
+  industry?: string;
+  industryId?: number;
+  department?: string;
+  departmentId?: number;
 }
 
 export interface RecruiterStats {

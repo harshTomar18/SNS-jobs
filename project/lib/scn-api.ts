@@ -6,6 +6,7 @@ import {
   MasterDataItem,
   User,
   WorkerProfile,
+  WorkerLanguageDetail,
 } from '@/lib/types';
 import { apiDelete, apiGet, apiPatch, apiPost } from '@/lib/api';
 
@@ -19,7 +20,8 @@ export type MasterResource =
   | 'languages'
   | 'qualifications'
   | 'benefits'
-  | 'assets';
+  | 'assets'
+  | 'functions';
 
 export interface BackendUser {
   id: string;
@@ -57,6 +59,9 @@ interface BackendWorkerProfile {
   user?: Pick<BackendUser, 'email' | 'phone' | 'isActive' | 'createdAt'>;
   name?: string | null;
   phone?: string | null;
+  alternatePhone?: string | null;
+  departmentId?: number | null;
+  department?: BackendLookup | null;
   state?: string | null;
   city?: string | null;
   currentLocality?: string | null;
@@ -93,6 +98,10 @@ interface BackendWorkerProfile {
     toDate?: string | null;
     isCurrent: boolean;
     description?: string | null;
+    industryId?: number | null;
+    industry?: BackendLookup | null;
+    departmentId?: number | null;
+    department?: BackendLookup | null;
   }[];
   skills?: { skill?: BackendLookup }[];
   languages?: { language?: BackendLookup; proficiency?: string | null }[];
@@ -369,8 +378,8 @@ export function toJob(job: BackendJob): JobWithMeta {
     responsibilities: job.responsibilities?.length
       ? job.responsibilities
       : job.description
-      ? job.description.split('\n').filter(Boolean).slice(0, 4)
-      : ['Review the job responsibilities with the recruiter.'],
+        ? job.description.split('\n').filter(Boolean).slice(0, 4)
+        : ['Review the job responsibilities with the recruiter.'],
     requirements: job.requirements?.length ? job.requirements : [
       ...qualifications.map((qualification) => `${qualification} preferred`),
       ...skills.slice(0, 4).map((skill) => `${skill} experience`),
@@ -427,9 +436,23 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     .map((entry: any) => entry.language?.id ?? entry.languageId ?? entry.id)
     .filter((id): id is number => typeof id === 'number');
 
-  const languages = languageEntries
-    .map((entry: any) => entry.language?.name ?? entry.name)
-    .filter((name): name is string => Boolean(name));
+  const languageDetails: WorkerLanguageDetail[] = languageEntries
+    .map((entry: any): WorkerLanguageDetail | null => {
+      const name = entry.language?.name ?? entry.name;
+      if (!name) return null;
+      return {
+        id: entry.language?.id ?? entry.languageId,
+        name,
+        proficiency: entry.proficiency || undefined,
+      };
+    })
+    .filter((item): item is WorkerLanguageDetail => item !== null);
+
+  const languages = languageDetails.map((item) =>
+    item.proficiency
+      ? `${item.name} (${item.proficiency.charAt(0).toUpperCase() + item.proficiency.slice(1)})`
+      : item.name,
+  );
 
   return {
     id: profile.id,
@@ -437,6 +460,9 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     fullName: profile.name || localPart(email || 'Worker'),
     email,
     phone: profile.phone || profile.user?.phone || '',
+    alternatePhone: profile.alternatePhone || undefined,
+    department: profile.department?.name || undefined,
+    departmentId: profile.departmentId || profile.department?.id || undefined,
     avatarUrl: profile.profilePhotoUrl || undefined,
     resumeUrl: profile.resumeUrl || undefined,
     headline: profile.headline || 'Worker profile',
@@ -459,12 +485,17 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
       endDate: entry.toDate || undefined,
       current: entry.isCurrent,
       description: entry.description || '',
+      industry: entry.industry?.name || undefined,
+      industryId: entry.industryId || entry.industry?.id || undefined,
+      department: entry.department?.name || undefined,
+      departmentId: entry.departmentId || entry.department?.id || undefined,
     })),
     skills: (profile.skills || [])
       .map((entry) => entry.skill?.name)
       .filter((name): name is string => Boolean(name)),
     languages,
     languageIds,
+    languageDetails,
     preferredIndustries: (profile.preferredIndustries || [])
       .map((entry) => entry.industry?.name)
       .filter((name): name is string => Boolean(name)),
@@ -506,13 +537,13 @@ export function toApplication(application: BackendApplication): Application {
   const history = application.history?.length
     ? application.history
     : [
-        {
-          id: `${application.id}-created`,
-          toStatus: application.status,
-          changedAt: application.appliedAt,
-          changedBy: { role: 'worker' as BackendRole },
-        },
-      ];
+      {
+        id: `${application.id}-created`,
+        toStatus: application.status,
+        changedAt: application.appliedAt,
+        changedBy: { role: 'worker' as BackendRole },
+      },
+    ];
 
   return {
     id: application.id,
@@ -536,6 +567,7 @@ export function toApplication(application: BackendApplication): Application {
     workerCity: workerProfile?.city || 'Location not specified',
     workerExperienceYears: workerProfile?.totalExperienceMonths ? Math.floor(workerProfile.totalExperienceMonths / 12) : 0,
     workerHeadline: workerProfile?.headline || 'Worker Profile',
+    workerProfile: workerProfile ? toWorkerProfile(workerProfile) : undefined,
   };
 }
 
@@ -597,8 +629,8 @@ export function toMasterDataItem(resource: MasterResource, item: BackendLookup |
     resource === 'locations'
       ? `${(item as BackendLocation).city} - ${(item as BackendLocation).locality}`
       : (item as BackendLookup).level
-      ? `${(item as BackendLookup).name} (${(item as BackendLookup).level})`
-      : (item as BackendLookup).name;
+        ? `${(item as BackendLookup).name} (${(item as BackendLookup).level})`
+        : (item as BackendLookup).name;
 
   return {
     id: String(item.id),
@@ -648,13 +680,15 @@ export const jobsApi = {
     return toJob(await apiGet<BackendJob>(`/jobs/${id}`));
   },
   async create(data: {
-    title: string;
+    title?: string;
     description: string;
-    industryId: number;
+    industryId?: number;
+    industryName?: string;
+    functionId?: number;
+    functionName?: string;
     locationId: number;
     jobRoleId?: number;
     jobRoleName?: string;
-    functionId?: number;
     skillIds?: number[];
     qualificationIds?: number[];
     responsibilities?: string[];
@@ -663,7 +697,14 @@ export const jobsApi = {
     wageMin?: number;
     wageMax?: number;
     wageType?: 'daily' | 'monthly' | 'annual';
+    monthlyWageMin?: number;
+    monthlyWageMax?: number;
+    dailyWageMin?: number;
+    dailyWageMax?: number;
+    yearlyWageMin?: number;
+    yearlyWageMax?: number;
     workingDays?: number | string;
+    workingStatus?: string;
     gender?: 'MALE' | 'FEMALE' | 'ANY';
     freshersOnly?: boolean;
     shiftType?: string;
@@ -675,29 +716,34 @@ export const jobsApi = {
     assetNames?: string[];
     status?: Job['status'];
   }) {
-    const wageMinVal = Number(data.wageMin || 0);
-    const wageMaxVal = Number(data.wageMax || data.wageMin || 0);
-    const rawWageType = (data.wageType || 'monthly').toLowerCase();
-    
-    // Map workingDays enum to word format ('FIVE_DAYS', 'SIX_DAYS', etc.)
-    const rawDaysStr = String(data.workingDays || '5').trim();
+    const roleName = data.jobRoleName || data.title || 'Job Role';
+
     let workingDaysEnum = 'FIVE_DAYS';
-    if (rawDaysStr === '6' || rawDaysStr.toUpperCase().includes('SIX')) {
-      workingDaysEnum = 'SIX_DAYS';
-    } else if (rawDaysStr === '7' || rawDaysStr.toUpperCase().includes('SEVEN')) {
-      workingDaysEnum = 'SEVEN_DAYS';
-    } else if (rawDaysStr === '4' || rawDaysStr.toUpperCase().includes('FOUR')) {
-      workingDaysEnum = 'FOUR_DAYS';
+    if (typeof data.workingDays === 'string' && data.workingDays.toUpperCase().endsWith('_DAYS')) {
+      workingDaysEnum = data.workingDays.toUpperCase();
+    } else {
+      const rawDaysStr = String(data.workingDays || '5').trim();
+      if (rawDaysStr === '6' || rawDaysStr.toUpperCase().includes('SIX')) {
+        workingDaysEnum = 'SIX_DAYS';
+      } else if (rawDaysStr === '7' || rawDaysStr.toUpperCase().includes('SEVEN')) {
+        workingDaysEnum = 'SEVEN_DAYS';
+      } else if (rawDaysStr === '4' || rawDaysStr.toUpperCase().includes('FOUR')) {
+        workingDaysEnum = 'FOUR_DAYS';
+      }
     }
 
-    const roleName = data.jobRoleName || data.title;
+    const rawJobType = String(data.jobType || 'full_time').toLowerCase();
+    const formattedJobType = rawJobType === 'full-time' || rawJobType === 'full_time' ? 'full_time' : rawJobType === 'part-time' || rawJobType === 'part_time' ? 'part_time' : rawJobType;
 
     const payload: any = {
-      industryId: Number(data.industryId),
+      jobRoleName: roleName,
+      industryId: data.industryId ? Number(data.industryId) : undefined,
+      industryName: data.industryName || undefined,
+      functionId: data.functionId ? Number(data.functionId) : undefined,
+      functionName: data.functionName || undefined,
       locationId: Number(data.locationId),
       jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
-      jobRoleName: roleName,
-      jobType: uiJobTypeToApi(data.jobType),
+      jobType: formattedJobType,
       shiftType: (data.shiftType || 'day').toLowerCase(),
       gender: (data.gender || 'ANY').toUpperCase(),
       headcountRequired: Number(data.headcountRequired || 1),
@@ -705,22 +751,40 @@ export const jobsApi = {
       maxExperienceMonths: data.maxExperienceMonths !== undefined ? Number(data.maxExperienceMonths) : undefined,
       freshersOnly: Boolean(data.freshersOnly),
       workingDays: workingDaysEnum,
+      workingStatus: data.workingStatus || undefined,
       description: data.description,
       responsibilities: data.responsibilities,
+      requirements: data.requirements,
+      skillIds: data.skillIds && data.skillIds.length > 0 ? data.skillIds : undefined,
+      qualificationIds: data.qualificationIds && data.qualificationIds.length > 0 ? data.qualificationIds : undefined,
       benefitNames: data.benefitNames,
       assetNames: data.assetNames,
       status: data.status ? statusToApi(data.status) : undefined,
     };
 
-    if (rawWageType === 'daily') {
-      payload.dailyWageMin = wageMinVal;
-      payload.dailyWageMax = wageMaxVal;
-    } else if (rawWageType === 'annual' || rawWageType === 'yearly') {
-      payload.yearlyWageMin = wageMinVal;
-      payload.yearlyWageMax = wageMaxVal;
+    if (data.monthlyWageMin !== undefined || data.monthlyWageMax !== undefined) {
+      payload.monthlyWageMin = Number(data.monthlyWageMin || 0);
+      payload.monthlyWageMax = Number(data.monthlyWageMax || data.monthlyWageMin || 0);
+    } else if (data.dailyWageMin !== undefined || data.dailyWageMax !== undefined) {
+      payload.dailyWageMin = Number(data.dailyWageMin || 0);
+      payload.dailyWageMax = Number(data.dailyWageMax || data.dailyWageMin || 0);
+    } else if (data.yearlyWageMin !== undefined || data.yearlyWageMax !== undefined) {
+      payload.yearlyWageMin = Number(data.yearlyWageMin || 0);
+      payload.yearlyWageMax = Number(data.yearlyWageMax || data.yearlyWageMin || 0);
     } else {
-      payload.monthlyWageMin = wageMinVal;
-      payload.monthlyWageMax = wageMaxVal;
+      const wageMinVal = Number(data.wageMin || 0);
+      const wageMaxVal = Number(data.wageMax || data.wageMin || 0);
+      const rawWageType = (data.wageType || 'monthly').toLowerCase();
+      if (rawWageType === 'daily') {
+        payload.dailyWageMin = wageMinVal;
+        payload.dailyWageMax = wageMaxVal;
+      } else if (rawWageType === 'annual' || rawWageType === 'yearly') {
+        payload.yearlyWageMin = wageMinVal;
+        payload.yearlyWageMax = wageMaxVal;
+      } else {
+        payload.monthlyWageMin = wageMinVal;
+        payload.monthlyWageMax = wageMaxVal;
+      }
     }
 
     const job = await apiPost<BackendJob>('/jobs', payload);
@@ -773,6 +837,9 @@ export const workerApi = {
     currentLocality?: string;
     name?: string;
     phone?: string;
+    alternatePhone?: string;
+    departmentName?: string;
+    departmentId?: number;
     headline?: string;
     summary?: string;
     totalExperienceMonths?: number;
@@ -784,6 +851,7 @@ export const workerApi = {
     preferredLocationIds?: number[];
     preferredIndustryIds?: number[];
     languageIds?: number[];
+    languages?: { languageId: number; proficiency?: string }[];
     // New API v2 fields
     dob?: string;
     maritalStatus?: string;
@@ -805,10 +873,16 @@ export const workerApi = {
       locationPayload.currentLocality = localityVal;
     }
 
+    let formattedLanguages = data.languages;
+    if (!formattedLanguages && data.languageIds) {
+      formattedLanguages = data.languageIds.map((id) => ({ languageId: id, proficiency: 'fluent' }));
+    }
+
     return toWorkerProfile(
       await apiPatch<BackendWorkerProfile>('/worker/profile', {
         ...data,
         ...locationPayload,
+        languages: formattedLanguages,
         maritalStatus: data.maritalStatus ? data.maritalStatus.toUpperCase() : undefined,
         availability: data.availability ? uiAvailabilityToApi(data.availability) : undefined,
       }),
@@ -821,6 +895,10 @@ export const workerApi = {
     toDate?: string;
     isCurrent?: boolean;
     description?: string;
+    industryName?: string;
+    departmentName?: string;
+    industryId?: number;
+    departmentId?: number;
   }) {
     return await apiPost<any>('/worker/experience', data);
   },
@@ -926,8 +1004,8 @@ export const adminApi = {
     const endpoint = active ? 'reactivate' : 'deactivate';
     return toRecruiter(await apiPatch<BackendRecruiter>(`/admin/recruiters/${id}/${endpoint}`));
   },
-  async resetRecruiterPassword(id: string, password: string) {
-    return await apiPatch<{ message?: string; recruiter?: BackendRecruiter }>(`/admin/recruiters/${id}/password`, { password });
+  async resetRecruiterPassword(id: string, newPassword: string) {
+    return await apiPatch<{ message?: string; recruiter?: BackendRecruiter }>(`/admin/recruiters/${id}/password`, { newPassword });
   },
   async getRecruiterFull(id: string) {
     return await apiGet<{ recruiter: BackendRecruiter; jobs: BackendJob[]; stats: any }>(`/admin/recruiters/${id}/full`);

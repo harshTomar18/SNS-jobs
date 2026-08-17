@@ -32,6 +32,7 @@ const schema = z.object({
   firstName: z.string().min(2, 'First name is required'),
   lastName: z.string().min(2, 'Last name is required'),
   phone: z.string().min(10, 'Valid phone is required'),
+  alternatePhone: z.string().optional(),
   city: z.string().min(2, 'City is required'),
   currentLocality: z.string().optional(),
   preferredLocationIds: z.array(z.string()).default([]),
@@ -218,6 +219,7 @@ export default function WorkerOnboardingPage() {
       await workerApi.updateProfile({
         name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
+        alternatePhone: data.alternatePhone || undefined,
         headline: data.headline,
         summary: data.summary,
         resumeUrl: resumeUrl || undefined,
@@ -323,10 +325,17 @@ export default function WorkerOnboardingPage() {
                     {errors.lastName && <p className="text-xs text-destructive">{errors.lastName.message}</p>}
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Phone Number *</Label>
-                  <Input {...register('phone')} readOnly className="bg-muted cursor-not-allowed opacity-75" />
-                  {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Primary Phone Number *</Label>
+                    <Input {...register('phone')} readOnly className="bg-muted cursor-not-allowed opacity-75" />
+                    {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Alternate Phone Number (Optional)</Label>
+                    <Input placeholder="e.g. 9876543210" {...register('alternatePhone')} />
+                    {errors.alternatePhone && <p className="text-xs text-destructive">{errors.alternatePhone.message}</p>}
+                  </div>
                 </div>
               </div>
             )}

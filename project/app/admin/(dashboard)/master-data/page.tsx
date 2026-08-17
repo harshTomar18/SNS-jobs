@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
-import { Plus, Building2, MapPin, Code, Languages, Briefcase, Award, Gift, Box, Upload } from 'lucide-react';
+import { Plus, Building2, MapPin, Code, Languages, Briefcase, Award, Gift, Box, Upload, Layers } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +27,7 @@ import { BulkMasterDataImportModal } from '@/components/admin/bulk-master-data-i
 
 const tabs: { id: MasterResource; label: string; icon: typeof Building2 }[] = [
   { id: 'industries', label: 'Industries', icon: Building2 },
+  { id: 'functions', label: 'Functions', icon: Layers },
   { id: 'locations', label: 'Locations', icon: MapPin },
   { id: 'skills', label: 'Skills', icon: Code },
   { id: 'job-roles', label: 'Job Roles', icon: Briefcase },

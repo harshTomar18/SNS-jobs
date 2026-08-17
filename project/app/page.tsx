@@ -515,11 +515,12 @@ export default function SCNJobsLanding() {
             <span className="disp" style={{ fontWeight: 800, fontSize: 19, letterSpacing: "-0.01em" }}>SCN Jobs</span>
           </Link>
 
-          <nav style={{ display: "flex", alignItems: "center", gap: 32 }} className="nav-desktop">
+          <nav style={{ display: "flex", alignItems: "center", gap: 24 }} className="nav-desktop">
             {[
               { label: "Featured Jobs", href: "#featured" },
-              { label: "Industries", href: "#industries" },
-              { label: "Cities", href: "#cities" },
+              { label: "About Us", href: "#about" },
+              { label: "Terms & Conditions", href: "#terms" },
+              { label: "Privacy Policy", href: "#privacy" },
               { label: "How it Works", href: "#how-it-works" },
               { label: "FAQ", href: "#faq" },
             ].map((l) => (
@@ -571,8 +572,9 @@ export default function SCNJobsLanding() {
           <div className="container" style={{ paddingBottom: 18, display: "flex", flexDirection: "column", gap: 14 }}>
             {[
               { label: "Featured Jobs", href: "#featured" },
-              { label: "Industries", href: "#industries" },
-              { label: "Cities", href: "#cities" },
+              { label: "About Us", href: "#about" },
+              { label: "Terms & Conditions", href: "#terms" },
+              { label: "Privacy Policy", href: "#privacy" },
               { label: "How it Works", href: "#how-it-works" },
               { label: "FAQ", href: "#faq" },
             ].map((l) => (
@@ -608,10 +610,8 @@ export default function SCNJobsLanding() {
               </div>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="disp" style={{ fontSize: "clamp(36px, 5vw, 58px)", lineHeight: 1.06, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>
-                Find your next
-                <br />
-                opportunity, <span style={{ color: BRAND.amberDeep }}>faster.</span>
+              <h1 className="disp" style={{ fontSize: "clamp(34px, 4.8vw, 54px)", lineHeight: 1.1, fontWeight: 800, letterSpacing: "-0.02em", margin: 0 }}>
+                Connect with the right jobs, the right companies, and the <span style={{ color: BRAND.amberDeep }}>right career path.</span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
@@ -780,84 +780,6 @@ export default function SCNJobsLanding() {
         <style>{`@media (max-width: 900px) { .jobs-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 620px) { .jobs-grid { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
-      {/* ---------------- SECTION 3: INDUSTRIES (Count removed, BG images + Smooth Slide-Up Hover) ---------------- */}
-      <section id="industries" className="container" style={{ padding: "96px 24px 20px" }}>
-        <Reveal>
-          <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>EXPLORE BY INDUSTRY</span>
-            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              Find opportunities that match your passion
-            </h2>
-          </div>
-        </Reveal>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }} className="industries-grid">
-          {TOP_INDUSTRIES_WITH_BG.map((ind, i) => {
-            const Icon = iconMap[ind.icon] || Laptop2;
-            return (
-              <Reveal key={ind.name} delay={i * 50}>
-                <div className="hover-slide-card">
-                  <img src={ind.bg} alt={ind.name} className="bg-img" />
-                  <div className="card-overlay">
-                    <div className="slide-up-body">
-                      <div
-                        style={{
-                          width: 40, height: 40, borderRadius: 10, background: "rgba(255,255,255,0.2)",
-                          backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center",
-                          marginBottom: 12, border: "1px solid rgba(255,255,255,0.3)",
-                        }}
-                      >
-                        <Icon size={20} color="#fff" />
-                      </div>
-                      <h3 className="disp" style={{ color: "#fff", fontSize: 16.5, fontWeight: 700, margin: 0 }}>{ind.name}</h3>
-                    </div>
-                  </div>
-                </div>
-              </Reveal>
-            );
-          })}
-        </div>
-        <style>{`@media (max-width: 900px) { .industries-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 520px) { .industries-grid { grid-template-columns: 1fr !important; } }`}</style>
-      </section>
-
-      {/* ---------------- SECTION 4: TOP CITIES (Page numbers removed, Image cards layout) ---------------- */}
-      <section id="cities" className="container" style={{ padding: "96px 24px 20px" }}>
-        <Reveal>
-          <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>POPULAR CITIES</span>
-            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              Discover jobs in top cities across India
-            </h2>
-          </div>
-        </Reveal>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18 }} className="cities-grid">
-          {TOP_CITIES_WITH_BG.map((city, i) => (
-            <Reveal key={city.name} delay={i * 40}>
-              <div className="hover-slide-card">
-                <img src={city.bg} alt={city.name} className="bg-img" />
-                <div className="card-overlay">
-                  <div className="slide-up-body">
-                    <span
-                      style={{
-                        fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase",
-                        color: BRAND.amber, background: "rgba(16,18,53,0.7)", padding: "3px 8px", borderRadius: 4,
-                        display: "inline-block", marginBottom: 8,
-                      }}
-                    >
-                      {city.state}
-                    </span>
-                    <h3 className="disp" style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                      <MapPin size={16} color={BRAND.amber} /> {city.name}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
-        <style>{`@media (max-width: 900px) { .cities-grid { grid-template-columns: 1fr 1fr !important; } } @media (max-width: 520px) { .cities-grid { grid-template-columns: 1fr !important; } }`}</style>
-      </section>
-
       {/* ---------------- HOW IT WORKS ---------------- */}
       <section id="how-it-works" style={{ background: pal.surfaceAlt, marginTop: 96, padding: "96px 0", borderTop: `1px solid ${pal.border}`, borderBottom: `1px solid ${pal.border}` }}>
         <div className="container">
@@ -981,6 +903,134 @@ export default function SCNJobsLanding() {
         </Reveal>
       </section>
 
+      {/* ---------------- ABOUT US SECTION ---------------- */}
+      <section id="about" className="container" style={{ padding: "96px 24px 20px" }}>
+        <Reveal>
+          <div style={{ textAlign: "center", marginBottom: 44 }}>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>ABOUT SCNJOB.COM</span>
+            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
+              About Sai Call Net & SCNJob.com
+            </h2>
+          </div>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div
+            style={{
+              background: pal.surface,
+              border: `1px solid ${pal.border}`,
+              borderRadius: 24,
+              padding: "40px 36px",
+              boxShadow: "0 20px 44px -24px rgba(16,18,53,0.12)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: `linear-gradient(135deg, ${BRAND.indigo}, ${BRAND.teal})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Building2 size={20} color="#fff" />
+              </div>
+              <div>
+                <h3 className="disp" style={{ fontSize: 20, fontWeight: 800, color: pal.text, margin: 0 }}>Sai Call Net Platform</h3>
+                <span style={{ fontSize: 12.5, color: BRAND.amberDeep, fontWeight: 700 }}>Official Job Portal</span>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 15, lineHeight: 1.7, color: pal.textMuted }}>
+              <p>
+                Welcome to <strong style={{ color: pal.text }}>scnjob.com</strong> Job Portal. The Site is provided and controlled by <strong style={{ color: pal.text }}>Sai Call Net</strong>. We are cautious about protecting your privacy and recognize the importance of maintaining the privacy of every user who visits our Site. We value your privacy and appreciate your trust. We are committed to being transparent about the data we collect about you, how it is used, and with whom it is shared.
+              </p>
+              <p>
+                <strong style={{ color: pal.text }}>scnjob.com</strong> is one of the leading job portals along with easy access to enable both employer as well as employee. We believe that not only does a job seeker have the right to get a relevant job, but an employer must also have the right to hire the perfect candidate for their organization to enhance business growth in a short span of time.
+              </p>
+              <p>
+                <strong style={{ color: pal.text }}>SCNJob.com</strong> makes it easy to search for jobs. The platform has a comprehensive database of jobs from all over India, so you can easily find the perfect job for you. You can filter your search by location, industry, experience level, and more. This makes it easy to narrow down your search and find the right job for you. SCNJob.com also offers personalized recommendations based on your skills and interests so you can quickly find the perfect role for you.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ---------------- TERMS & CONDITIONS SECTION ---------------- */}
+      <section id="terms" className="container" style={{ padding: "96px 24px 20px" }}>
+        <Reveal>
+          <div style={{ textAlign: "center", marginBottom: 44 }}>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.amberDeep, fontWeight: 600, letterSpacing: "0.1em" }}>TERMS & CONDITIONS</span>
+            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
+              Transparent Interface & Safety Policy
+            </h2>
+          </div>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div
+            style={{
+              background: pal.surface,
+              border: `1px solid ${pal.border}`,
+              borderRadius: 24,
+              padding: "40px 36px",
+              boxShadow: "0 20px 44px -24px rgba(16,18,53,0.12)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 20, fontSize: 15, lineHeight: 1.7, color: pal.textMuted }}>
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14, background: pal.surfaceAlt, padding: 20, borderRadius: 16, border: `1px solid ${pal.border}` }}>
+                <CheckCircle2 size={24} color={BRAND.teal} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: pal.text, margin: "0 0 6px 0" }}>Candidate Protection & Zero Scam Assurance</h4>
+                  <p style={{ margin: 0 }}>
+                    <strong style={{ color: pal.text }}>scnjob.com</strong> is going to transparent interface for employee and employer both where if candidate is being charged or scammed against job offer, candidate can report such employer and we assure you to block permanently post strong verification.
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 14, background: pal.surfaceAlt, padding: 20, borderRadius: 16, border: `1px solid ${pal.border}` }}>
+                <Users size={24} color={BRAND.indigo} style={{ flexShrink: 0, marginTop: 2 }} />
+                <div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: pal.text, margin: "0 0 6px 0" }}>Employer Talent Integrity & Remarks</h4>
+                  <p style={{ margin: 0 }}>
+                    Similarly, if employer find any hired talent cheats them in any manner could write a remark against his profile to beware the next employer or block him from future job opportunists.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      {/* ---------------- PRIVACY POLICY SECTION ---------------- */}
+      <section id="privacy" className="container" style={{ padding: "96px 24px 20px" }}>
+        <Reveal>
+          <div style={{ textAlign: "center", marginBottom: 44 }}>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>PRIVACY POLICY</span>
+            <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
+              Privacy Statement & Data Protection
+            </h2>
+          </div>
+        </Reveal>
+
+        <Reveal delay={80}>
+          <div
+            style={{
+              background: pal.surface,
+              border: `1px solid ${pal.border}`,
+              borderRadius: 24,
+              padding: "40px 36px",
+              boxShadow: "0 20px 44px -24px rgba(16,18,53,0.12)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 15, lineHeight: 1.7, color: pal.textMuted }}>
+              <p>
+                Company is committed to protecting the privacy of our users. We want, and strives to provide a safe, secure user experience. This Privacy Statement sets forth the online data collection and usage policies and practices that apply to this web site.
+              </p>
+              <p>
+                The following statement explains Company’s commitment to managing your personal information and sets out how and when personal information is collected, used, shared, and secured as well as your choices regarding use, access, and correction of your personal information.
+              </p>
+              <p>
+                This Privacy Commitment only applies to data gathered on the (<strong style={{ color: pal.text }}>www.scnjob.com</strong> "Site"), and does not apply to any other information or web site.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ---------------- FAQ ---------------- */}
       <section id="faq" className="container" style={{ padding: "96px 24px 20px", maxWidth: 820 }}>
         <Reveal>
@@ -1058,15 +1108,41 @@ export default function SCNJobsLanding() {
               </p>
             </div>
             {[
-              { h: "For Candidates", items: ["Browse Jobs", "Create Profile", "Login", "Career Resources"] },
-              { h: "For Recruiters", items: ["Post a Job", "Search Candidates", "Recruiter Login", "Pricing"] },
-              { h: "Company", items: ["About Us", "Careers", "Blog", "Contact"] },
+              {
+                h: "For Candidates",
+                links: [
+                  { label: "Browse Jobs", href: "/jobs" },
+                  { label: "Create Profile", href: "/worker/register" },
+                  { label: "Login", href: "/login" },
+                  { label: "Career Resources", href: "#how-it-works" },
+                ],
+              },
+              {
+                h: "For Recruiters",
+                links: [
+                  { label: "Post a Job", href: "/recruiter/jobs/new" },
+                  { label: "Search Candidates", href: "/recruiter/workers" },
+                  { label: "Recruiter Login", href: "/login" },
+                  { label: "Pricing", href: "#how-it-works" },
+                ],
+              },
+              {
+                h: "Company & Legal",
+                links: [
+                  { label: "About Us", href: "#about" },
+                  { label: "Terms & Conditions", href: "#terms" },
+                  { label: "Privacy Policy", href: "#privacy" },
+                  { label: "Contact Us", href: "#about" },
+                ],
+              },
             ].map((col) => (
               <div key={col.h}>
                 <h4 style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, color: pal.text }}>{col.h}</h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
-                  {col.items.map((it) => (
-                    <a key={it} href="#" style={{ fontSize: 13.5, color: pal.textMuted, textDecoration: "none" }}>{it}</a>
+                  {col.links.map((link) => (
+                    <Link key={link.label} href={link.href} style={{ fontSize: 13.5, color: pal.textMuted, textDecoration: "none" }}>
+                      {link.label}
+                    </Link>
                   ))}
                 </div>
               </div>

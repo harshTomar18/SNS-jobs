@@ -67,7 +67,7 @@ export default function WorkerProfilePage() {
   const profile = profileQuery.data as WorkerWithMeta | undefined;
 
   const [form, setForm] = useState({
-    name: '', phone: '', headline: '', summary: '',
+    name: '', phone: '', alternatePhone: '', headline: '', summary: '',
     totalExperienceMonths: 0, expectedSalaryMin: 0, expectedSalaryMax: 0,
     resumeUrl: '', state: '', city: '', locality: '',
     dob: '',
@@ -89,7 +89,7 @@ export default function WorkerProfilePage() {
   useEffect(() => {
     if (!profile) return;
     setForm({
-      name: profile.fullName, phone: profile.phone, headline: profile.headline,
+      name: profile.fullName, phone: profile.phone, alternatePhone: profile.alternatePhone || '', headline: profile.headline,
       summary: profile.bio, totalExperienceMonths: profile.experienceYears * 12,
       expectedSalaryMin: profile.expectedSalaryMin, expectedSalaryMax: profile.expectedSalaryMax,
       resumeUrl: profile.resumeUrl || '', state: profile.state || '',
@@ -128,7 +128,7 @@ export default function WorkerProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: () => workerApi.updateProfile({
-      name: form.name, phone: form.phone, headline: form.headline, summary: form.summary,
+      name: form.name, phone: form.phone, alternatePhone: form.alternatePhone || undefined, headline: form.headline, summary: form.summary,
       totalExperienceMonths: form.totalExperienceMonths,
       expectedSalaryMin: form.expectedSalaryMin, expectedSalaryMax: form.expectedSalaryMax,
       resumeUrl: form.resumeUrl || undefined,
@@ -187,23 +187,40 @@ export default function WorkerProfilePage() {
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not delete experience')),
   });
 
-  // Languages - FIXED: uses languageIds directly
+  // Languages - with proficiency selection
   const masterLanguagesQuery = useQuery({ queryKey: ['master', 'languages'], queryFn: () => masterDataApi.raw('languages') });
   const masterLanguages: BackendLookup[] = (masterLanguagesQuery.data as BackendLookup[]) || [];
   const [langModalOpen, setLangModalOpen] = useState(false);
-  const [selectedLangIds, setSelectedLangIds] = useState<number[]>([]);
+  const [selectedLangs, setSelectedLangs] = useState<{ languageId: number; proficiency: string }[]>([]);
   const [langSearch, setLangSearch] = useState('');
+
   const handleOpenLangModal = () => {
     if (!profile) return;
     const ids = profile.languageIds?.length
       ? profile.languageIds
       : masterLanguages.filter(ml => ml.name && profile.languages.map(l => l.toLowerCase()).includes(ml.name.toLowerCase())).map(ml => ml.id);
-    setSelectedLangIds(ids);
+    setSelectedLangs(ids.map(id => ({ languageId: id, proficiency: 'fluent' })));
     setLangModalOpen(true);
   };
-  const toggleLangSelection = (id: number) => setSelectedLangIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+
+  const toggleLangSelection = (id: number) => {
+    setSelectedLangs(prev => {
+      const exists = prev.some(item => item.languageId === id);
+      if (exists) {
+        return prev.filter(item => item.languageId !== id);
+      }
+      return [...prev, { languageId: id, proficiency: 'fluent' }];
+    });
+  };
+
+  const updateProficiency = (id: number, proficiency: string) => {
+    setSelectedLangs(prev =>
+      prev.map(item => (item.languageId === id ? { ...item, proficiency } : item))
+    );
+  };
+
   const updateLanguagesMutation = useMutation({
-    mutationFn: (languageIds: number[]) => workerApi.updateProfile({ languageIds }),
+    mutationFn: (languages: { languageId: number; proficiency: string }[]) => workerApi.updateProfile({ languages }),
     onSuccess: () => { toast.success('Languages updated'); setLangModalOpen(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update languages')),
   });
@@ -331,6 +348,7 @@ export default function WorkerProfilePage() {
                     <p className="text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Worker Profile'}</p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-bold">
                       {profile.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-slate-400" />{profile.phone}</span>}
+                      {profile.alternatePhone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-slate-400" />Alt: {profile.alternatePhone}</span>}
                       {profile.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-slate-400" />{profile.email}</span>}
                       <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-slate-400" />{[profile.locality, profile.city, profile.state].filter(Boolean).join(', ') || 'Location Not Set'}</span>
                       {profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline"><LinkIcon className="h-3.5 w-3.5" />View Resume</a>}
@@ -404,9 +422,10 @@ export default function WorkerProfilePage() {
                 </div>
                 {editing ? (
                   <div className="space-y-4 pt-1">
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-4 sm:grid-cols-3">
                       <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Full Name</Label><Input value={form.name} className="rounded-xl border-slate-200" onChange={e => setForm({ ...form, name: e.target.value })} /></div>
-                      <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Phone</Label><Input value={form.phone} className="rounded-xl border-slate-200" onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+                      <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Primary Phone</Label><Input value={form.phone} className="rounded-xl border-slate-200" onChange={e => setForm({ ...form, phone: e.target.value })} /></div>
+                      <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Alternate Phone</Label><Input placeholder="e.g. 9876543210" value={form.alternatePhone} className="rounded-xl border-slate-200" onChange={e => setForm({ ...form, alternatePhone: e.target.value })} /></div>
                     </div>
                     <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Headline</Label><Input value={form.headline} className="rounded-xl border-slate-200" onChange={e => setForm({ ...form, headline: e.target.value })} /></div>
                     <div className="grid gap-4 sm:grid-cols-2 items-end">
@@ -589,7 +608,17 @@ export default function WorkerProfilePage() {
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg" onClick={handleOpenLangModal}><Edit className="h-4 w-4" /></Button>
                 </div>
                 <div className="flex flex-wrap gap-2.5">
-                  {profile.languages.length ? profile.languages.map(lang => (
+                  {profile.languageDetails?.length ? profile.languageDetails.map(item => (
+                    <span key={item.name} className="inline-flex items-center gap-1.5 bg-blue-50/70 border border-blue-100 text-blue-800 font-extrabold text-xs px-3.5 py-1.5 rounded-xl shadow-xs">
+                      <Languages className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      <span>{item.name}</span>
+                      {item.proficiency && (
+                        <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-100/80 px-2 py-0.5 rounded-md ml-0.5">
+                          {item.proficiency}
+                        </span>
+                      )}
+                    </span>
+                  )) : profile.languages.length ? profile.languages.map(lang => (
                     <span key={lang} className="inline-flex items-center gap-1 bg-slate-50 border border-slate-100/60 text-slate-500 font-extrabold text-xs px-3.5 py-1.5 rounded-xl">
                       <Languages className="h-3.5 w-3.5 text-slate-400 shrink-0" /><span>{lang}</span>
                     </span>
@@ -732,21 +761,77 @@ export default function WorkerProfilePage() {
           </Dialog>
 
           <Dialog open={langModalOpen} onOpenChange={setLangModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white">
-              <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Update Languages</DialogTitle><DialogDescription className="text-xs text-slate-500">Select languages you can speak fluently.</DialogDescription></DialogHeader>
+            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-extrabold text-slate-800">Update Languages & Fluency</DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">Select languages and set your proficiency level for each.</DialogDescription>
+              </DialogHeader>
               <div className="space-y-4 py-3">
-                <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search languages..." value={langSearch} onChange={e => setLangSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs" /></div>
-                <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
-                  {masterLanguagesQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div> : masterLanguages.filter(l => !langSearch || l.name?.toLowerCase().includes(langSearch.toLowerCase())).map(lang => { const isSelected = selectedLangIds.includes(lang.id); return <div key={lang.id} onClick={() => toggleLangSelection(lang.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{lang.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleLangSelection(lang.id)} /></div>; })}
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input placeholder="Search languages..." value={langSearch} onChange={e => setLangSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs font-bold" />
                 </div>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedLangIds.length}):</span>
-                  {selectedLangIds.map(id => { const item = masterLanguages.find(l => l.id === id); if (!item) return null; return <Badge key={id} className="bg-blue-100 text-blue-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleLangSelection(id)} /></Badge>; })}
+                <div className="max-h-52 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
+                  {masterLanguagesQuery.isLoading ? (
+                    <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div>
+                  ) : (
+                    masterLanguages
+                      .filter(l => !langSearch || l.name?.toLowerCase().includes(langSearch.toLowerCase()))
+                      .map(lang => {
+                        const isSelected = selectedLangs.some(item => item.languageId === lang.id);
+                        return (
+                          <div
+                            key={lang.id}
+                            onClick={() => toggleLangSelection(lang.id)}
+                            className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${
+                              isSelected ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'
+                            }`}
+                          >
+                            <span>{lang.name}</span>
+                            <Checkbox checked={isSelected} onCheckedChange={() => toggleLangSelection(lang.id)} />
+                          </div>
+                        );
+                      })
+                  )}
                 </div>
+
+                {/* Selected Languages with Proficiency Selectors */}
+                {selectedLangs.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t border-slate-100">
+                    <span className="text-xs text-slate-700 font-extrabold block">Selected Languages & Proficiency ({selectedLangs.length}):</span>
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {selectedLangs.map(item => {
+                        const langItem = masterLanguages.find(l => l.id === item.languageId);
+                        if (!langItem) return null;
+                        return (
+                          <div key={item.languageId} className="flex items-center justify-between gap-3 p-2.5 bg-blue-50/70 border border-blue-100 rounded-xl text-xs">
+                            <span className="font-bold text-blue-900 shrink-0">{langItem.name}</span>
+                            <div className="flex items-center gap-2">
+                              <Select value={item.proficiency} onValueChange={(val) => updateProficiency(item.languageId, val)}>
+                                <SelectTrigger className="h-8 w-32 rounded-lg bg-white border-blue-200 text-xs font-bold text-blue-700">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="fluent" className="text-xs font-bold">Fluent</SelectItem>
+                                  <SelectItem value="intermediate" className="text-xs font-bold">Intermediate</SelectItem>
+                                  <SelectItem value="basic" className="text-xs font-bold">Basic</SelectItem>
+                                  <SelectItem value="native" className="text-xs font-bold">Native</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <X className="h-4 w-4 text-blue-400 hover:text-blue-600 cursor-pointer shrink-0" onClick={() => toggleLangSelection(item.languageId)} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" className="rounded-xl text-xs" onClick={() => setLangModalOpen(false)}>Cancel</Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateLanguagesMutation.mutate(selectedLangIds)} disabled={updateLanguagesMutation.isPending}>{updateLanguagesMutation.isPending ? 'Saving...' : 'Save Languages'}</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateLanguagesMutation.mutate(selectedLangs)} disabled={updateLanguagesMutation.isPending}>
+                  {updateLanguagesMutation.isPending ? 'Saving...' : 'Save Languages'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

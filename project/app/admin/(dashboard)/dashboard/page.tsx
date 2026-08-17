@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { Award, Briefcase, Building2, Code, FileText, Languages, MapPin, Users, ArrowRight } from 'lucide-react';
+import { Award, Briefcase, Building2, Code, FileText, Languages, MapPin, Users, ArrowRight, Layers } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,7 @@ export default function AdminDashboardPage() {
 
   const masterDataStats = [
     { label: 'Industries', value: stats?.industries || 0, icon: Building2, href: '/admin/master-data', color: 'text-primary' },
+    { label: 'Functions', value: (stats?.masterData as any)?.functions || 0, icon: Layers, href: '/admin/master-data', color: 'text-accent' },
     { label: 'Locations', value: stats?.locations || 0, icon: MapPin, href: '/admin/master-data', color: 'text-accent' },
     { label: 'Skills', value: stats?.skills || 0, icon: Code, href: '/admin/master-data', color: 'text-success' },
     { label: 'Languages', value: stats?.languages || 0, icon: Languages, href: '/admin/master-data', color: 'text-warning' },
