@@ -338,14 +338,6 @@ export default function RecruiterApplicationsPage() {
           <table className="w-full text-left border-collapse min-w-[850px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
-                <th className="px-6 py-4 w-12">
-                  <input
-                    type="checkbox"
-                    checked={paginatedApps.length > 0 && selectedIds.length === paginatedApps.length}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                  />
-                </th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">CANDIDATE</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">APPLIED FOR</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">DATE</th>
@@ -357,15 +349,7 @@ export default function RecruiterApplicationsPage() {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {paginatedApps.map((app) => (
-                <tr key={app.id} className={cn("hover:bg-slate-50/30 transition-colors", selectedIds.includes(app.id) && "bg-slate-50/40")}>
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(app.id)}
-                      onChange={(e) => handleSelectOne(app.id, e.target.checked)}
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4"
-                    />
-                  </td>
+                <tr key={app.id} className="hover:bg-slate-50/30 transition-colors">
                   <td className="px-6 py-4">
                     <div 
                       className="flex items-center gap-3 cursor-pointer group"
@@ -445,7 +429,7 @@ export default function RecruiterApplicationsPage() {
               ))}
               {paginatedApps.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-12">
+                  <td colSpan={7} className="text-center py-12">
                     <div className="flex flex-col items-center justify-center text-slate-400">
                       <FileText className="h-12 w-12 text-slate-200 mb-3" />
                       <span className="text-base font-bold text-slate-700">No applications found</span>
