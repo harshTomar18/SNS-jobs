@@ -525,7 +525,6 @@ export default function RecruiterApplicationsPage() {
               {/* Header Avatar Card */}
               <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
                 <Avatar className="h-16 w-16 border border-indigo-100 shadow-sm shrink-0">
-                  <AvatarImage src={workerProfile.profilePhotoUrl} alt={workerProfile.name} />
                   <AvatarFallback className="text-lg font-bold bg-indigo-50 text-indigo-600">
                     {getInitials(workerProfile.name)}
                   </AvatarFallback>

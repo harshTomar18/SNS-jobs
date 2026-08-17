@@ -85,6 +85,21 @@ export default function WorkerProfilePage() {
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
+  const [deptSearch, setDeptSearch] = useState('');
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+
+  const functionsQuery = useQuery({ queryKey: ['master', 'functions'], queryFn: () => masterDataApi.raw('functions') });
+  const rawFunctions = functionsQuery.data;
+  const masterFunctions: BackendLookup[] = Array.isArray(rawFunctions) ? (rawFunctions as BackendLookup[]) : [];
+
+  useEffect(() => {
+    setDeptSearch(form.departmentName || '');
+  }, [form.departmentName]);
+
+  const filteredMasterFunctions = useMemo(() => {
+    if (!deptSearch || deptSearch === form.departmentName) return masterFunctions;
+    return masterFunctions.filter(fn => (fn.name || '').toLowerCase().includes(deptSearch.toLowerCase()));
+  }, [masterFunctions, deptSearch, form.departmentName]);
 
   useEffect(() => {
     if (!profile) return;
@@ -332,17 +347,14 @@ export default function WorkerProfilePage() {
                 <div className="flex sm:flex-row items-start sm:items-end gap-5 text-left flex-1 min-w-0">
                   <div className="relative shrink-0 z-10">
                     <Avatar className="h-32 w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
-                      {profile.avatarUrl ? <AvatarImage src={profile.avatarUrl} alt={profile.fullName} className="object-cover h-full w-full" /> : null}
                       <AvatarFallback className="text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
                       <div className="absolute inset-0 border-[5px] border-[#00c853] rounded-full pointer-events-none" />
                       <div className="absolute bottom-0 left-0 right-0 bg-[#00c853] text-white text-[7px] font-black text-center py-1 uppercase tracking-wider">Open To Work</div>
                     </Avatar>
-                    <button className="absolute bottom-1.5 right-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 border-2 border-white shadow-md z-20"><Camera className="h-3.5 w-3.5" /></button>
                   </div>
                   <div className="pb-1 space-y-2 flex-1 min-w-0 text-left">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-2xl font-black text-slate-800">{profile.fullName}</h2>
-                      <Badge className="bg-[#e8eefc] text-[#1a73e8] font-bold text-[10px] rounded-full py-0.5 px-2.5 uppercase border-transparent">{profile.profileCompletion >= 80 ? 'PRO USER' : 'WORKER'}</Badge>
                       {profile.isFresher && <Badge className="bg-green-50 text-green-600 border-none text-[10px] font-bold rounded-full px-2.5 py-0.5">FRESHER</Badge>}
                     </div>
                     <p className="text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Worker Profile'}</p>
@@ -499,7 +511,52 @@ export default function WorkerProfilePage() {
                           </Select>
                         </div>
                         <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Job Preference</Label><Input placeholder="e.g. Full Time, Remote" value={form.jobPreference} className="rounded-xl border-slate-200 text-xs" onChange={e => setForm({ ...form, jobPreference: e.target.value })} /></div>
-                        <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Department / Function</Label><Input placeholder="e.g. Software Engineering" value={form.departmentName} className="rounded-xl border-slate-200 text-xs" onChange={e => setForm({ ...form, departmentName: e.target.value })} /></div>
+                        <div className="space-y-1.5 relative">
+                          <Label className="text-xs font-bold text-slate-500">Department / Function</Label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              autoComplete="off"
+                              placeholder="Search or select department..."
+                              className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 transition-all shadow-sm"
+                              value={deptSearch}
+                              onChange={e => {
+                                setDeptSearch(e.target.value);
+                                setForm(p => ({ ...p, departmentName: e.target.value }));
+                                setIsDeptOpen(true);
+                              }}
+                              onFocus={() => setIsDeptOpen(true)}
+                              onBlur={() => setTimeout(() => setIsDeptOpen(false), 200)}
+                            />
+                            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                          </div>
+                          {isDeptOpen && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {functionsQuery.isLoading ? (
+                                <div className="flex items-center justify-center p-2.5">
+                                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                                </div>
+                              ) : filteredMasterFunctions.length === 0 ? (
+                                <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
+                              ) : (
+                                filteredMasterFunctions.map((fn: BackendLookup) => (
+                                  <button
+                                    key={fn.id}
+                                    type="button"
+                                    className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                    onMouseDown={() => {
+                                      setDeptSearch(fn.name);
+                                      setForm(p => ({ ...p, departmentName: fn.name }));
+                                      setIsDeptOpen(false);
+                                    }}
+                                  >
+                                    {fn.name}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
