@@ -357,6 +357,8 @@ export function toJob(job: BackendJob): JobWithMeta {
     companyName,
     companyLogo: '',
     industry: job.industry?.name || 'General',
+    department: (job as any).function?.name || (job as any).functionName || (job as any).departmentName || (job as any).department || 'General',
+    departmentName: (job as any).function?.name || (job as any).functionName || (job as any).departmentName || (job as any).department || 'General',
     location: locationName,
     locality: job.location?.locality,
     workType: 'onsite',

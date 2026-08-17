@@ -33,6 +33,8 @@ export interface Job {
   companyName: string;
   companyLogo: string;
   industry: string;
+  department?: string;
+  departmentName?: string;
   location: string;
   locality?: string;
   workType: 'remote' | 'hybrid' | 'onsite';

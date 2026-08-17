@@ -437,6 +437,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
         <div className="space-y-2.5 pt-4 border-t border-slate-100 text-xs font-semibold text-slate-700">
           <p><strong>Role:</strong> {job.title}</p>
           <p><strong>Industry Type:</strong> {job.industry}</p>
+          <p><strong>Department / Function:</strong> {job.department || job.departmentName || (job as any).function?.name || (job as any).functionName || 'General'}</p>
           <p><strong>Employment Type:</strong> <span className="capitalize">{job.jobType}</span>, <span className="capitalize">{job.shift} Shift</span></p>
           <p><strong>Working Days:</strong> {job.workingDays ? `${job.workingDays} Days` : '5 Days Working'}</p>
         </div>
