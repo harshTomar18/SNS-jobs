@@ -348,8 +348,8 @@ export default function WorkerOnboardingPage() {
         });
       }
 
-      // 3. Add experience if provided and not fresher
-      if (!data.isFresher && data.companyName && data.jobTitle && data.fromDate) {
+      // 3. Add experience if provided (freshers can also add internships/projects)
+      if (data.companyName && data.jobTitle && data.fromDate) {
         await workerApi.addExperience({
           companyName: data.companyName,
           jobTitle: data.jobTitle,
@@ -919,28 +919,25 @@ export default function WorkerOnboardingPage() {
                 <h2 className="text-xl font-semibold">Work Experience (Optional)</h2>
 
                 {/* Fresher Checkbox */}
-                <div className="flex items-center space-x-2 rounded-lg border border-border p-3.5 bg-muted/20">
-                  <Checkbox
-                    id="onboardingFresher"
-                    checked={watch('isFresher')}
-                    onCheckedChange={(checked) => {
-                      const isChecked = Boolean(checked);
-                      setValue('isFresher', isChecked);
-                      if (isChecked) {
-                        setValue('workingStatus', 'IMMEDIATE_JOINER');
-                        setValue('noticePeriodDays', undefined);
-                        setValue('companyName', '');
-                        setValue('jobTitle', '');
-                        setValue('fromDate', '');
-                        setValue('toDate', '');
-                        setValue('isCurrent', false);
-                        setValue('description', '');
-                      }
-                    }}
-                  />
-                  <label htmlFor="onboardingFresher" className="text-sm font-semibold cursor-pointer">
-                    I am a Fresher
-                  </label>
+                <div className="flex items-center justify-between rounded-lg border border-border p-3.5 bg-muted/20">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="onboardingFresher"
+                      checked={watch('isFresher')}
+                      onCheckedChange={(checked) => {
+                        const isChecked = Boolean(checked);
+                        setValue('isFresher', isChecked);
+                        if (isChecked) {
+                          setValue('workingStatus', 'IMMEDIATE_JOINER');
+                          setValue('noticePeriodDays', undefined);
+                        }
+                      }}
+                    />
+                    <label htmlFor="onboardingFresher" className="text-sm font-semibold cursor-pointer">
+                      I am a Fresher
+                    </label>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-semibold">(Freshers can also add internships or projects below)</span>
                 </div>
 
                 {/* Working Status */}
@@ -976,12 +973,12 @@ export default function WorkerOnboardingPage() {
                   )}
                 </div>
 
-                {watch('isFresher') ? (
-                  <div className="rounded-lg border border-success/30 bg-success/5 p-4 text-sm font-medium text-success text-center">
-                    Fresher option selected — experience fields are disabled.
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
+                      Work Experience / Internship / Project (Optional)
+                    </h3>
                   </div>
-                ) : (
-                  <>
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label>Company Name</Label>
@@ -1019,8 +1016,7 @@ export default function WorkerOnboardingPage() {
                       <Label>Description</Label>
                       <Textarea {...register('description')} rows={3} placeholder="Key responsibilities and achievements..." />
                     </div>
-                  </>
-                )}
+                </div>
               </div>
             )}
 

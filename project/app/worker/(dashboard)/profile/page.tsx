@@ -610,9 +610,8 @@ export default function WorkerProfilePage() {
               <Card className="p-8 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-6">
                 <div className="flex items-center justify-between border-b border-slate-50 pb-2">
                   <h3 className="font-extrabold text-slate-800 text-lg">Experience</h3>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg" onClick={() => { if (profile.isFresher) { toast.error('Uncheck Fresher to add experience'); return; } setExpModalOpen(true); }}><Plus className="h-4.5 w-4.5" /></Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg" onClick={() => setExpModalOpen(true)}><Plus className="h-4.5 w-4.5" /></Button>
                 </div>
-                {profile.isFresher && <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-xs text-green-700 font-bold">Fresher profile — experience not applicable</div>}
                 <div className="relative pl-6 space-y-8 border-l-2 border-slate-100">
                   {profile.experience.length ? profile.experience.map(exp => (
                     <div key={exp.id} className="relative group">
@@ -630,7 +629,7 @@ export default function WorkerProfilePage() {
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg shrink-0 opacity-0 group-hover:opacity-100" onClick={() => deleteExperienceMutation.mutate(exp.id)} disabled={deleteExperienceMutation.isPending}><Trash2 className="h-4 w-4" /></Button>
                       </div>
                     </div>
-                  )) : <div className="text-center py-6"><p className="text-xs text-slate-400">{profile.isFresher ? 'Fresher — no experience needed.' : 'No experience added yet.'}</p></div>}
+                  )) : <div className="text-center py-6"><p className="text-xs text-slate-400">No experience added yet. (Freshers can also add internships, traineeships, or projects)</p></div>}
                 </div>
               </Card>
 
