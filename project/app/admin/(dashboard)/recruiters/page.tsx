@@ -395,37 +395,41 @@ export default function AdminRecruitersPage() {
 
           {fullRecruiterQuery.isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Loading recruiter details & posted jobs...</div>
-          ) : fullRecruiterQuery.data ? (
-            <div className="space-y-4 pt-2">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <div>
-                  <h3 className="font-bold text-lg">{fullRecruiterQuery.data.recruiter.name}</h3>
-                  <p className="text-sm text-muted-foreground">{fullRecruiterQuery.data.recruiter.email}</p>
-                </div>
-                <Badge variant="outline">{fullRecruiterQuery.data.jobs?.length || 0} Total Jobs Posted</Badge>
-              </div>
+          ) : (() => {
+            const selectedRecruiter = recruiters.find((r) => r.id === fullDetailRecruiterId);
+            const recruiterData = fullRecruiterQuery.data?.recruiter || (fullRecruiterQuery.data?.name ? fullRecruiterQuery.data : null) || selectedRecruiter;
+            const jobsData = fullRecruiterQuery.data?.jobs || (Array.isArray(fullRecruiterQuery.data) ? fullRecruiterQuery.data : []);
 
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold">Posted Jobs Oversight</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {fullRecruiterQuery.data.jobs?.map((job: any) => (
-                    <div key={job.id} className="rounded-lg border border-border p-3 flex items-center justify-between text-xs">
-                      <div>
-                        <p className="font-medium text-sm">{job.title}</p>
-                        <p className="text-muted-foreground">{job.headcountRequired} Openings</p>
+            return (
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div>
+                    <h3 className="font-bold text-lg">{recruiterData?.name || 'Recruiter'}</h3>
+                    <p className="text-sm text-muted-foreground">{recruiterData?.email || recruiterData?.companyName || ''}</p>
+                  </div>
+                  <Badge variant="outline">{jobsData?.length || 0} Total Jobs Posted</Badge>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">Posted Jobs Oversight</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {jobsData?.map((job: any) => (
+                      <div key={job.id} className="rounded-lg border border-border p-3 flex items-center justify-between text-xs">
+                        <div>
+                          <p className="font-medium text-sm">{job.title}</p>
+                          <p className="text-muted-foreground">{job.headcountRequired || 0} Openings</p>
+                        </div>
+                        <Badge variant="outline">{job.status}</Badge>
                       </div>
-                      <Badge variant="outline">{job.status}</Badge>
-                    </div>
-                  ))}
-                  {(!fullRecruiterQuery.data.jobs || fullRecruiterQuery.data.jobs.length === 0) && (
-                    <p className="text-xs text-muted-foreground">No jobs posted yet by this recruiter.</p>
-                  )}
+                    ))}
+                    {(!jobsData || jobsData.length === 0) && (
+                      <p className="text-xs text-muted-foreground py-4 text-center">No jobs posted yet by this recruiter.</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-sm text-muted-foreground">No recruiter record details found.</div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
