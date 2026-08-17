@@ -888,9 +888,7 @@ export default function WorkerProfilePage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="fluent" className="text-xs font-bold">Fluent</SelectItem>
-                                  <SelectItem value="intermediate" className="text-xs font-bold">Intermediate</SelectItem>
                                   <SelectItem value="basic" className="text-xs font-bold">Basic</SelectItem>
-                                  <SelectItem value="native" className="text-xs font-bold">Native</SelectItem>
                                 </SelectContent>
                               </Select>
                               <X className="h-4 w-4 text-blue-400 hover:text-blue-600 cursor-pointer shrink-0" onClick={() => toggleLangSelection(item.languageId)} />
