@@ -236,6 +236,7 @@ export default function AdminRecruitersPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
             </div>
           </Card>
         ))}
