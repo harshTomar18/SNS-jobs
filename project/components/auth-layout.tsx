@@ -38,9 +38,7 @@ export function AuthLayout({
 
       <header className="absolute left-0 right-0 top-0 z-50 flex h-20 items-center justify-between px-6 sm:px-10 lg:px-12">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#2B2E77] to-[#14B8A6] shadow-lg">
-            <Briefcase className="h-5 w-5 text-white" />
-          </div>
+          <img src="/logo.png" alt="SCN Jobs" className="h-9 w-9 object-contain rounded-xl shadow-sm" />
           <span className="text-xl font-extrabold tracking-tight">SCN Jobs</span>
         </Link>
         <ThemeToggle />
