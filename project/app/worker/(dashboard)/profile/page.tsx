@@ -314,7 +314,7 @@ export default function WorkerProfilePage() {
     </div>
   );
 
-  const wStatusLabel = {
+  const wStatusLabel: Record<string, string> = {
     SERVING_NOTICE: `Notice Period${profile?.noticePeriodDays ? ` (${profile.noticePeriodDays}d)` : ''}`,
     WORKING: 'Currently Working',
     NOT_WORKING: 'Not Working',

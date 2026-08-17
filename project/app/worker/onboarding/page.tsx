@@ -115,11 +115,11 @@ export default function WorkerOnboardingPage() {
 
   const functionsQuery = useQuery({ queryKey: ['master', 'functions'], queryFn: () => masterDataApi.raw('functions') });
   const rawFunctionsData = functionsQuery.data;
-  const functionsList: MasterRawItem[] = Array.isArray(rawFunctionsData) ? rawFunctionsData : [];
+  const functionsList: BackendLookup[] = Array.isArray(rawFunctionsData) ? (rawFunctionsData as BackendLookup[]) : [];
 
   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
   const rawIndustriesData = industriesQuery.data;
-  const industriesList: MasterRawItem[] = Array.isArray(rawIndustriesData) ? rawIndustriesData : [];
+  const industriesList: BackendLookup[] = Array.isArray(rawIndustriesData) ? (rawIndustriesData as BackendLookup[]) : [];
 
   useEffect(() => {
     setStateInput(selectedState);
@@ -164,6 +164,15 @@ export default function WorkerOnboardingPage() {
   const filteredLocalities = localities.filter((l: BackendLocation) => {
     if (!localityInput || l.locality === selectedLocality) return true;
     return l.locality.toLowerCase().includes(localityInput.toLowerCase());
+  });
+
+  const filteredFunctions = functionsList.filter((fn: BackendLookup) => {
+    if (!deptInput || fn.name === deptInput) return true;
+    return (fn.name || '').toLowerCase().includes(deptInput.toLowerCase());
+  });
+  const filteredIndustries = industriesList.filter((ind: BackendLookup) => {
+    if (!indInput || ind.name === indInput) return true;
+    return (ind.name || '').toLowerCase().includes(indInput.toLowerCase());
   });
 
   const handleStateChange = (state: string) => {
@@ -573,7 +582,7 @@ export default function WorkerOnboardingPage() {
                         ) : filteredFunctions.length === 0 ? (
                           <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
                         ) : (
-                          filteredFunctions.map((fn: MasterRawItem) => (
+                          filteredFunctions.map((fn: BackendLookup) => (
                             <button
                               key={fn.id}
                               type="button"
@@ -621,7 +630,7 @@ export default function WorkerOnboardingPage() {
                         ) : filteredIndustries.length === 0 ? (
                           <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
                         ) : (
-                          filteredIndustries.map((ind: MasterRawItem) => (
+                          filteredIndustries.map((ind: BackendLookup) => (
                             <button
                               key={ind.id}
                               type="button"
