@@ -914,7 +914,20 @@ export const workerApi = {
     institute?: string;
     passoutYear?: number;
   }) {
-    return await apiPost<any>('/worker/education', data);
+    const payload: any = {
+      institute: data.institute,
+      passoutYear: data.passoutYear ? Number(data.passoutYear) : undefined,
+    };
+    if (data.qualificationId) {
+      payload.qualificationId = Number(data.qualificationId);
+    }
+    if (data.level === 'ANY' || !data.qualificationId) {
+      if (data.qualificationName) payload.qualificationName = data.qualificationName;
+    }
+    if (data.level) {
+      payload.level = data.level;
+    }
+    return await apiPost<any>('/worker/education', payload);
   },
   async editEducation(id: string, data: {
     qualificationId?: number;
@@ -923,7 +936,20 @@ export const workerApi = {
     institute?: string;
     passoutYear?: number;
   }) {
-    return await apiPatch<any>(`/worker/education/${id}`, data);
+    const payload: any = {
+      institute: data.institute,
+      passoutYear: data.passoutYear ? Number(data.passoutYear) : undefined,
+    };
+    if (data.qualificationId) {
+      payload.qualificationId = Number(data.qualificationId);
+    }
+    if (data.level === 'ANY' || !data.qualificationId) {
+      if (data.qualificationName) payload.qualificationName = data.qualificationName;
+    }
+    if (data.level) {
+      payload.level = data.level;
+    }
+    return await apiPatch<any>(`/worker/education/${id}`, payload);
   },
   async deleteEducation(id: string) {
     return await apiDelete<any>(`/worker/education/${id}`);
