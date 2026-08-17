@@ -33,6 +33,8 @@ const schema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   phone: z.string().min(10, 'Valid phone is required'),
   alternatePhone: z.string().optional(),
+  departmentName: z.string().optional(),
+  industryName: z.string().optional(),
   city: z.string().min(2, 'City is required'),
   currentLocality: z.string().optional(),
   preferredLocationIds: z.array(z.string()).default([]),
@@ -52,6 +54,8 @@ const schema = z.object({
   toDate: z.string().optional(),
   isCurrent: z.boolean().default(false),
   description: z.string().optional(),
+  expDepartmentName: z.string().optional(),
+  expIndustryName: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -87,6 +91,18 @@ export default function WorkerOnboardingPage() {
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
 
+  const [deptInput, setDeptInput] = useState('');
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+
+  const [indInput, setIndInput] = useState('');
+  const [isIndOpen, setIsIndOpen] = useState(false);
+
+  const [expDeptInput, setExpDeptInput] = useState('');
+  const [isExpDeptOpen, setIsExpDeptOpen] = useState(false);
+
+  const [expIndInput, setExpIndInput] = useState('');
+  const [isExpIndOpen, setIsExpIndOpen] = useState(false);
+
   const [qualSearch, setQualSearch] = useState('');
   const [isQualOpen, setIsQualOpen] = useState(false);
   const [selectedQualLevel, setSelectedQualLevel] = useState<string>('');
@@ -96,6 +112,14 @@ export default function WorkerOnboardingPage() {
     queryFn: () => workerApi.getQualificationsGrouped(),
   });
   const qualGroups: Record<string, BackendLookup[]> = qualGroupsQuery.data || {};
+
+  const functionsQuery = useQuery({ queryKey: ['master', 'functions'], queryFn: () => masterDataApi.raw('functions') });
+  const rawFunctionsData = functionsQuery.data;
+  const functionsList: MasterRawItem[] = Array.isArray(rawFunctionsData) ? rawFunctionsData : [];
+
+  const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
+  const rawIndustriesData = industriesQuery.data;
+  const industriesList: MasterRawItem[] = Array.isArray(rawIndustriesData) ? rawIndustriesData : [];
 
   useEffect(() => {
     setStateInput(selectedState);
@@ -215,11 +239,12 @@ export default function WorkerOnboardingPage() {
     }
     setIsSubmitting(true);
     try {
-      // 1. Create or update profile including isFresher & workingStatus
+      // 1. Create or update profile including isFresher, department & workingStatus
       await workerApi.updateProfile({
         name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
         alternatePhone: data.alternatePhone || undefined,
+        departmentName: data.departmentName || undefined,
         headline: data.headline,
         summary: data.summary,
         resumeUrl: resumeUrl || undefined,
@@ -250,6 +275,8 @@ export default function WorkerOnboardingPage() {
           toDate: data.isCurrent || !data.toDate ? undefined : new Date(data.toDate).toISOString(),
           isCurrent: data.isCurrent,
           description: data.description || undefined,
+          industryName: data.expIndustryName || data.industryName || undefined,
+          departmentName: data.expDepartmentName || data.departmentName || undefined,
         });
       }
 
@@ -507,6 +534,105 @@ export default function WorkerOnboardingPage() {
                               onMouseDown={() => handleLocalityChange(loc.locality)}
                             >
                               {loc.locality}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Department / Function & Industry Row */}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {/* Department / Function */}
+                  <div className="space-y-2 relative">
+                    <Label>Department / Function</Label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Search or type department (e.g. Software Engineering)..."
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                        value={deptInput}
+                        onChange={(e) => {
+                          setDeptInput(e.target.value);
+                          setIsDeptOpen(true);
+                          setValue('departmentName', e.target.value);
+                        }}
+                        onFocus={() => setIsDeptOpen(true)}
+                        onBlur={() => setTimeout(() => setIsDeptOpen(false), 200)}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isDeptOpen && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                        {functionsQuery.isLoading ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : filteredFunctions.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
+                        ) : (
+                          filteredFunctions.map((fn: MasterRawItem) => (
+                            <button
+                              key={fn.id}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => {
+                                setDeptInput(fn.name);
+                                setValue('departmentName', fn.name);
+                                setIsDeptOpen(false);
+                              }}
+                            >
+                              {fn.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Industry */}
+                  <div className="space-y-2 relative">
+                    <Label>Industry</Label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        placeholder="Search or type industry (e.g. Information Technology)..."
+                        className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                        value={indInput}
+                        onChange={(e) => {
+                          setIndInput(e.target.value);
+                          setIsIndOpen(true);
+                          setValue('industryName', e.target.value);
+                        }}
+                        onFocus={() => setIsIndOpen(true)}
+                        onBlur={() => setTimeout(() => setIsIndOpen(false), 200)}
+                      />
+                      <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                    </div>
+                    {isIndOpen && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                        {industriesQuery.isLoading ? (
+                          <div className="flex items-center justify-center p-2.5">
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+                          </div>
+                        ) : filteredIndustries.length === 0 ? (
+                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
+                        ) : (
+                          filteredIndustries.map((ind: MasterRawItem) => (
+                            <button
+                              key={ind.id}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={() => {
+                                setIndInput(ind.name);
+                                setValue('industryName', ind.name);
+                                setIsIndOpen(false);
+                              }}
+                            >
+                              {ind.name}
                             </button>
                           ))
                         )}

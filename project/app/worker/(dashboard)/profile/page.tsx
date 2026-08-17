@@ -67,7 +67,7 @@ export default function WorkerProfilePage() {
   const profile = profileQuery.data as WorkerWithMeta | undefined;
 
   const [form, setForm] = useState({
-    name: '', phone: '', alternatePhone: '', headline: '', summary: '',
+    name: '', phone: '', alternatePhone: '', departmentName: '', headline: '', summary: '',
     totalExperienceMonths: 0, expectedSalaryMin: 0, expectedSalaryMax: 0,
     resumeUrl: '', state: '', city: '', locality: '',
     dob: '',
@@ -89,7 +89,7 @@ export default function WorkerProfilePage() {
   useEffect(() => {
     if (!profile) return;
     setForm({
-      name: profile.fullName, phone: profile.phone, alternatePhone: profile.alternatePhone || '', headline: profile.headline,
+      name: profile.fullName, phone: profile.phone, alternatePhone: profile.alternatePhone || '', departmentName: profile.department || '', headline: profile.headline,
       summary: profile.bio, totalExperienceMonths: profile.experienceYears * 12,
       expectedSalaryMin: profile.expectedSalaryMin, expectedSalaryMax: profile.expectedSalaryMax,
       resumeUrl: profile.resumeUrl || '', state: profile.state || '',
@@ -128,7 +128,7 @@ export default function WorkerProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: () => workerApi.updateProfile({
-      name: form.name, phone: form.phone, alternatePhone: form.alternatePhone || undefined, headline: form.headline, summary: form.summary,
+      name: form.name, phone: form.phone, alternatePhone: form.alternatePhone || undefined, departmentName: form.departmentName || undefined, headline: form.headline, summary: form.summary,
       totalExperienceMonths: form.totalExperienceMonths,
       expectedSalaryMin: form.expectedSalaryMin, expectedSalaryMax: form.expectedSalaryMax,
       resumeUrl: form.resumeUrl || undefined,
