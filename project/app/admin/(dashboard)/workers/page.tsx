@@ -94,24 +94,12 @@ export default function AdminWorkersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Candidates"
-        description="Manage candidate accounts, profiles, and submit data in bulk"
-        action={
-          <Button onClick={() => setShowBulkImport(true)}>
-            <Upload className="mr-2 h-4 w-4" />
-            Bulk Resume & Candidate Import
-          </Button>
-        }
+        description="Manage candidate accounts and profiles"
       />
 
       <Card className="p-6">
         <DataTable data={workers} columns={columns} searchable searchKeys={['fullName', 'email', 'city']} />
       </Card>
-
-      <BulkCandidateImportModal
-        open={showBulkImport}
-        onOpenChange={setShowBulkImport}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['admin-workers'] })}
-      />
 
       <Dialog open={Boolean(selectedCandidateId)} onOpenChange={(open) => !open && setSelectedCandidateId(null)}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
