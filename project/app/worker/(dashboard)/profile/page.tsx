@@ -355,6 +355,11 @@ export default function WorkerProfilePage() {
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {profile.workingStatus && <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${profile.workingStatus === 'IMMEDIATE_JOINER' ? 'bg-green-50 text-green-600' : profile.workingStatus === 'SERVING_NOTICE' ? 'bg-amber-50 text-amber-600' : profile.workingStatus === 'WORKING' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>{wStatusLabel[profile.workingStatus]}</span>}
+                      {(profile.expectedSalaryMin > 0 || profile.expectedSalaryMax > 0) && (
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1">
+                          Expected: ₹{profile.expectedSalaryMin.toLocaleString('en-IN')} - ₹{profile.expectedSalaryMax.toLocaleString('en-IN')}
+                        </span>
+                      )}
                       {profile.category && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-600">{{ GEN: 'General', OBC: 'OBC', SC_ST: 'SC/ST' }[profile.category]}</span>}
                       {profile.maritalStatus && <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-600 capitalize">{profile.maritalStatus}</span>}
                     </div>
@@ -391,9 +396,15 @@ export default function WorkerProfilePage() {
                 <p className="text-slate-400 font-bold text-[10px] leading-normal max-w-[200px]">Add more details to reach <span className="text-blue-600">All-Star</span> status.</p>
               </Card>
 
-              {(profile.dob || profile.maritalStatus || profile.category || profile.jobPreference) && (
+              {(profile.dob || profile.maritalStatus || profile.category || profile.jobPreference || profile.expectedSalaryMin || profile.expectedSalaryMax) && (
                 <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-3">
-                  <h3 className="font-extrabold text-slate-800 text-xs border-b border-slate-50 pb-2.5">Personal Details</h3>
+                  <h3 className="font-extrabold text-slate-800 text-xs border-b border-slate-50 pb-2.5">Personal & Preference Details</h3>
+                  {(profile.expectedSalaryMin > 0 || profile.expectedSalaryMax > 0) && (
+                    <div className="flex justify-between text-xs">
+                      <span className="font-bold text-slate-400">Expected Salary</span>
+                      <span className="font-extrabold text-emerald-700">₹{profile.expectedSalaryMin.toLocaleString('en-IN')} - ₹{profile.expectedSalaryMax.toLocaleString('en-IN')}</span>
+                    </div>
+                  )}
                   {profile.dob && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Date of Birth</span><span className="font-bold text-slate-700">{new Date(profile.dob).toLocaleDateString()}</span></div>}
                   {profile.maritalStatus && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Marital Status</span><span className="font-bold text-slate-700 capitalize">{profile.maritalStatus}</span></div>}
                   {profile.category && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Category</span><span className="font-bold text-slate-700">{{ GEN: 'General', OBC: 'OBC', SC_ST: 'SC/ST' }[profile.category]}</span></div>}
