@@ -348,8 +348,6 @@ export default function WorkerProfilePage() {
                   <div className="relative shrink-0 z-10">
                     <Avatar className="h-32 w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
                       <AvatarFallback className="text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
-                      <div className="absolute inset-0 border-[5px] border-[#00c853] rounded-full pointer-events-none" />
-                      <div className="absolute bottom-0 left-0 right-0 bg-[#00c853] text-white text-[7px] font-black text-center py-1 uppercase tracking-wider">Open To Work</div>
                     </Avatar>
                   </div>
                   <div className="pb-1 space-y-2 flex-1 min-w-0 text-left">
