@@ -909,7 +909,7 @@ export default function SCNJobsLanding() {
           <div style={{ textAlign: "center", marginBottom: 44 }}>
             <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>ABOUT SCNJOB.COM</span>
             <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              About Sai Call Net & SCNJob.com
+              About SCN Global Pvt Ltd & SCNJob.com
             </h2>
           </div>
         </Reveal>
@@ -929,14 +929,14 @@ export default function SCNJobsLanding() {
                 <Building2 size={20} color="#fff" />
               </div>
               <div>
-                <h3 className="disp" style={{ fontSize: 20, fontWeight: 800, color: pal.text, margin: 0 }}>Sai Call Net Platform</h3>
+                <h3 className="disp" style={{ fontSize: 20, fontWeight: 800, color: pal.text, margin: 0 }}>SCN Global Pvt Ltd Platform</h3>
                 <span style={{ fontSize: 12.5, color: BRAND.amberDeep, fontWeight: 700 }}>Official Job Portal</span>
               </div>
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 15, lineHeight: 1.7, color: pal.textMuted }}>
               <p>
-                Welcome to <strong style={{ color: pal.text }}>scnjob.com</strong> Job Portal. The Site is provided and controlled by <strong style={{ color: pal.text }}>Sai Call Net</strong>. We are cautious about protecting your privacy and recognize the importance of maintaining the privacy of every user who visits our Site. We value your privacy and appreciate your trust. We are committed to being transparent about the data we collect about you, how it is used, and with whom it is shared.
+                Welcome to <strong style={{ color: pal.text }}>scnjob.com</strong> Job Portal. The Site is provided and controlled by <strong style={{ color: pal.text }}>SCN Global Pvt Ltd</strong>. We are cautious about protecting your privacy and recognize the importance of maintaining the privacy of every user who visits our Site. We value your privacy and appreciate your trust. We are committed to being transparent about the data we collect about you, how it is used, and with whom it is shared.
               </p>
               <p>
                 <strong style={{ color: pal.text }}>scnjob.com</strong> is one of the leading job portals along with easy access to enable both employer as well as employee. We believe that not only does a job seeker have the right to get a relevant job, but an employer must also have the right to hire the perfect candidate for their organization to enhance business growth in a short span of time.
@@ -1132,7 +1132,7 @@ export default function SCNJobsLanding() {
                   { label: "About Us", href: "#about" },
                   { label: "Terms & Conditions", href: "#terms" },
                   { label: "Privacy Policy", href: "#privacy" },
-                  { label: "Contact Us", href: "#about" },
+                  { label: "Contact Us", href: "/contact" },
                 ],
               },
             ].map((col) => (

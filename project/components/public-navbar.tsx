@@ -21,6 +21,7 @@ const navLinks = [
   { label: 'Find Jobs', href: '/jobs' },
   { label: 'For Recruiters', href: '/login' },
   { label: 'How It Works', href: '/#how-it-works' },
+  { label: 'Contact Us', href: '/contact' },
 ];
 
 export function PublicNavbar() {
