@@ -230,45 +230,9 @@ function HeroSlider({ pal }: { pal: any }) {
         >
           <img
             src={s.image}
-            alt={s.title}
+            alt="Hero Slide"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
-          <div
-            className="hero-slide-overlay"
-            style={{
-              position: "absolute",
-              inset: 0,
-              background: "linear-gradient(180deg, rgba(16,18,53,0.15) 0%, rgba(16,18,53,0.88) 100%)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-            }}
-          >
-            <span
-              className="mono"
-              style={{
-                display: "inline-block",
-                padding: "5px 12px",
-                borderRadius: 999,
-                background: BRAND.amber,
-                color: BRAND.ink,
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                alignSelf: "flex-start",
-                marginBottom: 10,
-              }}
-            >
-              {s.badge}
-            </span>
-            <h3 className="disp" style={{ color: "#fff", fontSize: 22, fontWeight: 800, margin: 0, lineHeight: 1.25 }}>
-              {s.title}
-            </h3>
-            <p style={{ color: "#E5E7EB", fontSize: 13.5, marginTop: 6, marginBottom: 6 }}>{s.subtitle}</p>
-            <span style={{ color: BRAND.teal, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 5 }}>
-              <MapPin size={13} /> {s.location}
-            </span>
-          </div>
         </div>
       ))}
 
