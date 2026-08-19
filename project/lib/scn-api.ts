@@ -829,8 +829,59 @@ export const workerApi = {
   async profile() {
     return toWorkerProfile(await apiGet<BackendWorkerProfile>('/worker/profile'));
   },
-  async createProfile() {
-    return toWorkerProfile(await apiPost<BackendWorkerProfile>('/worker/profile'));
+  async createProfile(data: {
+    name?: string;
+    phone?: string;
+    alternatePhone?: string;
+    state?: string;
+    city?: string;
+    locality?: string;
+    currentLocality?: string;
+    dob?: string;
+    gender?: string;
+    maritalStatus?: string;
+    category?: string;
+    jobPreference?: string;
+    jobType?: string;
+    isFresher?: boolean;
+    workingStatus?: string;
+    noticePeriodDays?: number;
+    preferredIndustryIds?: number[];
+    industryNames?: string[];
+    departmentIds?: number[];
+    departmentNames?: string[];
+    preferredJobRoleIds?: number[];
+    jobRoleNames?: string[];
+    preferredLocationIds?: number[];
+    headline?: string;
+    summary?: string;
+    totalExperienceMonths?: number;
+    expectedSalaryMin?: number;
+    expectedSalaryMax?: number;
+    availability?: string;
+    resumeUrl?: string;
+    skillIds?: number[];
+    languages?: { languageId: number; proficiency?: string }[];
+  } = {}) {
+    const localityVal = (data?.locality || data?.currentLocality || '').trim();
+    const stateVal = (data?.state || '').trim();
+    const cityVal = (data?.city || '').trim();
+
+    const locationPayload: Record<string, string> = {};
+    if (stateVal && cityVal && localityVal) {
+      locationPayload.state = stateVal;
+      locationPayload.city = cityVal;
+      locationPayload.locality = localityVal;
+      locationPayload.currentLocality = localityVal;
+    }
+
+    return toWorkerProfile(
+      await apiPost<BackendWorkerProfile>('/worker/profile', {
+        ...(data || {}),
+        ...locationPayload,
+        maritalStatus: data?.maritalStatus ? data.maritalStatus.toUpperCase() : undefined,
+      }),
+    );
   },
   async updateProfile(data: {
     state?: string;
@@ -852,13 +903,20 @@ export const workerApi = {
     skillIds?: number[];
     preferredLocationIds?: number[];
     preferredIndustryIds?: number[];
+    industryNames?: string[];
+    departmentIds?: number[];
+    departmentNames?: string[];
+    preferredJobRoleIds?: number[];
+    jobRoleNames?: string[];
     languageIds?: number[];
     languages?: { languageId: number; proficiency?: string }[];
-    // New API v2 fields
+    // API Spec fields
     dob?: string;
+    gender?: string;
     maritalStatus?: string;
     category?: string;
     jobPreference?: string;
+    jobType?: string;
     isFresher?: boolean;
     workingStatus?: string;
     noticePeriodDays?: number;
@@ -868,9 +926,9 @@ export const workerApi = {
     const cityVal = (data.city || '').trim();
 
     const locationPayload: Record<string, string> = {};
-    if (stateVal) locationPayload.state = stateVal;
-    if (cityVal) locationPayload.city = cityVal;
-    if (localityVal) {
+    if (stateVal && cityVal && localityVal) {
+      locationPayload.state = stateVal;
+      locationPayload.city = cityVal;
       locationPayload.locality = localityVal;
       locationPayload.currentLocality = localityVal;
     }
@@ -913,10 +971,12 @@ export const workerApi = {
     level?: string;
     institute?: string;
     passoutYear?: number;
+    score?: string;
   }) {
     const payload: any = {
-      institute: data.institute,
+      institute: data.institute || undefined,
       passoutYear: data.passoutYear ? Number(data.passoutYear) : undefined,
+      score: data.score || undefined,
     };
     if (data.qualificationId) {
       payload.qualificationId = Number(data.qualificationId);
