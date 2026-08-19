@@ -58,9 +58,9 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
       {isWorker ? (
         <div className="flex items-center justify-between gap-2 px-5 py-6">
           <Link href={roleHomeRoutes[role]} className="flex items-center gap-3">
-            <img src="/logo.png" alt="SCN Jobs" className="h-10 w-10 object-contain rounded-xl shadow-sm shrink-0" />
+            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
             <div className="flex flex-col">
-              <span className="text-lg font-extrabold tracking-tight text-slate-800 leading-none">SCN JOBS</span>
+              <span className="text-lg font-extrabold tracking-tight text-slate-800 leading-none">SCNJOBS</span>
               <span className="text-[10px] font-medium text-slate-400 mt-1 block">Recruitment Suite</span>
             </div>
           </Link>
@@ -77,8 +77,8 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
       ) : (
         <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-5">
           <Link href={roleHomeRoutes[role]} className="flex items-center gap-2">
-            <img src="/logo.png" alt="SCN Jobs" className="h-9 w-9 object-contain rounded-xl shadow-sm shrink-0" />
-            <span className="text-lg font-extrabold tracking-tight">SCN Jobs</span>
+            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
+            <span className="text-lg font-extrabold tracking-tight">SCNJOBS</span>
           </Link>
           <Button
             variant="ghost"

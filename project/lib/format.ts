@@ -1,16 +1,19 @@
 export function formatSalary(min: number, max: number): string {
+  if (!min && !max) return 'Salary not specified';
   const formatLakh = (val: number) => {
-    if (val >= 10000000) return `${(val / 10000000).toFixed(1)} Cr`;
-    if (val >= 100000) return `${(val / 100000).toFixed(1)} L`;
-    return `${val}`;
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)} Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(1)} L`;
+    return `₹${val.toLocaleString('en-IN')}`;
   };
-  return `₹${formatLakh(min)} - ${formatLakh(max)}`;
+  if (min === max || (!max && min)) return formatLakh(min);
+  return `${formatLakh(min)} - ${formatLakh(max)}`;
 }
 
 export function formatSalaryShort(val: number): string {
-  if (val >= 10000000) return `${(val / 10000000).toFixed(1)}Cr`;
-  if (val >= 100000) return `${(val / 100000).toFixed(0)}L`;
-  return `${val}`;
+  if (!val) return '₹0';
+  if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)}Cr`;
+  if (val >= 100000) return `₹${(val / 100000).toFixed(0)}L`;
+  return `₹${val.toLocaleString('en-IN')}`;
 }
 
 export function timeAgo(dateString: string): string {

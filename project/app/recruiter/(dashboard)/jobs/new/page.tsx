@@ -528,9 +528,9 @@ export default function CreateJobPage() {
                   <Select value={formData.gender || 'ANY'} onValueChange={(val: 'ANY' | 'MALE' | 'FEMALE') => setValue('gender', val, { shouldValidate: true })}>
                     <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ANY">ANY</SelectItem>
-                      <SelectItem value="MALE">MALE</SelectItem>
-                      <SelectItem value="FEMALE">FEMALE</SelectItem>
+                      <SelectItem value="ANY">Any</SelectItem>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1005,9 +1005,9 @@ export default function CreateJobPage() {
                 <Select value={formData.wageType || 'monthly'} onValueChange={(val: 'monthly' | 'annual' | 'daily') => setValue('wageType', val, { shouldValidate: true })}>
                   <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">PER MONTH SALARY</SelectItem>
-                    <SelectItem value="annual">ANNUAL SALARY</SelectItem>
-                    <SelectItem value="daily">PER DAY</SelectItem>
+                    <SelectItem value="monthly">Per month salary (₹)</SelectItem>
+                    <SelectItem value="annual">Annual salary (₹)</SelectItem>
+                    <SelectItem value="daily">Per day (₹)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1015,14 +1015,14 @@ export default function CreateJobPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="wageMin" className="text-slate-700 font-extrabold text-xs">
-                    Minimum Wage ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Minimum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMin" type="number" placeholder="25000" {...register('wageMin')} className="rounded-xl border-slate-200" />
                   {errors.wageMin && <p className="text-xs text-red-500 font-bold">{errors.wageMin.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="wageMax" className="text-slate-700 font-extrabold text-xs">
-                    Maximum Wage ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Maximum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMax" type="number" placeholder="40000" {...register('wageMax')} className="rounded-xl border-slate-200" />
                   {errors.wageMax && <p className="text-xs text-red-500 font-bold">{errors.wageMax.message}</p>}

@@ -137,12 +137,12 @@ export default function AdminWorkersPage() {
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Experience & Status</h4>
                   <p className="text-sm">Total Experience: <strong>{selectedCandidate.experienceYears} Years</strong></p>
                   <p className="text-sm">Notice Period: <strong>{selectedCandidate.noticePeriodDays ? `${selectedCandidate.noticePeriodDays} Days` : 'Immediate'}</strong></p>
-                  <p className="text-sm">Working Status: <strong>{selectedCandidate.workingStatus || 'Active'}</strong></p>
+                  <p className="text-sm">Working Status: <strong className="capitalize">{selectedCandidate.workingStatus ? selectedCandidate.workingStatus.replace(/_/g, ' ').toLowerCase() : 'active'}</strong></p>
                 </div>
                 <div className="rounded-xl border border-border p-4 bg-muted/20">
                   <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Personal Details</h4>
-                  <p className="text-sm">Marital Status: <strong>{selectedCandidate.maritalStatus || 'N/A'}</strong></p>
-                  <p className="text-sm">Category: <strong>{selectedCandidate.category || 'GEN'}</strong></p>
+                  <p className="text-sm">Marital Status: <strong className="capitalize">{selectedCandidate.maritalStatus || 'N/A'}</strong></p>
+                  <p className="text-sm">Category: <strong className="uppercase">{selectedCandidate.category || 'GEN'}</strong></p>
                   <p className="text-sm">Is Fresher: <strong>{selectedCandidate.isFresher ? 'Yes' : 'No'}</strong></p>
                 </div>
               </div>

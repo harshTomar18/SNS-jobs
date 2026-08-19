@@ -40,8 +40,8 @@ export function PublicNavbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="SCN Jobs" className="h-9 w-9 object-contain rounded-xl shadow-sm" />
-            <span className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-white">SCN Jobs</span>
+            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm" />
+            <span className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-white">SCNJOBS</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (

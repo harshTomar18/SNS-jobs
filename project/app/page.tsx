@@ -503,15 +503,7 @@ export default function SCNJobsLanding() {
       >
         <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-            <div
-              style={{
-                width: 34, height: 34, borderRadius: 9,
-                background: `linear-gradient(135deg, ${BRAND.indigo}, ${BRAND.teal})`,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >
-              <Briefcase size={17} color="#fff" strokeWidth={2.4} />
-            </div>
+            <img src="/logo.png?v=3" alt="SCNJOBS" style={{ width: 38, height: 38, objectFit: "contain" }} />
             <span className="disp" style={{ fontWeight: 800, fontSize: 19, letterSpacing: "-0.01em" }}>SCN Jobs</span>
           </Link>
 
@@ -907,9 +899,9 @@ export default function SCNJobsLanding() {
       <section id="about" className="container" style={{ padding: "96px 24px 20px" }}>
         <Reveal>
           <div style={{ textAlign: "center", marginBottom: 44 }}>
-            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>ABOUT SCNJOB.COM</span>
+            <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>ABOUT SCNJOBS</span>
             <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              About SCN Global Pvt Ltd & SCNJob.com
+              About SCN Global Pvt Ltd & SCNJOBS
             </h2>
           </div>
         </Reveal>
@@ -936,13 +928,13 @@ export default function SCNJobsLanding() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 18, fontSize: 15, lineHeight: 1.7, color: pal.textMuted }}>
               <p>
-                Welcome to <strong style={{ color: pal.text }}>scnjob.com</strong> Job Portal. The Site is provided and controlled by <strong style={{ color: pal.text }}>SCN Global Pvt Ltd</strong>. We are cautious about protecting your privacy and recognize the importance of maintaining the privacy of every user who visits our Site. We value your privacy and appreciate your trust. We are committed to being transparent about the data we collect about you, how it is used, and with whom it is shared.
+                Welcome to <strong style={{ color: pal.text }}>SCNJOBS</strong> Job Portal. The Site is provided and controlled by <strong style={{ color: pal.text }}>SCN Global Pvt Ltd</strong>. We are cautious about protecting your privacy and recognize the importance of maintaining the privacy of every user who visits our Site. We value your privacy and appreciate your trust. We are committed to being transparent about the data we collect about you, how it is used, and with whom it is shared.
               </p>
               <p>
-                <strong style={{ color: pal.text }}>scnjob.com</strong> is one of the leading job portals along with easy access to enable both employer as well as employee. We believe that not only does a job seeker have the right to get a relevant job, but an employer must also have the right to hire the perfect candidate for their organization to enhance business growth in a short span of time.
+                <strong style={{ color: pal.text }}>SCNJOBS</strong> is one of the leading job portals along with easy access to enable both employer as well as employee. We believe that not only does a job seeker have the right to get a relevant job, but an employer must also have the right to hire the perfect candidate for their organization to enhance business growth in a short span of time.
               </p>
               <p>
-                <strong style={{ color: pal.text }}>SCNJob.com</strong> makes it easy to search for jobs. The platform has a comprehensive database of jobs from all over India, so you can easily find the perfect job for you. You can filter your search by location, industry, experience level, and more. This makes it easy to narrow down your search and find the right job for you. SCNJob.com also offers personalized recommendations based on your skills and interests so you can quickly find the perfect role for you.
+                <strong style={{ color: pal.text }}>SCNJOBS</strong> makes it easy to search for jobs. The platform has a comprehensive database of jobs from all over India, so you can easily find the perfect job for you. You can filter your search by location, industry, experience level, and more. This makes it easy to narrow down your search and find the right job for you. SCNJOBS also offers personalized recommendations based on your skills and interests so you can quickly find the perfect role for you.
               </p>
             </div>
           </div>
@@ -976,7 +968,7 @@ export default function SCNJobsLanding() {
                 <div>
                   <h4 style={{ fontSize: 16, fontWeight: 700, color: pal.text, margin: "0 0 6px 0" }}>Candidate Protection & Zero Scam Assurance</h4>
                   <p style={{ margin: 0 }}>
-                    <strong style={{ color: pal.text }}>scnjob.com</strong> is going to transparent interface for employee and employer both where if candidate is being charged or scammed against job offer, candidate can report such employer and we assure you to block permanently post strong verification.
+                    <strong style={{ color: pal.text }}>SCNJOBS</strong> is going to transparent interface for employee and employer both where if candidate is being charged or scammed against job offer, candidate can report such employer and we assure you to block permanently post strong verification.
                   </p>
                 </div>
               </div>
@@ -1024,7 +1016,7 @@ export default function SCNJobsLanding() {
                 The following statement explains Company’s commitment to managing your personal information and sets out how and when personal information is collected, used, shared, and secured as well as your choices regarding use, access, and correction of your personal information.
               </p>
               <p>
-                This Privacy Commitment only applies to data gathered on the (<strong style={{ color: pal.text }}>www.scnjob.com</strong> "Site"), and does not apply to any other information or web site.
+                This Privacy Commitment only applies to data gathered on the (<strong style={{ color: pal.text }}>www.scnjobs.com</strong> "Site"), and does not apply to any other information or web site.
               </p>
             </div>
           </div>
@@ -1079,13 +1071,13 @@ export default function SCNJobsLanding() {
             Ready to find your next opportunity?
           </h2>
           <p style={{ fontSize: 15.5, color: pal.textMuted, maxWidth: 480, margin: "0 auto 32px" }}>
-            Join thousands of candidates and recruiters on SCN Jobs. It's free to get started.
+            Join thousands of candidates and recruiters on SCNJOBS. It's free to get started.
           </p>
           <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
             <Link href="/worker/register" className="cta-btn" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: BRAND.amber, color: BRAND.ink, fontWeight: 700, fontSize: 14.5, padding: "13px 26px", borderRadius: 12, textDecoration: "none" }}>
               Get Started Free <ArrowRight size={16} />
             </Link>
-            <Link href="/login" className="ghost-btn" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: pal.text, fontWeight: 700, fontSize: 14.5, padding: "13px 26px", borderRadius: 12, border: `1px solid ${pal.border}`, textDecoration: "none" }}>
+            <Link href="/contact" className="ghost-btn" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "transparent", color: pal.text, fontWeight: 700, fontSize: 14.5, padding: "13px 26px", borderRadius: 12, border: `1px solid ${pal.border}`, textDecoration: "none" }}>
               I'm Hiring
             </Link>
           </div>
@@ -1098,10 +1090,8 @@ export default function SCNJobsLanding() {
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 40 }} className="footer-grid">
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: `linear-gradient(135deg, ${BRAND.indigo}, ${BRAND.teal})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <Briefcase size={15} color="#fff" />
-                </div>
-                <span className="disp" style={{ fontWeight: 800, fontSize: 17 }}>SCN Jobs</span>
+                <img src="/logo.png?v=3" alt="SCNJOBS" style={{ width: 40, height: 40, objectFit: "contain" }} />
+                <span className="disp" style={{ fontWeight: 800, fontSize: 17 }}>SCNJOBS</span>
               </div>
               <p style={{ fontSize: 13.5, color: pal.textMuted, lineHeight: 1.65, maxWidth: 260 }}>
                 The modern job portal connecting talent with opportunity. Built for the future of work.
@@ -1123,7 +1113,7 @@ export default function SCNJobsLanding() {
                   { label: "Post a Job", href: "/recruiter/jobs/new" },
                   { label: "Search Candidates", href: "/recruiter/workers" },
                   { label: "Recruiter Login", href: "/login" },
-                  { label: "Pricing", href: "#how-it-works" },
+                  { label: "Contact Us", href: "/contact" },
                 ],
               },
               {
@@ -1149,7 +1139,7 @@ export default function SCNJobsLanding() {
             ))}
           </div>
           <div style={{ marginTop: 48, paddingTop: 24, borderTop: `1px solid ${pal.border}`, display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <p style={{ fontSize: 12.5, color: pal.textMuted }}>© 2026 SCN Jobs. All rights reserved.</p>
+            <p style={{ fontSize: 12.5, color: pal.textMuted }}>© 2026 SCNJOBS. All rights reserved.</p>
             <p style={{ fontSize: 12.5, color: pal.textMuted }}>Made with care in India</p>
           </div>
         </div>

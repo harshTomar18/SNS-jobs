@@ -120,12 +120,12 @@ function formatSalaryDisplay(job?: JobWithMeta) {
   if (period.includes('annual') || period.includes('year')) {
     const minLacs = (min / 100000).toFixed(1).replace('.0', '');
     const maxLacs = (max / 100000).toFixed(1).replace('.0', '');
-    if (min === max) return `₹ ${minLacs} ${suffix}`;
-    return `₹ ${minLacs}-${maxLacs} ${suffix}`;
+    if (min === max) return `₹${minLacs} ${suffix}`;
+    return `₹${minLacs} - ₹${maxLacs} ${suffix}`;
   }
 
-  if (min === max) return `₹ ${min.toLocaleString()} ${suffix}`;
-  return `₹ ${min.toLocaleString()} - ${max.toLocaleString()} ${suffix}`;
+  if (min === max) return `₹${min.toLocaleString('en-IN')} ${suffix}`;
+  return `₹${min.toLocaleString('en-IN')} - ₹${max.toLocaleString('en-IN')} ${suffix}`;
 }
 
 function getJobMatchDetails(job: JobWithMeta, profileSkills: string[] = []) {

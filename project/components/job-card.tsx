@@ -69,8 +69,7 @@ export function JobCard({ job, variant = 'default', className, hrefPrefix = '/jo
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <IndianRupee className="h-3.5 w-3.5" />
+        <span className="font-semibold text-slate-700 dark:text-slate-200">
           {formatSalary(job.salaryMin, job.salaryMax)}
         </span>
         <span className="flex items-center gap-1">
