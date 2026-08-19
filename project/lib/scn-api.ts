@@ -829,8 +829,8 @@ export const workerApi = {
   async profile() {
     return toWorkerProfile(await apiGet<BackendWorkerProfile>('/worker/profile'));
   },
-  async createProfile() {
-    return toWorkerProfile(await apiPost<BackendWorkerProfile>('/worker/profile'));
+  async createProfile(data?: any) {
+    return toWorkerProfile(await apiPost<BackendWorkerProfile>('/worker/profile', data || {}));
   },
   async updateProfile(data: {
     state?: string;
@@ -848,7 +848,8 @@ export const workerApi = {
     expectedSalaryMin?: number;
     expectedSalaryMax?: number;
     availability?: string;
-    resumeUrl?: string;
+    resumeUrl?: string | null;
+    profilePhotoUrl?: string | null;
     skillIds?: number[];
     preferredLocationIds?: number[];
     preferredIndustryIds?: number[];

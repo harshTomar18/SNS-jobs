@@ -356,7 +356,7 @@ export default function WorkerProfilePage() {
                       <AvatarImage src={profile.profilePhotoUrl || undefined} alt={profile.fullName} className="object-cover h-full w-full" />
                       <AvatarFallback className="text-xl sm:text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
                     </Avatar>
-                    <div className="absolute bottom-0 right-0 z-20">
+                    <div className="absolute bottom-0 right-0 z-20 dp-camera-uploader">
                       <UploadButton
                         endpoint="dpUploader"
                         headers={{ Authorization: typeof window !== 'undefined' && localStorage.getItem('auth-token') ? `Bearer ${localStorage.getItem('auth-token')}` : '' }}
@@ -370,15 +370,34 @@ export default function WorkerProfilePage() {
                         }}
                         onUploadError={(e: Error) => { toast.error(`Photo upload failed: ${e.message}`); }}
                         appearance={{
-                          button: "bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center shadow-lg border-2 border-white cursor-pointer min-w-0 font-bold",
+                          container: "w-9 h-9 sm:w-10 sm:h-10 p-0 m-0",
+                          button: "bg-blue-600 hover:bg-blue-700 text-white rounded-full !w-9 !h-9 sm:!w-10 sm:!h-10 !min-w-[36px] p-0 flex items-center justify-center shadow-lg border-2 border-white cursor-pointer",
                           allowedContent: "hidden"
                         }}
                         content={{
-                          button: <Camera className="h-4 w-4 text-white" />
+                          button: <Camera className="h-4 w-4 text-white shrink-0" />
                         }}
                       />
                     </div>
                   </div>
+                  <style>{`
+                    .dp-camera-uploader { width: 36px; height: 36px; }
+                    .dp-camera-uploader button, .dp-camera-uploader [data-ut-element="button"] {
+                      width: 36px !important;
+                      height: 36px !important;
+                      min-width: 36px !important;
+                      max-width: 36px !important;
+                      border-radius: 9999px !important;
+                      padding: 0 !important;
+                      margin: 0 !important;
+                      display: flex !important;
+                      align-items: center !important;
+                      justify-content: center !important;
+                      background-color: #2563eb !important;
+                      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4) !important;
+                    }
+                    .dp-camera-uploader [data-ut-element="allowed-content"] { display: none !important; }
+                  `}</style>
                   <div className="pb-1 space-y-2 flex-1 min-w-0 text-left w-full">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl sm:text-2xl font-black text-slate-800 break-words">{profile.fullName}</h2>
