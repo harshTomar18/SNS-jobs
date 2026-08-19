@@ -26,25 +26,25 @@ const BRAND = {
 const getPalette = (dark: boolean) =>
   dark
     ? {
-        bg: "#0A0B1E",
-        bgAlt: "#12143080",
-        surface: "#13152F",
-        surfaceAlt: "#191C3D",
-        text: "#F3F2EC",
-        textMuted: "#A6A9C4",
-        border: "#262A54",
-        boardBg: "#0E1030",
-      }
+      bg: "#0A0B1E",
+      bgAlt: "#12143080",
+      surface: "#13152F",
+      surfaceAlt: "#191C3D",
+      text: "#F3F2EC",
+      textMuted: "#A6A9C4",
+      border: "#262A54",
+      boardBg: "#0E1030",
+    }
     : {
-        bg: "#FBFAF6",
-        bgAlt: "#F2F0E8",
-        surface: "#FFFFFF",
-        surfaceAlt: "#F5F3EC",
-        text: "#101235",
-        textMuted: "#5B5F79",
-        border: "#E7E3D6",
-        boardBg: "#101235",
-      };
+      bg: "#FBFAF6",
+      bgAlt: "#F2F0E8",
+      surface: "#FFFFFF",
+      surfaceAlt: "#F5F3EC",
+      text: "#101235",
+      textMuted: "#5B5F79",
+      border: "#E7E3D6",
+      boardBg: "#101235",
+    };
 
 const iconMap: Record<string, any> = {
   Code, CreditCard, HeartPulse, ShoppingCart, GraduationCap, Factory,
@@ -289,7 +289,7 @@ function HeroSlider({ pal }: { pal: any }) {
 function formatJobSalary(j: any): string {
   const min = j.monthlyWageMin ?? j.dailyWageMin ?? j.yearlyWageMin ?? j.salaryMin ?? j.wageMin;
   const max = j.monthlyWageMax ?? j.dailyWageMax ?? j.yearlyWageMax ?? j.salaryMax ?? j.wageMax ?? min;
-  
+
   const period = (j.monthlyWageMin || j.wagePeriod === 'monthly') ? '/ mo' : (j.dailyWageMin || j.wagePeriod === 'daily') ? '/ day' : '/ yr';
 
   if (min !== undefined && min !== null && min > 0) {
@@ -307,17 +307,17 @@ function formatJobSalary(j: any): string {
 
 function formatJobExperience(j: any): string {
   if (j.freshersOnly) return 'Fresher Friendly (0 yrs)';
-  
-  const minMonths = j.minExperienceMonths !== undefined && j.minExperienceMonths !== null 
-    ? j.minExperienceMonths 
-    : j.experienceMin !== undefined && j.experienceMin !== null 
-      ? j.experienceMin * 12 
+
+  const minMonths = j.minExperienceMonths !== undefined && j.minExperienceMonths !== null
+    ? j.minExperienceMonths
+    : j.experienceMin !== undefined && j.experienceMin !== null
+      ? j.experienceMin * 12
       : null;
 
-  const maxMonths = j.maxExperienceMonths !== undefined && j.maxExperienceMonths !== null 
-    ? j.maxExperienceMonths 
-    : j.experienceMax !== undefined && j.experienceMax !== null 
-      ? j.experienceMax * 12 
+  const maxMonths = j.maxExperienceMonths !== undefined && j.maxExperienceMonths !== null
+    ? j.maxExperienceMonths
+    : j.experienceMax !== undefined && j.experienceMax !== null
+      ? j.experienceMax * 12
       : null;
 
   if (minMonths !== null) {
@@ -363,7 +363,7 @@ export default function SCNJobsLanding() {
   const [openFaq, setOpenFaq] = useState(0);
   const [statsRef, statsVisible] = useReveal();
   const [scrolled, setScrolled] = useState(false);
-  
+
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchLocation, setSearchLocation] = useState('');
 
@@ -391,7 +391,8 @@ export default function SCNJobsLanding() {
         transition: "background 0.4s ease, color 0.4s ease",
       }}
     >
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 
         * { box-sizing: border-box; }
@@ -662,26 +663,26 @@ export default function SCNJobsLanding() {
               >
                 <div style={{ flex: 1.2, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
                   <Search size={17} color={pal.textMuted} />
-                  <input 
-                    placeholder="Job title or skill" 
+                  <input
+                    placeholder="Job title or skill"
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 14.5, color: pal.text }} 
+                    style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 14.5, color: pal.text }}
                   />
                 </div>
                 <div style={{ width: 1, background: pal.border, margin: "6px 0" }} />
                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
                   <MapPin size={17} color={pal.textMuted} />
-                  <input 
-                    placeholder="City" 
+                  <input
+                    placeholder="City"
                     value={searchLocation}
                     onChange={(e) => setSearchLocation(e.target.value)}
-                    style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 14.5, color: pal.text }} 
+                    style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 14.5, color: pal.text }}
                   />
                 </div>
-                <Link 
+                <Link
                   href={`/jobs?q=${encodeURIComponent(searchKeyword)}&loc=${encodeURIComponent(searchLocation)}`}
-                  className="cta-btn" 
+                  className="cta-btn"
                   style={{ display: "inline-flex", alignItems: "center", border: "none", borderRadius: 10, background: BRAND.amber, color: BRAND.ink, fontWeight: 700, fontSize: 14, padding: "0 22px", cursor: "pointer", textDecoration: "none" }}
                 >
                   Search
@@ -948,7 +949,7 @@ export default function SCNJobsLanding() {
           <div style={{ textAlign: "center", marginBottom: 44 }}>
             <span className="mono" style={{ fontSize: 12, color: BRAND.teal, fontWeight: 600, letterSpacing: "0.1em" }}>ABOUT SCNJOBS</span>
             <h2 className="disp" style={{ fontSize: "clamp(26px, 3.4vw, 36px)", fontWeight: 800, marginTop: 8 }}>
-              About SCN Global Pvt Ltd & SCNJOBS
+              {/* About SCN Global Pvt Ltd & SCNJOBS */}
             </h2>
           </div>
         </Reveal>
