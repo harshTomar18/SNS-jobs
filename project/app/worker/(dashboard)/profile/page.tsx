@@ -342,26 +342,26 @@ export default function WorkerProfilePage() {
         <>
           {/* Hero Card */}
           <Card className="overflow-hidden bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)]">
-            <div className="pt-3 px-8 pb-8 relative">
-              <div className="flex md:flex-row items-start md:items-end justify-between gap-6 w-full">
-                <div className="flex sm:flex-row items-start sm:items-end gap-5 text-left flex-1 min-w-0">
+            <div className="p-4 sm:p-8 relative">
+              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 w-full">
+                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 text-left flex-1 min-w-0 w-full">
                   <div className="relative shrink-0 z-10">
-                    <Avatar className="h-32 w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
-                      <AvatarFallback className="text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
+                    <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
+                      <AvatarFallback className="text-xl sm:text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
                     </Avatar>
                   </div>
-                  <div className="pb-1 space-y-2 flex-1 min-w-0 text-left">
+                  <div className="pb-1 space-y-2 flex-1 min-w-0 text-left w-full">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-2xl font-black text-slate-800">{profile.fullName}</h2>
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-800 break-words">{profile.fullName}</h2>
                       {profile.isFresher && <Badge className="bg-green-50 text-green-600 border-none text-[10px] font-bold rounded-full px-2.5 py-0.5">FRESHER</Badge>}
                     </div>
-                    <p className="text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Worker Profile'}</p>
+                    <p className="text-xs sm:text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Worker Profile'}</p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-bold">
-                      {profile.phone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-slate-400" />{profile.phone}</span>}
-                      {profile.alternatePhone && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5 text-slate-400" />Alt: {profile.alternatePhone}</span>}
-                      {profile.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5 text-slate-400" />{profile.email}</span>}
-                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 text-slate-400" />{[profile.locality, profile.city, profile.state].filter(Boolean).join(', ') || 'Location Not Set'}</span>
-                      {profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline"><LinkIcon className="h-3.5 w-3.5" />View Resume</a>}
+                      {profile.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />{profile.phone}</span>}
+                      {profile.alternatePhone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />Alt: {profile.alternatePhone}</span>}
+                      {profile.email && <span className="flex items-center gap-1 shrink-0 break-all"><Mail className="h-3.5 w-3.5 text-slate-400" />{profile.email}</span>}
+                      <span className="flex items-center gap-1 shrink-0"><MapPin className="h-3.5 w-3.5 text-slate-400" />{[profile.locality, profile.city, profile.state].filter(Boolean).join(', ') || 'Location Not Set'}</span>
+                      {profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline shrink-0"><LinkIcon className="h-3.5 w-3.5" />View Resume</a>}
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">
                       {profile.workingStatus && <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${profile.workingStatus === 'IMMEDIATE_JOINER' ? 'bg-green-50 text-green-600' : profile.workingStatus === 'SERVING_NOTICE' ? 'bg-amber-50 text-amber-600' : profile.workingStatus === 'WORKING' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>{wStatusLabel[profile.workingStatus]}</span>}
@@ -381,8 +381,8 @@ export default function WorkerProfilePage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0 self-start lg:self-end mt-4 lg:mt-0">
-                  <Button variant="outline" className="bg-[#e2e8f0] text-slate-700 font-bold border-transparent hover:bg-slate-300 rounded-xl py-5 px-6 text-xs" onClick={() => setEditing(p => !p)}>{editing ? 'Cancel' : 'Edit Profile'}</Button>
+                <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
+                  <Button variant="outline" className="w-full sm:w-auto bg-[#e2e8f0] text-slate-700 font-bold border-transparent hover:bg-slate-300 rounded-xl py-4 sm:py-5 px-5 sm:px-6 text-xs" onClick={() => setEditing(p => !p)}>{editing ? 'Cancel' : 'Edit Profile'}</Button>
                 </div>
               </div>
             </div>
@@ -563,7 +563,7 @@ export default function WorkerProfilePage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold text-slate-500">Resume URL</Label>
-                      <div className="flex gap-2 items-center">
+                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
                         <Input placeholder="Paste URL or upload" value={form.resumeUrl} className="rounded-xl border-slate-200 flex-1 text-xs" onChange={e => setForm({ ...form, resumeUrl: e.target.value })} />
                         <UploadButton endpoint="resumeUploader" headers={{ Authorization: typeof window !== 'undefined' && localStorage.getItem('auth-token') ? `Bearer ${localStorage.getItem('auth-token')}` : '' }} onClientUploadComplete={res => { if (res?.[0]) { setForm(p => ({ ...p, resumeUrl: res[0].url })); toast.success('Uploaded'); } }} onUploadError={(e: Error) => { toast.error(`Upload failed: ${e.message}`); }} appearance={{ button: "bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs py-2 px-4 font-bold h-10 shadow-sm cursor-pointer shrink-0", allowedContent: "hidden" }} />
                       </div>
@@ -702,7 +702,7 @@ export default function WorkerProfilePage() {
 
           {/* === Dialogs === */}
           <Dialog open={skillsModalOpen} onOpenChange={setSkillsModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white">
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Update Skills</DialogTitle><DialogDescription className="text-xs text-slate-500">Select skills for job matching.</DialogDescription></DialogHeader>
               <div className="space-y-4 py-3">
                 <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search skills..." value={skillSearch} onChange={e => setSkillSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs" /></div>
@@ -722,7 +722,7 @@ export default function WorkerProfilePage() {
           </Dialog>
 
           <Dialog open={eduModalOpen} onOpenChange={setEduModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">{editingEduId ? 'Edit Education' : 'Add Education'}</DialogTitle><DialogDescription className="text-xs text-slate-500">Select qualification level and specific qualification.</DialogDescription></DialogHeader>
               <div className="space-y-4 py-2">
                 {/* 1. Qualification Level Select */}
@@ -813,7 +813,7 @@ export default function WorkerProfilePage() {
           </Dialog>
 
           <Dialog open={expModalOpen} onOpenChange={setExpModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white">
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Add Work Experience</DialogTitle><DialogDescription className="text-xs text-slate-500">Add employment details.</DialogDescription></DialogHeader>
               <div className="space-y-4 py-2">
                 <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">Job Title *</Label><Input placeholder="e.g. Senior Designer" value={expForm.jobTitle} onChange={e => setExpForm({ ...expForm, jobTitle: e.target.value })} className="rounded-xl border-slate-200 text-xs" /></div>
@@ -833,7 +833,7 @@ export default function WorkerProfilePage() {
           </Dialog>
 
           <Dialog open={langModalOpen} onOpenChange={setLangModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-lg font-extrabold text-slate-800">Update Languages & Fluency</DialogTitle>
                 <DialogDescription className="text-xs text-slate-500">Select languages and set your proficiency level for each.</DialogDescription>
@@ -907,7 +907,7 @@ export default function WorkerProfilePage() {
           </Dialog>
 
           <Dialog open={industryModalOpen} onOpenChange={setIndustryModalOpen}>
-            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white">
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Preferred Industries</DialogTitle><DialogDescription className="text-xs text-slate-500">Select industries you prefer to work in.</DialogDescription></DialogHeader>
               <div className="space-y-4 py-3">
                 <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search industries..." value={industrySearch} onChange={e => setIndustrySearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs" /></div>

@@ -1013,7 +1013,8 @@ export const adminApi = {
     name: string;
     email: string;
     password: string;
-    industryIds: number[];
+    phone?: string;
+    industryIds?: number[];
   }) {
     return toRecruiter(await apiPost<BackendRecruiter>('/admin/recruiters', data));
   },
@@ -1021,6 +1022,7 @@ export const adminApi = {
     name?: string;
     email?: string;
     password?: string;
+    phone?: string;
     industryIds?: number[];
   }) {
     return toRecruiter(await apiPatch<BackendRecruiter>(`/admin/recruiters/${id}`, data));

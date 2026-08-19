@@ -206,11 +206,11 @@ function HeroSlider({ pal }: { pal: any }) {
 
   return (
     <div
+      className="hero-slider-box"
       style={{
         position: "relative",
         borderRadius: 24,
         overflow: "hidden",
-        height: 380,
         boxShadow: "0 30px 60px -20px rgba(16,18,53,0.45)",
         border: `1px solid ${pal.border}`,
         background: pal.surfaceAlt,
@@ -234,6 +234,7 @@ function HeroSlider({ pal }: { pal: any }) {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           <div
+            className="hero-slide-overlay"
             style={{
               position: "absolute",
               inset: 0,
@@ -241,7 +242,6 @@ function HeroSlider({ pal }: { pal: any }) {
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-end",
-              padding: 28,
             }}
           >
             <span
@@ -485,6 +485,14 @@ export default function SCNJobsLanding() {
           50% { transform: translateY(-10px); }
         }
 
+        .hero-slider-box { height: 380px; }
+        .hero-slide-overlay { padding: 28px; }
+        @media (max-width: 640px) {
+          .hero-slider-box { height: 280px !important; }
+          .hero-slide-overlay { padding: 18px 14px !important; }
+          .hero-slide-overlay h3 { font-size: 18px !important; }
+        }
+
         .spin-slow { animation: spin 22s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
       `}} />
@@ -585,9 +593,9 @@ export default function SCNJobsLanding() {
       </header>
 
       {/* ---------------- SECTION 1: HERO & SLIDER ---------------- */}
-      <section style={{ position: "relative", overflow: "hidden", paddingTop: 64, paddingBottom: 88 }}>
+      <section className="hero-section">
         <div className="hero-glow" />
-        <div className="container" style={{ position: "relative", display: "grid", gridTemplateColumns: "1.1fr 0.9fr", gap: 56, alignItems: "center" }}>
+        <div className="container hero-grid-box">
           <div>
             <Reveal>
               <div
@@ -668,12 +676,18 @@ export default function SCNJobsLanding() {
           </Reveal>
         </div>
         <style>{`
+          .hero-section { position: relative; overflow: hidden; padding-top: 64px; padding-bottom: 88px; }
+          .hero-grid-box { position: relative; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; align-items: center; }
+
           @media (max-width: 900px) {
-            .container > div[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+            .hero-section { padding-top: 20px !important; padding-bottom: 40px !important; }
+            .hero-grid-box { display: flex !important; flex-direction: column-reverse !important; gap: 24px !important; }
           }
-          @media (max-width: 560px) {
-            .search-row { flex-direction: column; }
-            .search-row > div[style*="width: 1"] { display: none; }
+          @media (max-width: 640px) {
+            .container { padding: 0 16px !important; }
+            .search-row { flex-direction: column !important; gap: 8px !important; padding: 10px !important; }
+            .search-row > div[style*="width: 1"] { display: none !important; }
+            .search-row > a { width: 100% !important; justify-content: center !important; padding: 12px 0 !important; font-size: 15px !important; }
           }
         `}</style>
       </section>

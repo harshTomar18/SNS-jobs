@@ -50,10 +50,9 @@ export default function AdminRecruitersPage() {
   const [newResetPassword, setNewResetPassword] = useState('');
   const [fullDetailRecruiterId, setFullDetailRecruiterId] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', industryIds: [] as number[] });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   
   const recruitersQuery = useQuery({ queryKey: ['admin-recruiters'], queryFn: adminApi.recruiters });
-  const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
   const fullRecruiterQuery = useQuery({
     queryKey: ['admin-recruiter-full', fullDetailRecruiterId],
     queryFn: () => (fullDetailRecruiterId ? adminApi.getRecruiterFull(fullDetailRecruiterId) : null),
@@ -61,14 +60,13 @@ export default function AdminRecruitersPage() {
   });
 
   const recruiters = useMemo<RecruiterView[]>(() => recruitersQuery.data ?? [], [recruitersQuery.data]);
-  const industries = useMemo<MasterRawItem[]>(() => industriesQuery.data ?? [], [industriesQuery.data]);
 
   const createMutation = useMutation({
     mutationFn: () => adminApi.createRecruiter(form),
     onSuccess: () => {
       toast.success('Recruiter created successfully');
       setShowCreate(false);
-      setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
+      setForm({ name: '', email: '', phone: '', password: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-recruiters'] });
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not create recruiter')),
@@ -79,7 +77,7 @@ export default function AdminRecruitersPage() {
     onSuccess: () => {
       toast.success('Recruiter updated successfully');
       setShowCreate(false);
-      setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
+      setForm({ name: '', email: '', phone: '', password: '' });
       queryClient.invalidateQueries({ queryKey: ['admin-recruiters'] });
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update recruiter')),
@@ -123,19 +121,10 @@ export default function AdminRecruitersPage() {
     recruiter.company.toLowerCase().includes(search.toLowerCase())
   ), [recruiters, search]);
 
-  const toggleIndustry = (id: number) => {
-    setForm((current) => ({
-      ...current,
-      industryIds: current.industryIds.includes(id)
-        ? current.industryIds.filter((item) => item !== id)
-        : [...current.industryIds, id],
-    }));
-  };
-
   const handleClose = (open: boolean) => {
     setShowCreate(open);
     if (!open) {
-      setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
+      setForm({ name: '', email: '', phone: '', password: '' });
       setEditMode(false);
       setSelectedRecruiterId('');
     }
@@ -148,7 +137,7 @@ export default function AdminRecruitersPage() {
         description="Create, manage, reset credentials, and oversee recruiter accounts"
         action={<Button onClick={() => {
           setEditMode(false);
-          setForm({ name: '', email: '', phone: '', password: '', industryIds: [] });
+          setForm({ name: '', email: '', phone: '', password: '' });
           setShowCreate(true);
         }}><Plus className="mr-2 h-4 w-4" />Add Recruiter</Button>}
       />
@@ -184,7 +173,7 @@ export default function AdminRecruitersPage() {
                     <Button variant="link" className="text-xs h-6 px-0 mt-1" onClick={() => {
                       setEditMode(true);
                       setSelectedRecruiterId(recruiter.id);
-                      setForm({ name: recruiter.name, email: recruiter.email, phone: recruiter.phone || '', password: '', industryIds: recruiter.industryIds });
+                      setForm({ name: recruiter.name, email: recruiter.email, phone: recruiter.phone || '', password: '' });
                       setShowCreate(true);
                     }}>
                       Edit
@@ -294,31 +283,12 @@ export default function AdminRecruitersPage() {
                 </div>
               )}
             </div>
-            <div className="space-y-2">
-              <Label>Assigned Industries</Label>
-              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto rounded-md border border-input p-3 bg-muted/30">
-                {industries.map((industry) => {
-                  const isSelected = form.industryIds.includes(industry.id);
-                  return (
-                    <Badge
-                      key={industry.id}
-                      variant={isSelected ? "default" : "outline"}
-                      className="cursor-pointer hover:bg-primary/90 transition-colors py-1.5 px-3"
-                      onClick={() => toggleIndustry(industry.id)}
-                    >
-                      {'name' in industry ? industry.name : industry.id}
-                      {isSelected && <Check className="ml-1.5 h-3 w-3" />}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => handleClose(false)}>Cancel</Button>
             <Button 
               onClick={() => editMode ? editMutation.mutate() : createMutation.mutate()} 
-              disabled={(editMode ? editMutation.isPending : createMutation.isPending) || !form.name || !form.email || form.industryIds.length === 0 || (!editMode && !form.password)}
+              disabled={(editMode ? editMutation.isPending : createMutation.isPending) || !form.name || !form.email || (!editMode && !form.password)}
             >
               {editMode ? (editMutation.isPending ? 'Updating...' : 'Update Recruiter') : (createMutation.isPending ? 'Creating...' : 'Create Recruiter')}
             </Button>
