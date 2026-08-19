@@ -15,6 +15,9 @@ function VerifyOTPContent() {
   const searchParams = useSearchParams();
   const { setSession } = useAuth();
   const phone = searchParams.get('phone') || '';
+  const email = searchParams.get('email') || '';
+  const targetAddress = email || phone || 'your email address';
+
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -28,7 +31,7 @@ function VerifyOTPContent() {
     try {
       const result = await authApi.verifyWorkerOtp(phone, otp);
       setSession(result.token, result.user, '/worker/onboarding');
-      toast.success('Phone verified. Welcome to SCN Jobs.');
+      toast.success('Email verified. Welcome to SCN Jobs.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Invalid OTP. Please try again.'));
     } finally {
@@ -40,7 +43,7 @@ function VerifyOTPContent() {
     if (resendCooldown > 0) return;
     try {
       const result = await authApi.resendWorkerOtp(phone);
-      toast.success(result.devOtp ? `OTP resent. Dev OTP: ${result.devOtp}` : 'OTP resent successfully');
+      toast.success(result.devOtp ? `OTP resent. Dev OTP: ${result.devOtp}` : 'OTP resent to your email');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to resend OTP'));
       return;
@@ -56,8 +59,8 @@ function VerifyOTPContent() {
 
   return (
     <AuthLayout
-      title="Verify your phone"
-      subtitle={`We sent a 6-digit code to +91 ${phone || 'your phone number'}`}
+      title="Verify your email"
+      subtitle={`We sent a 6-digit code to ${targetAddress}`}
     >
       <div className="space-y-6">
         <div className="flex justify-center">
@@ -107,7 +110,7 @@ export default function WorkerVerifyOTPPage() {
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Verify your phone" subtitle="Preparing verification">
+        <AuthLayout title="Verify your email" subtitle="Preparing verification">
           <div className="h-32 animate-pulse rounded-lg bg-muted" />
         </AuthLayout>
       }

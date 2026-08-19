@@ -55,9 +55,9 @@ export default function WorkerRegisterPage() {
       toast.success(
         result.devOtp
           ? `Account created. Dev OTP: ${result.devOtp}`
-          : 'Account created! Verify your phone number.',
+          : 'Account created! Verify your email address.',
       );
-      router.push(`/worker/verify-otp?phone=${encodeURIComponent(data.phone)}`);
+      router.push(`/worker/verify-otp?phone=${encodeURIComponent(data.phone)}&email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
     } finally {
