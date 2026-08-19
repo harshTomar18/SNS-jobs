@@ -353,7 +353,7 @@ export default function WorkerProfilePage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 text-left flex-1 min-w-0 w-full">
                   <div className="relative shrink-0 z-10 group">
                     <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
-                      <AvatarImage src={profile.profilePhotoUrl || undefined} alt={profile.fullName} className="object-cover h-full w-full" />
+                      <AvatarImage src={profile.profilePhotoUrl || profile.avatarUrl || undefined} alt={profile.fullName} className="object-cover h-full w-full" />
                       <AvatarFallback className="text-xl sm:text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
                     </Avatar>
                     <div className="absolute bottom-0 right-0 z-20 dp-camera-uploader">

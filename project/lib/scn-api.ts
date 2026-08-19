@@ -466,6 +466,7 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     department: profile.department?.name || undefined,
     departmentId: profile.departmentId || profile.department?.id || undefined,
     avatarUrl: profile.profilePhotoUrl || undefined,
+    profilePhotoUrl: profile.profilePhotoUrl || undefined,
     resumeUrl: profile.resumeUrl || undefined,
     headline: profile.headline || 'Worker profile',
     bio: profile.summary || '',
