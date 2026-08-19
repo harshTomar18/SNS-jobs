@@ -136,7 +136,7 @@ export default function WorkerProfilePage() {
   const handleLocalityChange = (locality: string) => { setForm(p => ({ ...p, locality })); setLocalityInput(locality); };
 
   const createMutation = useMutation({
-    mutationFn: workerApi.createProfile,
+    mutationFn: (data?: any) => workerApi.createProfile(data || {}),
     onSuccess: () => { toast.success('Profile created'); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not create profile')),
   });
@@ -328,7 +328,7 @@ export default function WorkerProfilePage() {
         <User className="mx-auto h-10 w-10 text-muted-foreground" />
         <h2 className="mt-4 text-lg font-semibold text-slate-800">No profile found</h2>
         <p className="mt-2 text-sm text-slate-400">Create your profile to start applying for jobs.</p>
-        <Button className="mt-6 bg-blue-600 hover:bg-blue-700 font-bold px-6 py-5 rounded-xl" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
+        <Button className="mt-6 bg-blue-600 hover:bg-blue-700 font-bold px-6 py-5 rounded-xl" onClick={() => createMutation.mutate({})} disabled={createMutation.isPending}>
           {createMutation.isPending ? 'Creating...' : 'Create Profile'}
         </Button>
       </Card>
@@ -647,7 +647,7 @@ export default function WorkerProfilePage() {
                       </div>
                     </div>
                     <div className="flex gap-2.5 pt-2">
-                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs py-2 px-5" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}><Check className="mr-1 h-4 w-4" />{updateMutation.isPending ? 'Saving...' : 'Save Changes'}</Button>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs py-2 px-5" onClick={() => updateMutation.mutate(undefined)} disabled={updateMutation.isPending}><Check className="mr-1 h-4 w-4" />{updateMutation.isPending ? 'Saving...' : 'Save Changes'}</Button>
                       <Button variant="outline" className="border-slate-200 text-slate-600 rounded-xl text-xs py-2 px-5" onClick={() => setEditing(false)}>Cancel</Button>
                     </div>
                   </div>
@@ -855,7 +855,7 @@ export default function WorkerProfilePage() {
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" className="rounded-xl text-xs" onClick={() => setEduModalOpen(false)}>Cancel</Button>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" disabled={!selectedQualId || (editingEduId ? editEduMutation.isPending : addEduMutation.isPending)} onClick={() => editingEduId ? editEduMutation.mutate() : addEduMutation.mutate()}>{editingEduId ? (editEduMutation.isPending ? 'Saving...' : 'Update') : (addEduMutation.isPending ? 'Saving...' : 'Add Education')}</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" disabled={!selectedQualId || (editingEduId ? editEduMutation.isPending : addEduMutation.isPending)} onClick={() => editingEduId ? editEduMutation.mutate(undefined) : addEduMutation.mutate(undefined)}>{editingEduId ? (editEduMutation.isPending ? 'Saving...' : 'Update') : (addEduMutation.isPending ? 'Saving...' : 'Add Education')}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

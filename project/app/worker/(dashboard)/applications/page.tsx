@@ -141,7 +141,7 @@ function ApplicationCard({ application }: { application: Application }) {
             size="sm"
             className="text-destructive"
             disabled={withdrawMutation.isPending}
-            onClick={() => withdrawMutation.mutate()}
+            onClick={() => withdrawMutation.mutate(undefined)}
           >
             <Ban className="mr-1.5 h-3.5 w-3.5" />
             Withdraw

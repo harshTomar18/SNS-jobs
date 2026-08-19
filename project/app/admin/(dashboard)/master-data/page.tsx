@@ -202,7 +202,7 @@ export default function MasterDataPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setShowCreate(false); setEditingItem(null); }}>Cancel</Button>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>{editingItem ? 'Save Changes' : 'Create'}</Button>
+            <Button onClick={() => saveMutation.mutate(undefined)} disabled={saveMutation.isPending}>{editingItem ? 'Save Changes' : 'Create'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

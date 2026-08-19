@@ -215,7 +215,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
       toast.info('You have already applied to this job');
       return;
     }
-    applyMutation.mutate();
+    applyMutation.mutate(undefined);
   };
 
   // Highlights extraction

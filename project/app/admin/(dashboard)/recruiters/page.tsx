@@ -287,7 +287,7 @@ export default function AdminRecruitersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => handleClose(false)}>Cancel</Button>
             <Button 
-              onClick={() => editMode ? editMutation.mutate() : createMutation.mutate()} 
+              onClick={() => editMode ? editMutation.mutate(undefined) : createMutation.mutate(undefined)} 
               disabled={(editMode ? editMutation.isPending : createMutation.isPending) || !form.name || !form.email || (!editMode && !form.password)}
             >
               {editMode ? (editMutation.isPending ? 'Updating...' : 'Update Recruiter') : (createMutation.isPending ? 'Creating...' : 'Create Recruiter')}
@@ -335,7 +335,7 @@ export default function AdminRecruitersPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setResetRecruiterTarget(null)}>Cancel</Button>
             <Button
-              onClick={() => resetPasswordMutation.mutate()}
+              onClick={() => resetPasswordMutation.mutate(undefined)}
               disabled={resetPasswordMutation.isPending || !newResetPassword || newResetPassword.length < 6}
             >
               {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
