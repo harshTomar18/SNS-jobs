@@ -143,7 +143,10 @@ export default function WorkerProfilePage() {
 
   const updateMutation = useMutation({
     mutationFn: () => workerApi.updateProfile({
-      name: form.name, phone: form.phone, alternatePhone: form.alternatePhone || undefined, departmentName: form.departmentName || undefined, headline: form.headline, summary: form.summary,
+      name: form.name, phone: form.phone, alternatePhone: form.alternatePhone || undefined,
+      departmentName: form.departmentName || undefined,
+      departmentNames: form.departmentName ? [form.departmentName] : undefined,
+      headline: form.headline, summary: form.summary,
       totalExperienceMonths: form.totalExperienceMonths,
       expectedSalaryMin: form.expectedSalaryMin, expectedSalaryMax: form.expectedSalaryMax,
       resumeUrl: form.resumeUrl || undefined,
@@ -151,9 +154,12 @@ export default function WorkerProfilePage() {
       city: form.city || undefined,
       locality: form.locality || undefined,
       currentLocality: form.locality || undefined,
-      dob: form.dob || undefined, maritalStatus: form.maritalStatus || undefined,
-      category: form.category || undefined, jobPreference: form.jobPreference || undefined,
-      isFresher: form.isFresher, workingStatus: form.workingStatus || undefined,
+      dob: form.dob || undefined,
+      maritalStatus: form.maritalStatus ? form.maritalStatus.toUpperCase() : undefined,
+      category: form.category || undefined,
+      jobPreference: form.jobPreference || undefined,
+      isFresher: form.isFresher,
+      workingStatus: form.workingStatus || undefined,
       noticePeriodDays: form.workingStatus === 'SERVING_NOTICE' ? (form.noticePeriodDays || undefined) : undefined,
     }),
     onSuccess: () => { toast.success('Profile updated'); setEditing(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },

@@ -852,13 +852,20 @@ export const workerApi = {
     skillIds?: number[];
     preferredLocationIds?: number[];
     preferredIndustryIds?: number[];
+    industryNames?: string[];
+    departmentIds?: number[];
+    departmentNames?: string[];
+    preferredJobRoleIds?: number[];
+    jobRoleNames?: string[];
     languageIds?: number[];
     languages?: { languageId: number; proficiency?: string }[];
-    // New API v2 fields
+    // Spec fields
     dob?: string;
+    gender?: string;
     maritalStatus?: string;
     category?: string;
     jobPreference?: string;
+    jobType?: string;
     isFresher?: boolean;
     workingStatus?: string;
     noticePeriodDays?: number;
