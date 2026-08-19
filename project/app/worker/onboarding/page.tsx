@@ -150,7 +150,7 @@ export default function WorkerOnboardingPage() {
     };
 
     setEducationList((prev) => [...prev, newItem]);
-    
+
     // Clear temporary inputs for next entry
     setSelectedQualLevel('');
     setQualSearch('');
@@ -257,8 +257,8 @@ export default function WorkerOnboardingPage() {
   const qualifications: MasterRawItem[] = Array.isArray(rawQualificationsData)
     ? rawQualificationsData
     : rawQualificationsData && typeof rawQualificationsData === 'object'
-    ? Object.values(rawQualificationsData).flat()
-    : [];
+      ? Object.values(rawQualificationsData).flat()
+      : [];
 
   const {
     register,
@@ -300,7 +300,7 @@ export default function WorkerOnboardingPage() {
     setIsSubmitting(true);
     try {
       // 1. Create or update profile including isFresher, department & workingStatus
-      await workerApi.updateProfile({
+      const profilePayload = {
         name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
         alternatePhone: data.alternatePhone || undefined,
@@ -317,11 +317,17 @@ export default function WorkerOnboardingPage() {
         isFresher: data.isFresher,
         workingStatus: data.workingStatus || undefined,
         noticePeriodDays: data.workingStatus === 'SERVING_NOTICE' ? (data.noticePeriodDays || undefined) : undefined,
-      });
+      };
+
+      try {
+        await workerApi.createProfile(profilePayload);
+      } catch {
+        await workerApi.updateProfile(profilePayload);
+      }
 
       // 2. Add all education items (multiple qualifications supported)
       const allEducationItems = [...educationList];
-      
+
       const currentQualId = data.qualificationId;
       const currentInstitute = data.institute;
       const currentPassoutYear = data.passoutYear;
@@ -488,7 +494,7 @@ export default function WorkerOnboardingPage() {
             {currentStep === 2 && (
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                 <h2 className="text-xl font-semibold">Location & Professional Info</h2>
-                
+
                 {/* Location Grid Row */}
                 <div className="grid gap-4 sm:grid-cols-3">
                   {/* Step 1: State */}
@@ -814,7 +820,7 @@ export default function WorkerOnboardingPage() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="space-y-4 p-4 border border-slate-200/70 rounded-2xl bg-white/60">
                   <h3 className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">
                     {educationList.length > 0 ? 'Add Another Qualification' : 'Qualification Details'}
@@ -881,9 +887,8 @@ export default function WorkerOnboardingPage() {
                                     setQualSearch(q.name || String(q.id));
                                     setIsQualOpen(false);
                                   }}
-                                  className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                                    watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
-                                  }`}
+                                  className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
+                                    }`}
                                 >
                                   {'name' in q ? q.name : String(q.id)}
                                 </button>
