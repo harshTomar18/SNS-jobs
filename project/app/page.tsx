@@ -701,22 +701,23 @@ export default function SCNJobsLanding() {
             </Reveal>
           </div>
 
-          <Reveal delay={200}>
-            <div>
-              <HeroSlider pal={pal} />
-            </div>
-          </Reveal>
+          <div style={{ width: "100%" }}>
+            <HeroSlider pal={pal} />
+          </div>
         </div>
         <style>{`
           .hero-section { position: relative; overflow: hidden; padding-top: 64px; padding-bottom: 88px; }
           .hero-grid-box { position: relative; display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 56px; align-items: center; }
+          .hero-slider-box { height: 380px; width: 100%; position: relative; }
 
           @media (max-width: 900px) {
             .hero-section { padding-top: 20px !important; padding-bottom: 40px !important; }
             .hero-grid-box { display: flex !important; flex-direction: column-reverse !important; gap: 24px !important; }
+            .hero-slider-box { height: 260px !important; }
           }
           @media (max-width: 640px) {
             .container { padding: 0 16px !important; }
+            .hero-slider-box { height: 220px !important; }
             .search-row { flex-direction: column !important; gap: 8px !important; padding: 10px !important; }
             .search-row > div[style*="width: 1"] { display: none !important; }
             .search-row > a { width: 100% !important; justify-content: center !important; padding: 12px 0 !important; font-size: 15px !important; }
