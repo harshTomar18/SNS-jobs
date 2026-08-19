@@ -351,10 +351,33 @@ export default function WorkerProfilePage() {
             <div className="p-4 sm:p-8 relative">
               <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 w-full">
                 <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 text-left flex-1 min-w-0 w-full">
-                  <div className="relative shrink-0 z-10">
+                  <div className="relative shrink-0 z-10 group">
                     <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
+                      <AvatarImage src={profile.profilePhotoUrl || undefined} alt={profile.fullName} className="object-cover h-full w-full" />
                       <AvatarFallback className="text-xl sm:text-3xl font-black text-blue-600 bg-blue-50 flex items-center justify-center h-full w-full">{getInitials(profile.fullName)}</AvatarFallback>
                     </Avatar>
+                    <div className="absolute bottom-0 right-0 z-20">
+                      <UploadButton
+                        endpoint="dpUploader"
+                        headers={{ Authorization: typeof window !== 'undefined' && localStorage.getItem('auth-token') ? `Bearer ${localStorage.getItem('auth-token')}` : '' }}
+                        onClientUploadComplete={res => {
+                          if (res?.[0]) {
+                            workerApi.updateProfile({ profilePhotoUrl: res[0].url }).then(() => {
+                              toast.success('Profile photo updated!');
+                              queryClient.invalidateQueries({ queryKey: ['worker-profile'] });
+                            });
+                          }
+                        }}
+                        onUploadError={(e: Error) => { toast.error(`Photo upload failed: ${e.message}`); }}
+                        appearance={{
+                          button: "bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center shadow-lg border-2 border-white cursor-pointer min-w-0 font-bold",
+                          allowedContent: "hidden"
+                        }}
+                        content={{
+                          button: <Camera className="h-4 w-4 text-white" />
+                        }}
+                      />
+                    </div>
                   </div>
                   <div className="pb-1 space-y-2 flex-1 min-w-0 text-left w-full">
                     <div className="flex flex-wrap items-center gap-2">
