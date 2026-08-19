@@ -322,6 +322,74 @@ function HeroSlider({ pal }: { pal: any }) {
   );
 }
 
+function formatJobSalary(j: any): string {
+  const min = j.monthlyWageMin ?? j.dailyWageMin ?? j.yearlyWageMin ?? j.salaryMin ?? j.wageMin;
+  const max = j.monthlyWageMax ?? j.dailyWageMax ?? j.yearlyWageMax ?? j.salaryMax ?? j.wageMax ?? min;
+  
+  const period = (j.monthlyWageMin || j.wagePeriod === 'monthly') ? '/ mo' : (j.dailyWageMin || j.wagePeriod === 'daily') ? '/ day' : '/ yr';
+
+  if (min !== undefined && min !== null && min > 0) {
+    if (max && max > min) {
+      return `₹${Number(min).toLocaleString('en-IN')} - ₹${Number(max).toLocaleString('en-IN')} ${period}`;
+    }
+    return `₹${Number(min).toLocaleString('en-IN')} ${period}`;
+  }
+
+  if (j.salary_range) return j.salary_range.startsWith('₹') ? j.salary_range : `₹${j.salary_range}`;
+  if (j.pay) return j.pay.startsWith('₹') ? j.pay : `₹${j.pay}`;
+
+  return 'Salary Best in Industry';
+}
+
+function formatJobExperience(j: any): string {
+  if (j.freshersOnly) return 'Fresher Friendly (0 yrs)';
+  
+  const minMonths = j.minExperienceMonths !== undefined && j.minExperienceMonths !== null 
+    ? j.minExperienceMonths 
+    : j.experienceMin !== undefined && j.experienceMin !== null 
+      ? j.experienceMin * 12 
+      : null;
+
+  const maxMonths = j.maxExperienceMonths !== undefined && j.maxExperienceMonths !== null 
+    ? j.maxExperienceMonths 
+    : j.experienceMax !== undefined && j.experienceMax !== null 
+      ? j.experienceMax * 12 
+      : null;
+
+  if (minMonths !== null) {
+    const minYears = Math.floor(minMonths / 12);
+    const maxYears = maxMonths !== null ? Math.floor(maxMonths / 12) : null;
+
+    if (minYears === 0 && (!maxYears || maxYears === 0)) return 'Fresher Friendly (0 yrs)';
+    if (maxYears && maxYears > minYears) return `${minYears} - ${maxYears} yrs exp`;
+    if (minYears === 0 && maxYears === 1) return '0 - 1 yrs exp';
+    return `${minYears}+ yrs exp`;
+  }
+
+  if (j.created_at) return j.created_at;
+  if (j.posted) return j.posted;
+  return '0 - 2 yrs exp';
+}
+
+function formatJobLocation(j: any): string {
+  if (typeof j.location === 'string' && j.location) return j.location;
+  if (j.loc) return j.loc;
+  if (j.location && typeof j.location === 'object') {
+    const parts = [j.location.locality, j.location.city, j.location.state].filter(Boolean);
+    return parts.length > 0 ? parts.join(', ') : 'Delhi';
+  }
+  return 'Delhi';
+}
+
+function formatJobCompany(j: any): string {
+  if (j.companyName) return j.companyName;
+  if (j.company_name) return j.company_name;
+  if (j.company) return j.company;
+  if (j.poster?.recruiter?.name) return j.poster.recruiter.name;
+  if (j.poster?.email) return j.poster.email;
+  return 'SCN Partner';
+}
+
 /* ------------------------------------------------------------------ */
 /*  Main component                                                     */
 /* ------------------------------------------------------------------ */
@@ -762,21 +830,21 @@ export default function SCNJobsLanding() {
                     }}
                     className="disp"
                   >
-                    {(j.company_name || j.company || 'S')[0]}
+                    {(formatJobCompany(j) || 'S')[0]}
                   </div>
                   <span style={{ fontSize: 11, fontWeight: 700, color: BRAND.amberDeep, background: `${BRAND.amber}1f`, padding: "4px 10px", borderRadius: 999 }}>
-                    {j.category || j.tag || 'Hot Role'}
+                    {j.category || j.tag || j.industry || 'Hot Role'}
                   </span>
                 </div>
-                <h3 className="disp" style={{ fontSize: 17.5, fontWeight: 700, marginTop: 16, marginBottom: 4 }}>{j.title}</h3>
-                <p style={{ fontSize: 13.5, color: pal.textMuted, marginBottom: 16 }}>{j.company_name || j.company}</p>
+                <h3 className="disp" style={{ fontSize: 17.5, fontWeight: 700, marginTop: 16, marginBottom: 4 }}>{j.title || j.jobRole?.name || 'Job Opening'}</h3>
+                <p style={{ fontSize: 13.5, color: pal.textMuted, marginBottom: 16 }}>{formatJobCompany(j)}</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: 13, color: pal.textMuted }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><MapPin size={13} /> {j.location || j.loc}</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><IndianRupee size={13} /> {j.salary_range || j.pay} / yr</span>
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Clock size={13} /> {j.created_at || j.posted}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><MapPin size={13} /> {formatJobLocation(j)}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><IndianRupee size={13} /> {formatJobSalary(j)}</span>
+                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}><Clock size={13} /> {formatJobExperience(j)}</span>
                 </div>
                 <div style={{ marginTop: 18, paddingTop: 16, borderTop: `1px solid ${pal.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: pal.textMuted }}>{j.employment_type || j.type}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: pal.textMuted }}>{j.jobType || j.employment_type || j.type || 'Full Time'}</span>
                   <Link href="/worker/register" style={{ fontSize: 13, fontWeight: 700, color: BRAND.teal, textDecoration: "none" }}>Apply →</Link>
                 </div>
               </div>
