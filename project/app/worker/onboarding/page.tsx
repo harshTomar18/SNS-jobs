@@ -33,6 +33,10 @@ const schema = z.object({
   lastName: z.string().min(2, 'Last name is required'),
   phone: z.string().min(10, 'Valid phone is required'),
   alternatePhone: z.string().optional(),
+  dob: z.string().optional(),
+  gender: z.string().optional(),
+  maritalStatus: z.string().optional(),
+  category: z.string().optional(),
   departmentName: z.string().optional(),
   industryName: z.string().optional(),
   city: z.string().min(2, 'City is required'),
@@ -304,6 +308,10 @@ export default function WorkerOnboardingPage() {
         name: `${data.firstName} ${data.lastName}`,
         phone: data.phone,
         alternatePhone: data.alternatePhone || undefined,
+        dob: data.dob || undefined,
+        gender: data.gender || undefined,
+        maritalStatus: data.maritalStatus ? data.maritalStatus.toUpperCase() : undefined,
+        category: data.category || undefined,
         departmentNames: data.departmentName ? [data.departmentName] : undefined,
         industryNames: data.industryName ? [data.industryName] : undefined,
         headline: data.headline,
@@ -486,6 +494,56 @@ export default function WorkerOnboardingPage() {
                         {errors.alternatePhone && <p className="text-xs text-destructive">{errors.alternatePhone.message}</p>}
                       </div>
                     )}
+                  </div>
+
+                  {/* Personal Info Row: DOB, Gender, Marital Status, Category */}
+                  <div className="grid gap-4 sm:grid-cols-2 pt-2">
+                    <div className="space-y-2">
+                      <Label>Date of Birth</Label>
+                      <Input type="date" {...register('dob')} className="rounded-xl border-slate-200" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Gender</Label>
+                      <Select value={watch('gender') || ''} onValueChange={(v) => setValue('gender', v)}>
+                        <SelectTrigger className="rounded-xl border-slate-200 text-xs">
+                          <SelectValue placeholder="Select gender..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MALE">Male</SelectItem>
+                          <SelectItem value="FEMALE">Female</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Marital Status</Label>
+                      <Select value={watch('maritalStatus') || ''} onValueChange={(v) => setValue('maritalStatus', v)}>
+                        <SelectTrigger className="rounded-xl border-slate-200 text-xs">
+                          <SelectValue placeholder="Select marital status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SINGLE">Single</SelectItem>
+                          <SelectItem value="MARRIED">Married</SelectItem>
+                          <SelectItem value="DIVORCED">Divorced</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select value={watch('category') || ''} onValueChange={(v) => setValue('category', v)}>
+                        <SelectTrigger className="rounded-xl border-slate-200 text-xs">
+                          <SelectValue placeholder="Select category..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="GEN">General</SelectItem>
+                          <SelectItem value="OBC">OBC</SelectItem>
+                          <SelectItem value="SC_ST">SC / ST</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               </div>
