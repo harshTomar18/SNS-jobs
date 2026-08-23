@@ -115,7 +115,7 @@ function formatSalaryDisplay(job?: JobWithMeta) {
   
   if (min === 0 && max === 0) return 'Salary not specified';
 
-  const suffix = period === 'daily' ? 'P.D.' : period.includes('annual') || period.includes('year') ? 'Lacs P.A.' : 'P.M.';
+  const suffix = period === 'daily' ? 'P.D.' : period.includes('annual') || period.includes('year') ? 'Lacs P.A.' : 'per month';
 
   if (period.includes('annual') || period.includes('year')) {
     const minLacs = (min / 100000).toFixed(1).replace('.0', '');
@@ -305,7 +305,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
               <div className="flex items-center gap-1.5">
                 <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
                 <span className="truncate max-w-[280px]">
-                  {[job.locality, job.location].filter(Boolean).join(', ')}
+                  {job.locality && !job.location.includes(job.locality) ? `${job.locality}, ${job.location}` : job.location}
                 </span>
               </div>
             </div>
@@ -392,7 +392,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
           <div className="text-xs font-semibold text-slate-700 space-y-1.5 bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
             <p className="text-sm font-bold text-slate-900">{job.title}</p>
             <p><strong>Company:</strong> {job.companyName}</p>
-            <p><strong>Location:</strong> {[job.locality, job.location].filter(Boolean).join(', ')}</p>
+            <p><strong>Location:</strong> {job.locality && !job.location.includes(job.locality) ? `${job.locality}, ${job.location}` : job.location}</p>
             <p><strong>Experience:</strong> {job.experienceMin}-{job.experienceMax} Years</p>
             <p><strong>Job Type:</strong> <span className="capitalize">{job.jobType}</span></p>
           </div>

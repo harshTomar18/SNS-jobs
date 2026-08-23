@@ -1,5 +1,7 @@
 'use client';
 
+// Updated dashboard page
+
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -59,13 +61,9 @@ export default function RecruiterDashboardPage() {
   const recentApplications = applications.slice(0, 3);
 
   const formatWage = (min: number, max: number) => {
-    const formatNum = (num: number) => {
-      if (num >= 1000) {
-        return `₹${Math.round(num / 1000)}k`;
-      }
-      return `₹${num}`;
-    };
-    if (min === max) return formatNum(min);
+    if (!min && !max) return 'Salary not specified';
+    const formatNum = (num: number) => `₹${num.toLocaleString('en-IN')}`;
+    if (min === max || (!max && min)) return formatNum(min || max);
     return `${formatNum(min)} - ${formatNum(max)}`;
   };
 
@@ -94,12 +92,12 @@ export default function RecruiterDashboardPage() {
 
         <div className="flex flex-wrap items-center gap-3">
 
-          {/* Find Workers link */}
+          {/* Find Candidates link */}
           <Link 
             href="/recruiter/workers" 
             className="flex items-center justify-center gap-2 border-2 border-dashed border-indigo-200 bg-indigo-50/10 hover:bg-indigo-50/30 text-indigo-600 font-bold rounded-2xl px-5 py-3 text-xs shadow-sm transition-all"
           >
-            Find Workers
+            Find Candidates
           </Link>
 
           {/* Post a Job button */}

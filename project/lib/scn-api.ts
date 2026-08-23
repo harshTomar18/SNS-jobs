@@ -302,7 +302,8 @@ export function toJob(job: BackendJob): JobWithMeta {
     .map((entry) => entry.qualification?.name)
     .filter((name): name is string => Boolean(name));
   const experienceMin = Math.floor((job.minExperienceMonths || 0) / 12);
-  const locationName = job.location?.city || 'Location not specified';
+  const locationParts = [job.location?.locality, job.location?.city].filter(Boolean);
+  const locationName = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
   const title = job.title || job.jobRole?.name || (job as any).jobRoleName || 'Job Listing';
 
   // Handle new 3 independent range pairs (daily, monthly, yearly)
@@ -424,9 +425,10 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     .map((entry) => {
       if (!entry.location) return null;
       const { id, locality, city, state } = entry.location;
+      const parts = Array.from(new Set([locality, city, state].filter(Boolean)));
       return {
         id,
-        label: [locality, city, state].filter(Boolean).join(', '),
+        label: parts.join(', '),
       };
     })
     .filter((entry): entry is { id: number; label: string } => Boolean(entry));
@@ -528,6 +530,10 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     isFresher: profile.isFresher ?? false,
     workingStatus: profile.workingStatus || undefined,
     noticePeriodDays: profile.noticePeriodDays || undefined,
+    gender: (profile as any).gender || undefined,
+    preferredDepartments: ((profile as any).preferredDepartments || []).map((entry: any) => entry.department?.name || entry.name).filter((n: any): n is string => Boolean(n)),
+    preferredJobRoles: ((profile as any).preferredJobRoles || []).map((entry: any) => entry.jobRole?.name || entry.name).filter((n: any): n is string => Boolean(n)),
+    assets: ((profile as any).assets || []).map((entry: any) => entry.asset?.name || entry.name || (typeof entry === 'string' ? entry : '')).filter((n: any): n is string => Boolean(n)),
   };
 }
 
@@ -750,8 +756,8 @@ export const jobsApi = {
       shiftType: (data.shiftType || 'day').toLowerCase(),
       gender: (data.gender || 'ANY').toUpperCase(),
       headcountRequired: Number(data.headcountRequired || 1),
-      minExperienceMonths: Number(data.minExperienceMonths || 0),
-      maxExperienceMonths: data.maxExperienceMonths !== undefined ? Number(data.maxExperienceMonths) : undefined,
+      minExperienceMonths: data.freshersOnly ? 0 : Number(data.minExperienceMonths || 0),
+      maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceMonths !== undefined ? Number(data.maxExperienceMonths) : undefined),
       freshersOnly: Boolean(data.freshersOnly),
       workingDays: workingDaysEnum,
       workingStatus: data.workingStatus || undefined,

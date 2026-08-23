@@ -37,7 +37,16 @@ export function DashboardLayout({ children, items, role, title }: DashboardLayou
 
     syncSidebar();
     mediaQuery.addEventListener('change', syncSidebar);
-    return () => mediaQuery.removeEventListener('change', syncSidebar);
+
+    // Prevent double scrollbar by locking root element overflow
+    document.documentElement.classList.add('overflow-hidden', 'h-full');
+    document.body.classList.add('overflow-hidden', 'h-full');
+
+    return () => {
+      mediaQuery.removeEventListener('change', syncSidebar);
+      document.documentElement.classList.remove('overflow-hidden', 'h-full');
+      document.body.classList.remove('overflow-hidden', 'h-full');
+    };
   }, []);
 
   if (isLoading || !isAuthenticated || !user || user.role !== role) {

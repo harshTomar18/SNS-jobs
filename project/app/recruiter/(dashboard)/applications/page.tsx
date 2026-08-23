@@ -50,7 +50,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/empty-state';
 import { Application, ApplicationStatus, WorkerProfile } from '@/lib/types';
-import { getInitials } from '@/lib/format';
+import { getInitials, formatExpectedSalary } from '@/lib/format';
 import { applicationsApi, adminApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
@@ -96,7 +96,7 @@ export default function RecruiterApplicationsPage() {
       return {
         id: selectedCandidateApp.workerId,
         name: selectedCandidateApp.workerName,
-        headline: selectedCandidateApp.workerHeadline || 'Worker Profile',
+        headline: selectedCandidateApp.workerHeadline || 'Candidate Profile',
         city: selectedCandidateApp.workerCity || 'Location not specified',
         experienceYears: selectedCandidateApp.workerExperienceYears || 0,
         totalExperienceMonths: (selectedCandidateApp.workerExperienceYears || 0) * 12,
@@ -366,7 +366,7 @@ export default function RecruiterApplicationsPage() {
                         <span className="font-bold text-slate-800 text-sm leading-tight group-hover:text-indigo-600 transition-colors underline-offset-2 group-hover:underline">
                           {app.workerName}
                         </span>
-                        <span className="text-[11px] text-slate-400 font-semibold mt-0.5">{app.workerHeadline || 'Worker Profile'}</span>
+                        <span className="text-[11px] text-slate-400 font-semibold mt-0.5">{app.workerHeadline || 'Candidate Profile'}</span>
                       </div>
                     </div>
                   </td>
@@ -497,7 +497,7 @@ export default function RecruiterApplicationsPage() {
       <Sheet open={isWorkerSheetOpen} onOpenChange={setIsWorkerSheetOpen}>
         <SheetContent side="right" className="h-full overflow-y-auto bg-white border-l border-slate-100 shadow-xl p-6 sm:max-w-xl w-3/4 md:w-[540px]">
           <SheetHeader className="text-left border-b border-slate-50 pb-4 mb-4">
-            <SheetTitle className="text-lg font-bold text-slate-800">Worker Profile Details</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-slate-800">Candidate Profile Details</SheetTitle>
           </SheetHeader>
 
           {workerDetailQuery.isLoading ? (
@@ -515,7 +515,7 @@ export default function RecruiterApplicationsPage() {
                 </Avatar>
                 <div className="flex-1">
                   <h3 className="text-base font-extrabold text-slate-800 leading-tight">{workerProfile.name}</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{workerProfile.headline || workerProfile.departmentName || 'Worker Profile'}</p>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{workerProfile.headline || workerProfile.departmentName || 'Candidate Profile'}</p>
                   <p className="text-xs text-slate-500 font-semibold mt-1">
                     {[
                       workerProfile.city,
@@ -565,9 +565,7 @@ export default function RecruiterApplicationsPage() {
                 <div>
                   <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">SALARY BRACKET</span>
                   <p className="font-extrabold text-slate-700 text-sm mt-0.5">
-                    {workerProfile.expectedSalaryMin || workerProfile.expectedSalaryMax
-                      ? `₹${((workerProfile.expectedSalaryMin || 0) / 100000).toFixed(0)}L - ₹${((workerProfile.expectedSalaryMax || 0) / 100000).toFixed(0)}L`
-                      : '₹0L - ₹0L'}
+                    {formatExpectedSalary(workerProfile.expectedSalaryMin, workerProfile.expectedSalaryMax)}
                   </p>
                 </div>
                 <div>
@@ -710,7 +708,7 @@ export default function RecruiterApplicationsPage() {
                 </Avatar>
                 <div className="flex-1">
                   <h3 className="text-base font-extrabold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{selectedApp.workerName}</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{selectedApp.workerHeadline || 'Worker Profile'}</p>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{selectedApp.workerHeadline || 'Candidate Profile'}</p>
                   <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1">
                     <MapPinIcon /> {selectedApp.workerCity || 'Location not specified'} • {selectedApp.workerExperienceYears} Years Experience
                   </p>

@@ -118,13 +118,9 @@ export default function RecruiterJobsPage() {
   const paginatedJobs = filteredJobs.slice(startIndex, endIndex);
 
   const formatWage = (min: number, max: number) => {
-    const formatNum = (num: number) => {
-      if (num >= 1000) {
-        return `₹${Math.round(num / 1000)}k`;
-      }
-      return `₹${num}`;
-    };
-    if (min === max) return formatNum(min);
+    if (!min && !max) return 'Salary not specified';
+    const formatNum = (num: number) => `₹${num.toLocaleString('en-IN')}`;
+    if (min === max || (!max && min)) return formatNum(min || max);
     return `${formatNum(min)} - ${formatNum(max)}`;
   };
 
@@ -225,7 +221,9 @@ export default function RecruiterJobsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col text-left">
-                      <span className="text-sm font-bold text-slate-700 leading-tight">{job.location}</span>
+                      <span className="text-sm font-bold text-slate-700 leading-tight">
+                        {job.locality && !job.location.includes(job.locality) ? `${job.locality}, ${job.location}` : job.location}
+                      </span>
                       <span className="text-[10px] text-slate-400 font-semibold capitalize mt-0.5">({job.workType})</span>
                     </div>
                   </td>

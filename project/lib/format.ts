@@ -61,3 +61,20 @@ export function getInitials(name?: string | null): string {
     .join('')
     .toUpperCase();
 }
+
+export function formatExpectedSalary(min?: number | null, max?: number | null): string {
+  if (!min && !max) return 'Not specified';
+  const minVal = min || 0;
+  const maxVal = max || minVal;
+  if (minVal === 0 && maxVal === 0) return 'Not specified';
+
+  if (minVal >= 100000) {
+    const minL = (minVal / 100000).toFixed(1).replace('.0', '');
+    const maxL = (maxVal / 100000).toFixed(1).replace('.0', '');
+    if (minVal === maxVal) return `₹${minL}L`;
+    return `₹${minL}L - ₹${maxL}L`;
+  }
+
+  if (minVal === maxVal) return `₹${minVal.toLocaleString('en-IN')}`;
+  return `₹${minVal.toLocaleString('en-IN')} - ₹${maxVal.toLocaleString('en-IN')}`;
+}

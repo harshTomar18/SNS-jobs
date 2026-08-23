@@ -97,10 +97,8 @@ function CompanyLogo({ name, className = 'h-12 w-12' }: { name: string; classNam
 // Helper to format salary
 function displaySalary(min: number, max: number) {
   if (min === 0 && max === 0) return 'Salary not specified';
-  if (max >= 1000) {
-    return `₹${Math.round(min / 1000)}k - ₹${Math.round(max / 1000)}k`;
-  }
-  return `₹${min} - ₹${max}`;
+  if (min === max) return `₹${min.toLocaleString('en-IN')}`;
+  return `₹${min.toLocaleString('en-IN')} - ₹${max.toLocaleString('en-IN')}`;
 }
 
 function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
