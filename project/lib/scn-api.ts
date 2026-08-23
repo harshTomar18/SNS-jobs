@@ -228,6 +228,10 @@ export interface WorkerWithMeta extends WorkerProfile {
   state?: string;
   locality?: string;
   preferredLocationDetails?: { id: number; label: string }[];
+  gender?: string;
+  preferredDepartments?: string[];
+  preferredJobRoles?: string[];
+  assets?: string[];
 }
 
 export interface DashboardStats {
