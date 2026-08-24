@@ -42,12 +42,9 @@ export function JobCard({ job, variant = 'default', className, hrefPrefix = '/jo
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <Avatar className="h-12 w-12 rounded-lg border border-border">
-            <AvatarImage src={job.companyLogo} alt={job.companyName} />
-            <AvatarFallback className="rounded-lg">
-              <Building2 className="h-5 w-5 text-muted-foreground" />
-            </AvatarFallback>
-          </Avatar>
+          <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white p-1 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+            <img src="/logo.png" alt={job.companyName || 'SCN Jobs'} className="w-full h-full object-contain" />
+          </div>
           <div>
             <Link href={`${hrefPrefix}/${job.id}`}>
               <h3 className="font-semibold leading-tight transition-colors group-hover:text-primary">

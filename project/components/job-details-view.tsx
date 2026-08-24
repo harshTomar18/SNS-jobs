@@ -45,64 +45,10 @@ import { useAuth } from '@/lib/auth-context';
 import { Application } from '@/lib/types';
 
 // Helper component for logos
-function CompanyLogo({ name, className = 'h-16 w-16' }: { name: string; className?: string }) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes('linear')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-[#121214] border border-neutral-800 shadow-sm text-[#5E6AD2] font-black text-2xl`}>
-        L
-      </div>
-    );
-  }
-  if (normalized.includes('google')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 shadow-sm text-2xl font-bold`}>
-        <span className="text-[#4285F4]">G</span>
-        <span className="text-[#EA4335]">o</span>
-        <span className="text-[#FBBC05]">o</span>
-        <span className="text-[#34A853]">g</span>
-      </div>
-    );
-  }
-  if (normalized.includes('airbnb')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-rose-50 border border-rose-100 shadow-sm text-2xl font-bold text-rose-500`}>
-        A
-      </div>
-    );
-  }
-  if (normalized.includes('vercel')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-black border border-neutral-900 shadow-sm text-white font-extrabold text-lg`}>
-        ▲
-      </div>
-    );
-  }
-  if (normalized.includes('stripe')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-indigo-50 border border-indigo-100 shadow-sm text-2xl font-extrabold text-indigo-600`}>
-        S
-      </div>
-    );
-  }
-  if (normalized.includes('meta')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 shadow-sm text-2xl font-bold text-blue-600`}>
-        M
-      </div>
-    );
-  }
-  if (normalized.includes('shopify')) {
-    return (
-      <div className={`${className} flex items-center justify-center rounded-2xl bg-green-50 border border-green-100 shadow-sm text-2xl font-bold text-green-600`}>
-        S
-      </div>
-    );
-  }
-  const initial = name.charAt(0).toUpperCase();
+function CompanyLogo({ name, className = 'h-16 w-16' }: { name?: string; className?: string }) {
   return (
-    <div className={`${className} flex items-center justify-center rounded-2xl bg-blue-50 border border-blue-100 shadow-sm text-2xl font-bold text-blue-600`}>
-      {initial}
+    <div className={`${className} flex items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-sm p-1.5 overflow-hidden shrink-0`}>
+      <img src="/logo.png" alt={name || 'SCN Jobs'} className="w-full h-full object-contain" />
     </div>
   );
 }
@@ -262,13 +208,13 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
             </h1>
 
             {/* Recruiter & Rating Row */}
-            <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600 font-bold">
+            {/* <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600 font-bold">
               <span>{job.companyName}</span>
               <span className="flex items-center gap-1 text-amber-500 font-bold">
                 <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> 2.5
               </span>
               <span className="text-slate-400 text-xs font-semibold">81 Reviews</span>
-            </div>
+            </div> */}
 
             {/* Dynamic Details in a Row (Side by side with vertical dividers) */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm font-bold text-slate-700 pt-1">
