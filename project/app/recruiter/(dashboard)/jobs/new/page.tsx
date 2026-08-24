@@ -562,7 +562,7 @@ export default function CreateJobPage() {
   const skillSuggestions = useMemo(() => {
     const selectedSet = new Set(selectedSkillIds);
     const query = skillSearch.trim().toLowerCase();
-    if (!query) return [];
+    if (!query) return skills.filter(skill => !selectedSet.has(String(skill.id)));
     return skills.filter(skill => {
       const id = String(skill.id);
       if (selectedSet.has(id)) return false;
@@ -772,79 +772,6 @@ export default function CreateJobPage() {
                       <SelectItem value="ANY">Any Status</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* Required Languages */}
-                <div className="space-y-2 sm:col-span-3 border-t border-slate-50 pt-3">
-                  <Label className="text-slate-700 font-extrabold text-xs">Required Languages (Candidate Languages)</Label>
-
-                  {/* Selected Languages dismissible badges */}
-                  {selectedLanguageIds.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50/50 border border-slate-100 rounded-xl mb-2">
-                      {selectedLanguageIds.map((id) => {
-                        const lang = languages.find((l) => String(l.id) === id);
-                        const name = lang && 'name' in lang ? lang.name : id;
-                        return (
-                          <Badge
-                            key={id}
-                            className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
-                          >
-                            {name}
-                            <button
-                              type="button"
-                              onClick={() => toggleId('languageIds', id)}
-                              className="hover:bg-indigo-200/50 rounded-full p-0.5"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Search Input Box */}
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Search and add required languages (English, Hindi, Tamil, Telugu, Marathi, etc.)..."
-                      value={langSearch}
-                      onChange={(e) => setLangSearch(e.target.value)}
-                      className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
-                    />
-                  </div>
-
-                  {/* Language Suggestions Grid */}
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30 mt-2">
-                    {langSuggestions.length > 0 ? (
-                      langSuggestions.map((lang: any) => {
-                        const id = String(lang.id);
-                        const isSelected = selectedLanguageIds.includes(id);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              toggleId('languageIds', id);
-                            }}
-                            className={cn(
-                              'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
-                              isSelected
-                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                            )}
-                          >
-                            {isSelected ? '✓ ' : '+ '}
-                            {'name' in lang ? lang.name : id}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <span className="text-[10px] text-slate-400 italic py-1">No matching languages found.</span>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -1162,38 +1089,45 @@ export default function CreateJobPage() {
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <input
                     type="text"
-                    placeholder="Search and add skills..."
+                    placeholder="Search and select skills..."
                     value={skillSearch}
                     onChange={(e) => setSkillSearch(e.target.value)}
                     className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
                   />
                 </div>
 
-                {/* Suggestions List */}
-                {skillSearch.trim() !== '' && (
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
-                    {skillSuggestions.length > 0 ? (
-                      skillSuggestions.map((skill) => {
-                        const id = String(skill.id);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            onClick={() => {
-                              toggleId('skillIds', id);
-                              setSkillSearch('');
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 transition-all hover:border-slate-300"
-                          >
-                            + {'name' in skill ? skill.name : id}
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <span className="text-[10px] text-slate-400 italic">No matching skills found.</span>
-                    )}
-                  </div>
-                )}
+                {/* Skills Dropdown / Suggestions Grid with Search */}
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
+                  {skillSuggestions.length > 0 ? (
+                    skillSuggestions.map((skill: any) => {
+                      const id = String(skill.id);
+                      const isSelected = selectedSkillIds.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('skillIds', id);
+                          }}
+                          className={cn(
+                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
+                            isSelected
+                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                          )}
+                        >
+                          {isSelected ? '✓ ' : '+ '}
+                          {'name' in skill ? skill.name : id}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <span className="text-[10px] text-slate-400 italic py-1">
+                      {skillSearch.trim() !== '' ? 'No matching skills found.' : 'No skills available.'}
+                    </span>
+                  )}
+                </div>
               </div>
               <Separator className="my-2 bg-slate-50" />
               <div className="space-y-3">
