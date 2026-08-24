@@ -48,7 +48,9 @@ export default function RecruiterDashboardPage() {
   const acceptedCount = applications.filter(a => a.status === 'accepted').length;
   const rejectedCount = applications.filter(a => a.status === 'rejected').length;
 
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Sarah';
+  const recruiterNameFromJobs = jobs.find(j => j.recruiterName && j.recruiterName !== 'SCN Recruiter' && !j.recruiterName.includes('@'))?.recruiterName;
+  const isDefaultLocalPart = user?.name && user.email && user.name.toLowerCase().replace(/\s+/g, '') === user.email.split('@')[0].toLowerCase().replace(/\s+/g, '');
+  const displayName = (!isDefaultLocalPart && user?.name) ? user.name : (recruiterNameFromJobs || user?.name || 'Recruiter');
 
   // Conversion calculations
   const acceptedConversion = totalApplicationsCount > 0 ? (acceptedCount / totalApplicationsCount) * 100 : 0;
@@ -84,7 +86,7 @@ export default function RecruiterDashboardPage() {
       <div className="flex flex-row items-center justify-between flex-wrap gap-6">
         <div className="flex flex-col text-left">
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">
-            {greeting}, {firstName}
+            {greeting}, {displayName}
           </h1>
           {/* <span className="text-3xl mt-1.5 leading-none">👋</span> */}
           <p className="text-slate-400 text-sm font-semibold mt-2">Here's what's happening with your hiring pipeline today.</p>

@@ -969,7 +969,7 @@ export default function SCNJobsLanding() {
                 <Building2 size={20} color="#fff" />
               </div>
               <div>
-                <h3 className="disp" style={{ fontSize: 20, fontWeight: 800, color: pal.text, margin: 0 }}>SCN Global Pvt Ltd Platform</h3>
+                <h3 className="disp" style={{ fontSize: 20, fontWeight: 800, color: pal.text, margin: 0 }}> SCN JOBS Platform </h3>
                 <span style={{ fontSize: 12.5, color: BRAND.amberDeep, fontWeight: 700 }}>Official Job Portal</span>
               </div>
             </div>

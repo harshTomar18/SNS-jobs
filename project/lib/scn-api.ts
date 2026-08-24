@@ -283,16 +283,30 @@ const localPart = (email: string) =>
     .replace(/[._-]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-export function toUser(user: BackendUser): User {
+export function toUser(user: BackendUser | any, rootData?: any): User {
+  if (!user && rootData?.user) {
+    user = rootData.user;
+  }
+  const rootName = rootData?.name || rootData?.data?.name;
+  const recruiterName = user?.recruiter?.name || user?.poster?.recruiter?.name || rootData?.recruiter?.name || rootData?.poster?.recruiter?.name;
+  const workerName = user?.workerProfile?.name || user?.worker?.name || rootData?.workerProfile?.name;
+  
+  let explicitName = rootName || workerName || recruiterName;
+  if (!explicitName && user?.name && user.name.toLowerCase() !== localPart(user?.email || '').toLowerCase()) {
+    explicitName = user.name;
+  }
+
+  const nameToUse = explicitName || localPart(user?.email || 'User');
+
   return {
-    id: user.id,
-    name: user.workerProfile?.name || user.recruiter?.name || localPart(user.email),
-    email: user.email,
-    phone: user.phone || user.workerProfile?.phone || undefined,
-    role: apiRoleToUi(user.role),
-    avatarUrl: user.workerProfile?.profilePhotoUrl || undefined,
-    company: user.recruiter?.name,
-    designation: user.role === 'super_admin' ? 'Administrator' : undefined,
+    id: user?.id || rootData?.id || '',
+    name: nameToUse,
+    email: user?.email || rootData?.email || '',
+    phone: user?.phone || user?.workerProfile?.phone || rootData?.phone || undefined,
+    role: apiRoleToUi(user?.role || rootData?.role || 'worker'),
+    avatarUrl: user?.workerProfile?.profilePhotoUrl || rootData?.profilePhotoUrl || undefined,
+    company: recruiterName || user?.company,
+    designation: user?.role === 'super_admin' ? 'Administrator' : undefined,
   };
 }
 
@@ -721,15 +735,17 @@ export function toMasterDataItem(resource: MasterResource, item: BackendLookup |
 
 export const authApi = {
   async login(email: string, password: string) {
-    const result = await apiPost<{ token: string; user: BackendUser }>('/auth/login', {
+    const result = await apiPost<{ token: string; user: BackendUser; name?: string }>('/auth/login', {
       email,
       password,
     });
-    return { token: result.token, user: toUser(result.user) };
+    return { token: result.token, user: toUser(result.user, result) };
   },
   async me() {
-    const user = await apiGet<BackendUser | null>('/auth/me');
-    return user ? toUser(user) : null;
+    const res = await apiGet<any>('/auth/me');
+    if (!res) return null;
+    const userObj = res.user || res;
+    return toUser(userObj, res);
   },
   logout() {
     return apiPost<{ success?: boolean }>('/auth/logout');
@@ -738,11 +754,11 @@ export const authApi = {
     return apiPost<{ userId: string; devOtp?: string }>('/auth/worker/register', data);
   },
   async verifyWorkerOtp(phone: string, otp: string) {
-    const result = await apiPost<{ token: string; user: BackendUser }>('/auth/worker/verify-otp', {
+    const result = await apiPost<{ token: string; user: BackendUser; name?: string }>('/auth/worker/verify-otp', {
       phone,
       otp,
     });
-    return { token: result.token, user: toUser(result.user) };
+    return { token: result.token, user: toUser(result.user, result) };
   },
   resendWorkerOtp(phone: string) {
     return apiPost<{ devOtp?: string }>('/auth/worker/resend-otp', { phone });

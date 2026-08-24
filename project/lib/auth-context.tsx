@@ -36,7 +36,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       try {
-        setUser(JSON.parse(storedUser));
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+
+        authApi.me().then((freshUser) => {
+          if (freshUser && freshUser.name && freshUser.name !== parsed.name) {
+            setUser(freshUser);
+            localStorage.setItem('auth-user', JSON.stringify(freshUser));
+          }
+        }).catch(() => {});
       } catch {
         localStorage.removeItem('auth-token');
         localStorage.removeItem('auth-user');
