@@ -351,26 +351,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
         </Card>
       )}
 
-      {/* 3. Job match score Card */}
-      {!isRecruiter && (
-        <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-3 text-left shadow-sm">
-          <h4 className="text-xs font-extrabold text-slate-800">Job match score</h4>
-          <div className="flex flex-wrap gap-2.5 text-xs font-bold">
-            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Early Applicant
-            </span>
-            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Keyskills
-            </span>
-            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Location
-            </span>
-            <span className="flex items-center gap-1.5 text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
-              <X className="h-3.5 w-3.5 text-slate-400" /> Work Experience
-            </span>
-          </div>
-        </Card>
-      )}
+
 
       {/* 3. Job Description Card (Matching Image 2 & 3) */}
       <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-6 text-left shadow-sm">
