@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sheet';
 import { EmptyState } from '@/components/empty-state';
 import { getInitials, formatExpectedSalary } from '@/lib/format';
+import { CandidateProfileDrawer } from '@/components/candidate-profile-drawer';
 import { workerApi, masterDataApi, WorkerWithMeta } from '@/lib/scn-api';
 import { cn } from '@/lib/utils';
 
@@ -601,95 +602,12 @@ export default function RecruiterWorkerSearchPage() {
         </div>
       )}
 
-      {/* Details Sheet */}
-      <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <SheetContent side="right" className="h-full overflow-y-auto bg-white border-l border-slate-100 shadow-xl p-6 sm:max-w-xl w-3/4 md:w-[500px]">
-          <SheetHeader className="text-left border-b border-slate-50 pb-4 mb-4">
-            <SheetTitle className="text-lg font-bold text-slate-800">Candidate Profile Details</SheetTitle>
-          </SheetHeader>
-          
-          {selectedWorker && (
-            <div className="space-y-6 mt-4">
-              {/* Profile Overview */}
-              <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-xl text-left">
-                <Avatar className="h-16 w-16 border border-indigo-100">
-                  <AvatarFallback className="text-lg font-bold bg-indigo-50 text-indigo-600">
-                    {getInitials(selectedWorker.fullName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h3 className="text-base font-extrabold text-slate-800 leading-tight">{selectedWorker.fullName}</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{selectedWorker.headline || 'Candidate Profile'}</p>
-                  <p className="text-xs text-slate-500 font-semibold mt-1">
-                    {selectedWorker.city || 'Location not specified'} • {selectedWorker.experienceYears} Years Exp
-                  </p>
-                </div>
-                {selectedWorker.resumeUrl && (
-                  <Button size="sm" variant="outline" className="border-slate-200 font-bold rounded-lg" asChild>
-                    <a href={selectedWorker.resumeUrl} target="_blank" rel="noreferrer">
-                      <Download className="mr-1.5 h-4 w-4" /> Resume
-                    </a>
-                  </Button>
-                )}
-              </div>
-
-              {/* Bio / Summary */}
-              {selectedWorker.bio && (
-                <div className="text-left">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Professional Summary</span>
-                  <p className="mt-1.5 text-sm text-slate-600 leading-relaxed bg-slate-50/20 p-3 rounded-lg border border-slate-100">{selectedWorker.bio}</p>
-                </div>
-              )}
-
-              {/* Grid Specifications */}
-              <div className="grid grid-cols-2 gap-4 text-left border-t border-b border-slate-100 py-4">
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Experience</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">{selectedWorker.experienceYears} Years</p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Salary Bracket</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">{formatExpectedSalary(selectedWorker.expectedSalaryMin, selectedWorker.expectedSalaryMax)}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Availability</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5 capitalize">{selectedWorker.availability.replace('-', ' ')}</p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">{selectedWorker.city || selectedWorker.preferredLocations[0] || 'N/A'}</p>
-                </div>
-              </div>
-
-              {/* Skills */}
-              <div className="text-left">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Technical Skills</span>
-                <div className="flex flex-wrap gap-2">
-                  {selectedWorker.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border-none font-bold text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Preferred Locations */}
-              {selectedWorker.preferredLocations.length > 0 && (
-                <div className="text-left">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Preferred Cities</span>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedWorker.preferredLocations.map((loc, idx) => (
-                      <Badge key={idx} variant="outline" className="border-slate-100 text-slate-500 font-semibold text-xs">
-                        {loc}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Candidate Profile Details Drawer */}
+      <CandidateProfileDrawer
+        worker={selectedWorker}
+        open={isDetailsOpen}
+        onOpenChange={setIsDetailsOpen}
+      />
     </div>
   );
 }

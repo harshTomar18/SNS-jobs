@@ -36,7 +36,7 @@ export default function AdminJobsPage() {
       ),
     },
     { key: 'location', header: 'Location', sortable: true },
-    { key: 'salaryMin', header: 'Salary', render: (row) => formatSalary(row.salaryMin, row.salaryMax) },
+    { key: 'salaryMin', header: 'Salary', render: (row) => formatSalary(row.salaryMin, row.salaryMax, row.wagePeriod) },
     { key: 'openings', header: 'Openings', sortable: true },
     {
       key: 'applicationsCount',

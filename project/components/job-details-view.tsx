@@ -28,7 +28,8 @@ import {
   Check,
   BadgeCheck,
   X,
-  IndianRupee
+  IndianRupee,
+  Pencil
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -115,13 +116,13 @@ function formatSalaryDisplay(job?: JobWithMeta) {
   
   if (min === 0 && max === 0) return 'Salary not specified';
 
-  const suffix = period === 'daily' ? 'P.D.' : period.includes('annual') || period.includes('year') ? 'Lacs P.A.' : 'per month';
+  const suffix = period === 'daily' ? 'per day' : period.includes('annual') || period.includes('year') ? 'per annum' : 'per month';
 
   if (period.includes('annual') || period.includes('year')) {
     const minLacs = (min / 100000).toFixed(1).replace('.0', '');
     const maxLacs = (max / 100000).toFixed(1).replace('.0', '');
-    if (min === max) return `₹${minLacs} ${suffix}`;
-    return `₹${minLacs} - ₹${maxLacs} ${suffix}`;
+    if (min === max) return `₹${minLacs} Lakh ${suffix}`;
+    return `₹${minLacs} Lakh - ₹${maxLacs} Lakh ${suffix}`;
   }
 
   if (min === max) return `₹${min.toLocaleString('en-IN')} ${suffix}`;
@@ -331,6 +332,10 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
           {/* Action buttons anchored strictly at FAR RIGHT */}
           {isRecruiter ? (
             <div className="flex items-center gap-2 shrink-0 ml-auto">
+              <Button variant="outline" size="sm" onClick={() => router.push(`/recruiter/jobs/new?id=${job.id}`)} className="rounded-xl font-bold border-slate-200 flex items-center gap-1.5">
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Job
+              </Button>
               <Button variant="outline" size="sm" onClick={() => router.push('/recruiter/jobs')} className="rounded-xl font-bold border-slate-200">
                 Manage All Jobs
               </Button>

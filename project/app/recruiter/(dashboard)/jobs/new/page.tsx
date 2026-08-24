@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -89,6 +89,7 @@ const schema = z.object({
   maxExperienceYears: z.coerce.number().min(0).optional(),
   benefitNames: z.array(z.string()).default([]),
   assetNames: z.array(z.string()).default([]),
+  languageIds: z.array(z.string()).default([]),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   responsibilities: z.string().optional(),
   requirements: z.string().optional(),
@@ -103,19 +104,24 @@ const splitLines = (value?: string) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const formatWage = (min: number, max: number) => {
+const formatWage = (min: number, max: number, period = 'monthly') => {
+  const suffix = period === 'daily' ? 'per day' : period === 'annual' ? 'per annum' : 'per month';
   if (min >= 100000 || max >= 100000) {
-    return `₹${(min / 100000).toFixed(1)}L - ₹${(max / 100000).toFixed(1)}L LPA`;
+    return `₹${(min / 100000).toFixed(1)} Lakh - ₹${(max / 100000).toFixed(1)} Lakh ${suffix}`;
   }
-  return `₹${min.toLocaleString()} - ₹${max.toLocaleString()} LPA`;
+  return `₹${min.toLocaleString()} - ₹${max.toLocaleString()} ${suffix}`;
 };
 
 const EMPTY_ARRAY: any[] = [];
 
 export default function CreateJobPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editJobId = searchParams?.get('id') || null;
+  const isEditing = Boolean(editJobId);
   const [skillSearch, setSkillSearch] = useState('');
   const [qualSearch, setQualSearch] = useState('');
+  const [langSearch, setLangSearch] = useState('');
   const [selectedQualLevel, setSelectedQualLevel] = useState<string>('ALL');
 
   const [jobRoleSearch, setJobRoleSearch] = useState('');
@@ -139,6 +145,12 @@ export default function CreateJobPage() {
 
   const [localityInput, setLocalityInput] = useState('');
   const [isLocalityOpen, setIsLocalityOpen] = useState(false);
+
+  const [benefitSearch, setBenefitSearch] = useState('');
+  const [isBenefitOpen, setIsBenefitOpen] = useState(false);
+
+  const [assetSearch, setAssetSearch] = useState('');
+  const [isAssetOpen, setIsAssetOpen] = useState(false);
 
   const { data: statesData, isLoading: isLoadingStates } = useQuery<string[]>({
     queryKey: ['master', 'locations', 'states'],
@@ -208,12 +220,16 @@ export default function CreateJobPage() {
   const jobRolesQuery = useQuery({ queryKey: ['master', 'job-roles'], queryFn: () => masterDataApi.raw('job-roles') });
   const skillsQuery = useQuery({ queryKey: ['master', 'skills'], queryFn: () => masterDataApi.raw('skills') });
   const qualificationsQuery = useQuery({ queryKey: ['master', 'qualifications'], queryFn: () => masterDataApi.raw('qualifications') });
+  const languagesQuery = useQuery({ queryKey: ['master', 'languages'], queryFn: () => masterDataApi.raw('languages') });
+  const benefitsQuery = useQuery({ queryKey: ['master', 'benefits'], queryFn: () => masterDataApi.raw('benefits') });
+  const assetsQuery = useQuery({ queryKey: ['master', 'assets'], queryFn: () => masterDataApi.raw('assets') });
 
   const industries: MasterRawItem[] = industriesQuery.data ?? EMPTY_ARRAY;
   const functions: MasterRawItem[] = functionsQuery.data ?? EMPTY_ARRAY;
   const locations: MasterRawItem[] = locationsQuery.data ?? EMPTY_ARRAY;
   const jobRoles: MasterRawItem[] = jobRolesQuery.data ?? EMPTY_ARRAY;
   const skills: MasterRawItem[] = Array.isArray(skillsQuery.data) ? skillsQuery.data : EMPTY_ARRAY;
+  const languages: MasterRawItem[] = Array.isArray(languagesQuery.data) ? languagesQuery.data : EMPTY_ARRAY;
   const rawQuals = qualificationsQuery.data;
   const qualifications: MasterRawItem[] = useMemo(() => {
     return Array.isArray(rawQuals)
@@ -223,12 +239,38 @@ export default function CreateJobPage() {
         : EMPTY_ARRAY;
   }, [rawQuals]);
 
+  const rawBenefitsData = benefitsQuery.data;
+  const benefitsOptionsList: string[] = useMemo(() => {
+    if (Array.isArray(rawBenefitsData) && rawBenefitsData.length > 0) {
+      const names = rawBenefitsData.map((b: any) => (typeof b === 'string' ? b : b.name || b.title || String(b.id))).filter(Boolean);
+      return Array.from(new Set([...names, ...BENEFITS_OPTIONS]));
+    }
+    return BENEFITS_OPTIONS;
+  }, [rawBenefitsData]);
+
+  const rawAssetsData = assetsQuery.data;
+  const assetsOptionsList: string[] = useMemo(() => {
+    if (Array.isArray(rawAssetsData) && rawAssetsData.length > 0) {
+      const names = rawAssetsData.map((a: any) => (typeof a === 'string' ? a : a.name || a.title || String(a.id))).filter(Boolean);
+      return Array.from(new Set([...names, ...ASSETS_OPTIONS]));
+    }
+    return ASSETS_OPTIONS;
+  }, [rawAssetsData]);
+
+  const editJobQuery = useQuery({
+    queryKey: ['recruiter-job-edit', editJobId],
+    queryFn: () => jobsApi.get(editJobId!),
+    enabled: !!editJobId,
+  });
+  const existingJob = editJobQuery.data;
+
   const {
     register,
     handleSubmit,
     watch,
     setValue,
     getValues,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -241,6 +283,7 @@ export default function CreateJobPage() {
       wageMax: 0,
       skillIds: [],
       qualificationIds: [],
+      languageIds: [],
       benefitNames: [],
       assetNames: [],
       wageType: 'monthly',
@@ -261,6 +304,155 @@ export default function CreateJobPage() {
   const formData = watch();
   const selectedSkillIds = formData.skillIds || [];
   const selectedQualificationIds = formData.qualificationIds || [];
+  const selectedLanguageIds = formData.languageIds || [];
+
+  useEffect(() => {
+    if (existingJob) {
+      const roleName = (existingJob as any).jobRoleName || existingJob.title || (existingJob as any).jobRole?.name || '';
+      setValue('jobRoleName', roleName);
+      setJobRoleSearch(roleName);
+      if (existingJob.jobRoleId) setValue('jobRoleId', String(existingJob.jobRoleId));
+
+      if (existingJob.industryId) setValue('industryId', String(existingJob.industryId));
+      const indName = (existingJob as any).industryName || existingJob.industry || (existingJob as any).industry?.name || '';
+      if (indName) setIndustrySearch(indName);
+
+      if (existingJob.functionId) setValue('functionId', String(existingJob.functionId));
+      const funcName = (existingJob as any).functionName || existingJob.departmentName || existingJob.department || '';
+      if (funcName) {
+        setValue('functionName', funcName);
+        setFunctionSearch(funcName);
+      }
+
+      if (existingJob.locationId) {
+        setValue('locationId', String(existingJob.locationId));
+        const loc: any = locations.find((l: any) => String(l.id) === String(existingJob.locationId));
+        if (loc) {
+          if (loc.state) {
+            setSelectedState(loc.state);
+            setStateInput(loc.state);
+          }
+          if (loc.city) {
+            setSelectedCity(loc.city);
+            setCityInput(loc.city);
+          }
+          if (loc.locality) {
+            setSelectedLocalityId(String(loc.id));
+            setLocalityInput(loc.locality);
+          }
+        }
+      }
+
+      setValue('description', existingJob.description || '');
+      const respStr = Array.isArray(existingJob.responsibilities)
+        ? existingJob.responsibilities.join('\n')
+        : String(existingJob.responsibilities || '');
+      setValue('responsibilities', respStr);
+
+      const reqStr = Array.isArray(existingJob.requirements)
+        ? existingJob.requirements.join('\n')
+        : String(existingJob.requirements || '');
+      setValue('requirements', reqStr);
+
+      const openings = (existingJob as any).openings || (existingJob as any).headcountRequired || 1;
+      setValue('headcountRequired', Number(openings));
+
+      const gender = (existingJob as any).genderPreference || (existingJob as any).gender || 'ANY';
+      setValue('gender', gender as any);
+
+      const isFresher = Boolean(existingJob.freshersOnly || (existingJob as any).isFresherFriendly);
+      setValue('freshersOnly', isFresher);
+
+      const expMinM = (existingJob as any).minExperienceMonths !== undefined
+        ? (existingJob as any).minExperienceMonths
+        : ((existingJob as any).experienceMin !== undefined ? (existingJob as any).experienceMin * 12 : 0);
+
+      const expMaxM = (existingJob as any).maxExperienceMonths !== undefined
+        ? (existingJob as any).maxExperienceMonths
+        : ((existingJob as any).experienceMax !== undefined ? (existingJob as any).experienceMax * 12 : undefined);
+
+      setValue('minExperienceYears', Math.floor((expMinM || 0) / 12));
+      if (expMaxM !== undefined && expMaxM !== null) {
+        setValue('maxExperienceYears', Math.floor(expMaxM / 12));
+      }
+
+      const wMin = existingJob.wageMin || existingJob.salaryMin || (existingJob as any).monthlyWageMin || (existingJob as any).dailyWageMin || (existingJob as any).yearlyWageMin || 0;
+      const wMax = existingJob.wageMax || existingJob.salaryMax || (existingJob as any).monthlyWageMax || (existingJob as any).dailyWageMax || (existingJob as any).yearlyWageMax || wMin;
+      const wType = (existingJob as any).wageType || (existingJob as any).wagePeriod || 'monthly';
+
+      setValue('wageMin', Number(wMin));
+      setValue('wageMax', Number(wMax));
+      setValue('wageType', wType as any);
+
+      if ((existingJob as any).workingStatus) setValue('workingStatus', (existingJob as any).workingStatus);
+
+      const rawWorkingDays = (existingJob as any).workingDays;
+      if (rawWorkingDays) {
+        if (String(rawWorkingDays).includes('6') || String(rawWorkingDays).toUpperCase().includes('SIX')) {
+          setValue('workingDays', 6);
+        } else {
+          setValue('workingDays', 5);
+        }
+      }
+
+      const shiftVal = (existingJob as any).shift || (existingJob as any).shiftType || 'day';
+      setValue('shiftType', String(shiftVal).toLowerCase() as any);
+
+      const rawJobType = String(existingJob.jobType || 'full-time').toLowerCase();
+      const formattedJobType = rawJobType.includes('part') ? 'part-time' : rawJobType.includes('contract') ? 'contract' : 'full-time';
+      setValue('jobType', formattedJobType as any);
+
+      if (existingJob.skills && Array.isArray(existingJob.skills)) {
+        const sIds = skills
+          .filter((s: any) => existingJob.skills.includes(s.name) || existingJob.skills.includes(String(s.id)))
+          .map((s: any) => String(s.id));
+        if (sIds.length > 0) {
+          setValue('skillIds', sIds);
+        } else {
+          const rawSkillIds = existingJob.skills.map((s: any) => typeof s === 'object' ? String(s.id) : String(s)).filter(Boolean);
+          setValue('skillIds', rawSkillIds);
+        }
+      }
+
+      if (existingJob.qualifications && Array.isArray(existingJob.qualifications)) {
+        const qIds = qualifications
+          .filter((q: any) => (existingJob.qualifications as any).includes(q.name) || (existingJob.qualifications as any).includes(String(q.id)))
+          .map((q: any) => String(q.id));
+        if (qIds.length > 0) {
+          setValue('qualificationIds', qIds);
+        } else {
+          const rawQualIds = (existingJob.qualifications as any).map((q: any) => typeof q === 'object' ? String(q.id) : String(q)).filter(Boolean);
+          setValue('qualificationIds', rawQualIds);
+        }
+      }
+
+      if ((existingJob as any).languageIds && Array.isArray((existingJob as any).languageIds)) {
+        setValue('languageIds', (existingJob as any).languageIds.map(String));
+      } else if (existingJob.languages && Array.isArray(existingJob.languages)) {
+        const lIds = languages
+          .filter((l: any) => (existingJob.languages as any).includes(l.name) || (existingJob.languages as any).includes(String(l.id)))
+          .map((l: any) => String(l.id));
+        if (lIds.length > 0) {
+          setValue('languageIds', lIds);
+        } else {
+          const rawLangIds = existingJob.languages.map((l: any) => typeof l === 'object' ? String(l.id) : String(l)).filter(Boolean);
+          setValue('languageIds', rawLangIds);
+        }
+      }
+
+      const bNames = (existingJob as any).benefitNames || (existingJob as any).benefits || [];
+      if (Array.isArray(bNames)) {
+        const parsedBenefits = bNames.map((b: any) => typeof b === 'string' ? b : b?.name).filter(Boolean);
+        setValue('benefitNames', parsedBenefits);
+      }
+
+      const aNames = (existingJob as any).assetNames || (existingJob as any).assets || [];
+      if (Array.isArray(aNames)) {
+        const parsedAssets = aNames.map((a: any) => typeof a === 'string' ? a : a?.name).filter(Boolean);
+        setValue('assetNames', parsedAssets);
+      }
+    }
+  }, [existingJob, locations, skills, qualifications, setValue]);
 
   const publishMutation = useMutation({
     mutationFn: async (data: FormData) => {
@@ -271,7 +463,7 @@ export default function CreateJobPage() {
       const selectedFunction = functions.find((f: any) => String(f.id) === data.functionId);
       const funcName = data.functionName || (selectedFunction && 'name' in selectedFunction ? selectedFunction.name : functionSearch);
 
-      const job = await jobsApi.create({
+      const payload = {
         jobRoleName: roleName,
         description: data.description,
         industryId: Number(data.industryId),
@@ -282,6 +474,7 @@ export default function CreateJobPage() {
         jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
         skillIds: data.skillIds.map(Number),
         qualificationIds: data.qualificationIds.map(Number),
+        languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map(Number) : undefined,
         wageMin: data.wageMin,
         wageMax: data.wageMax,
         wageType: data.wageType,
@@ -292,24 +485,30 @@ export default function CreateJobPage() {
         shiftType: data.shiftType,
         jobType: data.jobType,
         headcountRequired: data.headcountRequired,
-        minExperienceMonths: data.freshersOnly ? 0 : data.minExperienceYears * 12,
-        maxExperienceMonths: data.freshersOnly ? 0 : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
+        minExperienceMonths: data.freshersOnly ? undefined : data.minExperienceYears * 12,
+        maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
         benefitNames: data.benefitNames,
         assetNames: data.assetNames,
         responsibilities: splitLines(data.responsibilities),
         requirements: splitLines(data.requirements),
         benefits: splitLines(data.benefits),
-      });
-      return jobsApi.updateStatus(job.id, 'published');
+      };
+
+      if (isEditing && editJobId) {
+        return jobsApi.update(editJobId, payload);
+      } else {
+        const job = await jobsApi.create(payload);
+        return jobsApi.updateStatus(job.id, 'published');
+      }
     },
     onSuccess: () => {
-      toast.success('Job published successfully');
+      toast.success(isEditing ? 'Job updated successfully' : 'Job published successfully');
       router.push('/recruiter/jobs');
     },
-    onError: (error) => toast.error(getApiErrorMessage(error, 'Failed to publish job')),
+    onError: (error) => toast.error(getApiErrorMessage(error, isEditing ? 'Failed to update job' : 'Failed to publish job')),
   });
 
-  const toggleId = (field: 'skillIds' | 'qualificationIds', id: string) => {
+  const toggleId = (field: 'skillIds' | 'qualificationIds' | 'languageIds', id: string) => {
     const current: string[] = getValues(field) || [];
     const updated = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
     setValue(field, updated, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
@@ -341,6 +540,17 @@ export default function CreateJobPage() {
       return s && 'name' in s ? s.name : id;
     });
   }, [selectedSkillIds, skills]);
+  const langSuggestions = useMemo(() => {
+    const selectedSet = new Set(selectedLanguageIds);
+    const query = langSearch.trim().toLowerCase();
+    if (!query) return languages.filter(l => !selectedSet.has(String(l.id)));
+    return languages.filter(l => {
+      const id = String(l.id);
+      if (selectedSet.has(id)) return false;
+      const name = 'name' in l ? l.name : '';
+      return name.toLowerCase().includes(query);
+    });
+  }, [languages, selectedLanguageIds, langSearch]);
 
   const selectedQualificationsNames = useMemo(() => {
     return selectedQualificationIds.map(id => {
@@ -389,8 +599,10 @@ export default function CreateJobPage() {
       {/* Header Row */}
       <div className="flex flex-row items-center justify-between flex-wrap gap-4 border-b border-slate-50 pb-6 text-left">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Create New Job</h1>
-          <p className="text-slate-400 text-sm font-semibold mt-1">Fill in the details to post a new job opening instantly</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">{isEditing ? 'Edit Job Opening' : 'Create New Job'}</h1>
+          <p className="text-slate-400 text-sm font-semibold mt-1">
+            {isEditing ? 'Update job details, requirements, and information' : 'Fill in the details to post a new job opening instantly'}
+          </p>
         </div>
       </div>
 
@@ -445,6 +657,13 @@ export default function CreateJobPage() {
                             key={role.id}
                             type="button"
                             className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setValue('jobRoleId', String(role.id));
+                              setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
+                              setJobRoleSearch(role.name || String(role.id));
+                              setIsJobRoleOpen(false);
+                            }}
                             onClick={() => {
                               setValue('jobRoleId', String(role.id));
                               setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
@@ -496,6 +715,13 @@ export default function CreateJobPage() {
                             key={func.id}
                             type="button"
                             className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setValue('functionId', String(func.id));
+                              setValue('functionName', func.name || String(func.id));
+                              setFunctionSearch(func.name || String(func.id));
+                              setIsFunctionOpen(false);
+                            }}
                             onClick={() => {
                               setValue('functionId', String(func.id));
                               setValue('functionName', func.name || String(func.id));
@@ -546,6 +772,79 @@ export default function CreateJobPage() {
                       <SelectItem value="ANY">Any Status</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Required Languages */}
+                <div className="space-y-2 sm:col-span-3 border-t border-slate-50 pt-3">
+                  <Label className="text-slate-700 font-extrabold text-xs">Required Languages (Candidate Languages)</Label>
+
+                  {/* Selected Languages dismissible badges */}
+                  {selectedLanguageIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50/50 border border-slate-100 rounded-xl mb-2">
+                      {selectedLanguageIds.map((id) => {
+                        const lang = languages.find((l) => String(l.id) === id);
+                        const name = lang && 'name' in lang ? lang.name : id;
+                        return (
+                          <Badge
+                            key={id}
+                            className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
+                          >
+                            {name}
+                            <button
+                              type="button"
+                              onClick={() => toggleId('languageIds', id)}
+                              className="hover:bg-indigo-200/50 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Search Input Box */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search and add required languages (English, Hindi, Tamil, Telugu, Marathi, etc.)..."
+                      value={langSearch}
+                      onChange={(e) => setLangSearch(e.target.value)}
+                      className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
+                    />
+                  </div>
+
+                  {/* Language Suggestions Grid */}
+                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30 mt-2">
+                    {langSuggestions.length > 0 ? (
+                      langSuggestions.map((lang: any) => {
+                        const id = String(lang.id);
+                        const isSelected = selectedLanguageIds.includes(id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleId('languageIds', id);
+                            }}
+                            className={cn(
+                              'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
+                              isSelected
+                                ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                            )}
+                          >
+                            {isSelected ? '✓ ' : '+ '}
+                            {'name' in lang ? lang.name : id}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <span className="text-[10px] text-slate-400 italic py-1">No matching languages found.</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -622,6 +921,12 @@ export default function CreateJobPage() {
                             key={ind.id}
                             type="button"
                             className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setValue('industryId', String(ind.id), { shouldValidate: true });
+                              setIndustrySearch(ind.name || String(ind.id));
+                              setIsIndustryOpen(false);
+                            }}
                             onClick={() => {
                               setValue('industryId', String(ind.id), { shouldValidate: true });
                               setIndustrySearch(ind.name || String(ind.id));
@@ -685,7 +990,10 @@ export default function CreateJobPage() {
                                 key={state}
                                 type="button"
                                 className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={() => handleStateChange(state)}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleStateChange(state);
+                                }}
                               >
                                 {state}
                               </button>
@@ -739,7 +1047,10 @@ export default function CreateJobPage() {
                                 key={city}
                                 type="button"
                                 className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={() => handleCityChange(city)}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleCityChange(city);
+                                }}
                               >
                                 {city}
                               </button>
@@ -794,7 +1105,10 @@ export default function CreateJobPage() {
                                 key={loc.id}
                                 type="button"
                                 className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={() => handleLocalityChange(String(loc.id))}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  handleLocalityChange(String(loc.id));
+                                }}
                               >
                                 {loc.locality}
                               </button>
@@ -990,6 +1304,81 @@ export default function CreateJobPage() {
                   )}
                 </div>
               </div>
+
+              <Separator className="my-2 bg-slate-50" />
+
+              {/* Required Languages Section */}
+              <div className="space-y-3">
+                <Label className="text-slate-700 font-extrabold text-xs">Required Languages</Label>
+
+                {/* Selected Languages dismissible badges */}
+                {selectedLanguageIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 p-2 bg-slate-50/50 border border-slate-100 rounded-xl">
+                    {selectedLanguageIds.map((id) => {
+                      const lang = languages.find((l) => String(l.id) === id);
+                      const name = lang && 'name' in lang ? lang.name : id;
+                      return (
+                        <Badge
+                          key={id}
+                          className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-600 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
+                        >
+                          {name}
+                          <button
+                            type="button"
+                            onClick={() => toggleId('languageIds', id)}
+                            className="hover:bg-indigo-200/50 rounded-full p-0.5"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Search Input Box */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search and add required languages (English, Hindi, Tamil, etc.)..."
+                    value={langSearch}
+                    onChange={(e) => setLangSearch(e.target.value)}
+                    className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
+                  />
+                </div>
+
+                {/* Language Suggestions Grid */}
+                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
+                  {langSuggestions.length > 0 ? (
+                    langSuggestions.map((lang: any) => {
+                      const id = String(lang.id);
+                      const isSelected = selectedLanguageIds.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('languageIds', id);
+                          }}
+                          className={cn(
+                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
+                            isSelected
+                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
+                          )}
+                        >
+                          {isSelected ? '✓ ' : '+ '}
+                          {'name' in lang ? lang.name : id}
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <span className="text-[10px] text-slate-400 italic py-1">No matching languages found.</span>
+                  )}
+                </div>
+              </div>
             </Card>
 
             {/* Card 4: Salary & Shift */}
@@ -1006,7 +1395,7 @@ export default function CreateJobPage() {
                   <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="monthly">Per month salary (₹)</SelectItem>
-                    <SelectItem value="annual">Annual salary (₹)</SelectItem>
+                    <SelectItem value="annual">Per annum salary (₹)</SelectItem>
                     <SelectItem value="daily">Per day (₹)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1015,14 +1404,14 @@ export default function CreateJobPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="wageMin" className="text-slate-700 font-extrabold text-xs">
-                    Minimum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Minimum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Per Annum' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMin" type="number" placeholder="25000" {...register('wageMin')} className="rounded-xl border-slate-200" />
                   {errors.wageMin && <p className="text-xs text-red-500 font-bold">{errors.wageMin.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="wageMax" className="text-slate-700 font-extrabold text-xs">
-                    Maximum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Annual' : 'Per Month'}) *
+                    Maximum Wage (₹) ({formData.wageType === 'daily' ? 'Per Day' : formData.wageType === 'annual' ? 'Per Annum' : 'Per Month'}) *
                   </Label>
                   <Input id="wageMax" type="number" placeholder="40000" {...register('wageMax')} className="rounded-xl border-slate-200" />
                   {errors.wageMax && <p className="text-xs text-red-500 font-bold">{errors.wageMax.message}</p>}
@@ -1060,30 +1449,86 @@ export default function CreateJobPage() {
                 <Rocket className="h-5 w-5" />
                 <span>5. Benefits Provided</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {BENEFITS_OPTIONS.map((benefit) => {
-                  const isChecked = (formData.benefitNames || []).includes(benefit);
-                  return (
-                    <div
-                      key={benefit}
-                      onClick={() => toggleBenefit(benefit)}
-                      className={cn(
-                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all select-none',
-                        isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
-                      )}
-                    >
-                      <div className={cn(
-                        'h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-all',
-                        isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
-                      )}>
-                        {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
-                      </div>
-                      <span className="text-xs font-bold">
+
+              <div className="space-y-3 relative">
+                {/* Render Selected Benefits as dismissible badges */}
+                {(formData.benefitNames || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50/70 border border-slate-100 rounded-xl">
+                    {(formData.benefitNames || []).map((benefit) => (
+                      <Badge
+                        key={benefit}
+                        className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
+                      >
                         {benefit}
-                      </span>
-                    </div>
-                  );
-                })}
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleBenefit(benefit);
+                          }}
+                          className="hover:bg-indigo-200/50 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search Input Box */}
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Type to search and select benefits..."
+                    className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 pl-10 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                    value={benefitSearch}
+                    onChange={(e) => {
+                      setBenefitSearch(e.target.value);
+                      setIsBenefitOpen(true);
+                    }}
+                    onFocus={() => setIsBenefitOpen(true)}
+                    onBlur={() => setTimeout(() => setIsBenefitOpen(false), 200)}
+                  />
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                </div>
+
+                {/* Searchable Multi-Select Dropdown Menu */}
+                {isBenefitOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    {benefitsOptionsList
+                      .filter((benefit) => !benefitSearch || benefit.toLowerCase().includes(benefitSearch.toLowerCase()))
+                      .map((benefit) => {
+                        const isChecked = (formData.benefitNames || []).includes(benefit);
+                        return (
+                          <button
+                            key={benefit}
+                            type="button"
+                            className={cn(
+                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                              isChecked ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleBenefit(benefit);
+                            }}
+                          >
+                            <span>{benefit}</span>
+                            <div className={cn(
+                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                              isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                            )}>
+                              {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    {benefitsOptionsList.filter((b) => !benefitSearch || b.toLowerCase().includes(benefitSearch.toLowerCase())).length === 0 && (
+                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching benefits found</div>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -1093,30 +1538,86 @@ export default function CreateJobPage() {
                 <FileText className="h-5 w-5" />
                 <span>6. Required Assets / Documents</span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {ASSETS_OPTIONS.map((asset) => {
-                  const isChecked = (formData.assetNames || []).includes(asset);
-                  return (
-                    <div
-                      key={asset}
-                      onClick={() => toggleAsset(asset)}
-                      className={cn(
-                        'flex items-center space-x-2.5 p-3 rounded-xl border cursor-pointer transition-all select-none',
-                        isChecked ? 'bg-indigo-50/70 border-indigo-200 text-indigo-700 font-bold' : 'bg-slate-50/40 border-slate-100 text-slate-700 hover:bg-slate-100/60'
-                      )}
-                    >
-                      <div className={cn(
-                        'h-4 w-4 shrink-0 rounded border flex items-center justify-center transition-all',
-                        isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
-                      )}>
-                        {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
-                      </div>
-                      <span className="text-xs font-bold">
+
+              <div className="space-y-3 relative">
+                {/* Render Selected Assets as dismissible badges */}
+                {(formData.assetNames || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 p-2.5 bg-slate-50/70 border border-slate-100 rounded-xl">
+                    {(formData.assetNames || []).map((asset) => (
+                      <Badge
+                        key={asset}
+                        className="bg-indigo-50 hover:bg-indigo-100/80 text-indigo-700 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-sm"
+                      >
                         {asset}
-                      </span>
-                    </div>
-                  );
-                })}
+                        <button
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleAsset(asset);
+                          }}
+                          className="hover:bg-indigo-200/50 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+
+                {/* Search Input Box */}
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    placeholder="Type to search and select required assets..."
+                    className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 pl-10 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
+                    value={assetSearch}
+                    onChange={(e) => {
+                      setAssetSearch(e.target.value);
+                      setIsAssetOpen(true);
+                    }}
+                    onFocus={() => setIsAssetOpen(true)}
+                    onBlur={() => setTimeout(() => setIsAssetOpen(false), 200)}
+                  />
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
+                </div>
+
+                {/* Searchable Multi-Select Dropdown Menu */}
+                {isAssetOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    {assetsOptionsList
+                      .filter((asset) => !assetSearch || asset.toLowerCase().includes(assetSearch.toLowerCase()))
+                      .map((asset) => {
+                        const isChecked = (formData.assetNames || []).includes(asset);
+                        return (
+                          <button
+                            key={asset}
+                            type="button"
+                            className={cn(
+                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                              isChecked ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleAsset(asset);
+                            }}
+                          >
+                            <span>{asset}</span>
+                            <div className={cn(
+                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                              isChecked ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                            )}>
+                              {isChecked && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    {assetsOptionsList.filter((a) => !assetSearch || a.toLowerCase().includes(assetSearch.toLowerCase())).length === 0 && (
+                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching assets found</div>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
 
@@ -1142,10 +1643,10 @@ export default function CreateJobPage() {
                   <Textarea id="requirements" rows={6} placeholder="e.g. 3 years NextJS exp" {...register('requirements')} className="rounded-xl border-slate-200" />
                   {errors.requirements && <p className="text-xs text-red-500 font-bold">{errors.requirements.message}</p>}
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="benefits" className="text-slate-700 font-extrabold text-xs">Benefits (One per line)</Label>
                   <Textarea id="benefits" rows={6} placeholder="e.g. Medical insurance" {...register('benefits')} className="rounded-xl border-slate-200" />
-                </div>
+                </div> */}
               </div>
             </Card>
 
@@ -1239,7 +1740,7 @@ export default function CreateJobPage() {
                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl py-3 text-xs shadow-md shadow-indigo-100 hover:shadow-indigo-200 transition-all h-auto flex items-center justify-center gap-1.5"
                   >
                     <Rocket className="h-4 w-4" />
-                    {publishMutation.isPending ? 'Publishing...' : 'Publish Job'}
+                    {publishMutation.isPending ? (isEditing ? 'Updating...' : 'Publishing...') : (isEditing ? 'Update Job' : 'Publish Job')}
                   </Button>
                   <Button
                     type="button"

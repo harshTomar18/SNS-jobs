@@ -158,6 +158,10 @@ export interface WorkerProfile {
   workingStatus?: 'SERVING_NOTICE' | 'WORKING' | 'NOT_WORKING' | 'IMMEDIATE_JOINER' | string;
   noticePeriodDays?: number;
   preferredIndustryIds?: number[];
+  preferredDepartmentIds?: number[];
+  preferredDepartments?: string[];
+  preferredJobRoleIds?: number[];
+  preferredJobRoles?: string[];
   preferredLocationIds?: number[];
 }
 

@@ -9,6 +9,7 @@ import {
   MoreVertical, 
   Trash2, 
   Eye, 
+  Pencil,
   Users, 
   Clock, 
   MapPin, 
@@ -229,7 +230,7 @@ export default function RecruiterJobsPage() {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-slate-700">
-                      {formatWage(job.salaryMin, job.salaryMax)}
+                      {formatSalary(job.salaryMin, job.salaryMax, job.wagePeriod)}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -279,6 +280,9 @@ export default function RecruiterJobsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem asChild>
                           <Link href={`/recruiter/jobs/${job.id}`}><Eye className="mr-2 h-4 w-4" />View Job</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/recruiter/jobs/new?id=${job.id}`}><Pencil className="mr-2 h-4 w-4" />Edit Job</Link>
                         </DropdownMenuItem>
                         {job.status === 'draft' && (
                           <DropdownMenuItem onClick={() => statusMutation.mutate({ id: job.id, status: 'published' })}>

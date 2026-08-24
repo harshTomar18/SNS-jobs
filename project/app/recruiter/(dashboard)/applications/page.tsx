@@ -51,6 +51,7 @@ import { Separator } from '@/components/ui/separator';
 import { EmptyState } from '@/components/empty-state';
 import { Application, ApplicationStatus, WorkerProfile } from '@/lib/types';
 import { getInitials, formatExpectedSalary } from '@/lib/format';
+import { CandidateProfileDrawer } from '@/components/candidate-profile-drawer';
 import { applicationsApi, adminApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
@@ -493,200 +494,13 @@ export default function RecruiterApplicationsPage() {
           </div>
         )}
       </Card>
-          {/* Candidate Profile Sheet (Opened when Candidate Name / Avatar is clicked) */}
-      <Sheet open={isWorkerSheetOpen} onOpenChange={setIsWorkerSheetOpen}>
-        <SheetContent side="right" className="h-full overflow-y-auto bg-white border-l border-slate-100 shadow-xl p-6 sm:max-w-xl w-3/4 md:w-[540px]">
-          <SheetHeader className="text-left border-b border-slate-50 pb-4 mb-4">
-            <SheetTitle className="text-lg font-bold text-slate-800">Candidate Profile Details</SheetTitle>
-          </SheetHeader>
 
-          {workerDetailQuery.isLoading ? (
-            <div className="flex items-center justify-center p-12 text-slate-400 text-xs font-semibold">
-              Loading profile details...
-            </div>
-          ) : workerProfile ? (
-            <div className="space-y-6 mt-2 text-left">
-              {/* Header Avatar Card */}
-              <div className="flex items-center gap-4 p-4 bg-slate-50/50 border border-slate-100 rounded-2xl">
-                <Avatar className="h-16 w-16 border border-indigo-100 shadow-sm shrink-0">
-                  <AvatarFallback className="text-lg font-bold bg-indigo-50 text-indigo-600">
-                    {getInitials(workerProfile.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <h3 className="text-base font-extrabold text-slate-800 leading-tight">{workerProfile.name}</h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">{workerProfile.headline || workerProfile.departmentName || 'Candidate Profile'}</p>
-                  <p className="text-xs text-slate-500 font-semibold mt-1">
-                    {[
-                      workerProfile.city,
-                      workerProfile.totalExperienceMonths !== undefined
-                        ? `${Math.floor(workerProfile.totalExperienceMonths / 12)} Years Exp`
-                        : workerProfile.experienceYears !== undefined
-                          ? `${workerProfile.experienceYears} Years Exp`
-                          : null
-                    ].filter(Boolean).join(' • ') || 'Location not specified'}
-                  </p>
-                  {(workerProfile.phone || workerProfile.alternatePhone) && (
-                    <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-600 font-medium">
-                      {workerProfile.phone && <span>Phone: {workerProfile.phone}</span>}
-                      {workerProfile.alternatePhone && <span>Alt: {workerProfile.alternatePhone}</span>}
-                    </div>
-                  )}
-                </div>
-                {workerProfile.resumeUrl && (
-                  <Button size="sm" variant="outline" className="border-slate-200 font-bold rounded-xl shadow-sm text-xs shrink-0" asChild>
-                    <a href={workerProfile.resumeUrl} target="_blank" rel="noreferrer">
-                      <Download className="mr-1.5 h-3.5 w-3.5" /> Resume
-                    </a>
-                  </Button>
-                )}
-              </div>
-
-              {/* PROFESSIONAL SUMMARY */}
-              <div className="text-left">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">PROFESSIONAL SUMMARY</span>
-                <div className="text-xs text-slate-600 leading-relaxed bg-slate-50/50 p-3 rounded-xl border border-slate-100 min-h-[44px]">
-                  {workerProfile.summary || 'No professional summary provided.'}
-                </div>
-              </div>
-
-              {/* Grid Specifications */}
-              <div className="grid grid-cols-2 gap-4 text-left border-t border-b border-slate-100 py-4">
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">EXPERIENCE</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">
-                    {workerProfile.totalExperienceMonths !== undefined && workerProfile.totalExperienceMonths > 0
-                      ? `${Math.floor(workerProfile.totalExperienceMonths / 12)} Years`
-                      : workerProfile.experienceYears !== undefined
-                        ? `${workerProfile.experienceYears} Years`
-                        : '0 Years'}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">SALARY BRACKET</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">
-                    {formatExpectedSalary(workerProfile.expectedSalaryMin, workerProfile.expectedSalaryMax)}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">AVAILABILITY</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5 capitalize">
-                    {workerProfile.availability ? workerProfile.availability.toLowerCase().replace('-', ' ') : 'Immediate'}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">LOCATION</span>
-                  <p className="font-extrabold text-slate-700 text-sm mt-0.5">{workerProfile.city || workerProfile.state || 'N/A'}</p>
-                </div>
-              </div>
-
-              {/* TECHNICAL SKILLS */}
-              {workerProfile.skills && workerProfile.skills.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">TECHNICAL SKILLS</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {workerProfile.skills.map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="bg-indigo-50 text-indigo-700 border-none font-bold text-xs py-1 px-3 rounded-full">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Languages & Proficiency Badges */}
-              {((workerProfile.languageDetails && workerProfile.languageDetails.length > 0) || (workerProfile.languages && workerProfile.languages.length > 0)) && (
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Languages Known</span>
-                  <div className="flex flex-wrap gap-2">
-                    {workerProfile.languageDetails?.map((lang, idx) => (
-                      <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-xs py-1 px-3 rounded-full flex items-center gap-1.5">
-                        <Globe className="h-3 w-3 text-indigo-500" />
-                        <span>{lang.name}</span>
-                        {lang.proficiency && (
-                          <span className="bg-indigo-100 text-indigo-700 text-[9px] font-extrabold px-1.5 py-0.5 rounded uppercase">
-                            {lang.proficiency}
-                          </span>
-                        )}
-                      </Badge>
-                    ))}
-                    {(!workerProfile.languageDetails || workerProfile.languageDetails.length === 0) && workerProfile.languages?.map((lang, idx) => (
-                      <Badge key={idx} variant="outline" className="bg-slate-50 border-slate-200 text-slate-700 font-semibold text-xs py-1 px-3 rounded-full">
-                        {lang}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Technical Skills */}
-              {workerProfile.skills && workerProfile.skills.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Skills</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {workerProfile.skills.map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="bg-indigo-50 text-indigo-700 border-none font-bold text-xs py-1 px-2.5 rounded-full">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Work Experience History */}
-              {workerProfile.experience && workerProfile.experience.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Work Experience</span>
-                  <div className="space-y-2.5">
-                    {workerProfile.experience.map((exp: any) => (
-                      <div key={exp.id || exp.jobTitle} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-slate-800 text-xs">{exp.jobTitle}</h4>
-                          <span className="text-[10px] font-semibold text-slate-400">{exp.fromDate} - {exp.isCurrent ? 'Present' : exp.toDate || ''}</span>
-                        </div>
-                        <p className="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                          <Briefcase className="h-3 w-3 text-slate-400" /> {exp.companyName}
-                        </p>
-                        {(exp.departmentName || exp.industryName) && (
-                          <p className="text-[11px] text-slate-400 font-medium">
-                            {[exp.departmentName, exp.industryName].filter(Boolean).join(' • ')}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Education */}
-              {workerProfile.education && workerProfile.education.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">Education</span>
-                  <div className="space-y-2">
-                    {workerProfile.education.map((edu: any) => (
-                      <div key={edu.id || edu.qualificationName} className="p-3 bg-slate-50/50 border border-slate-100 rounded-xl space-y-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-bold text-slate-800 text-xs">{edu.qualificationName || edu.qualification?.name}</h4>
-                          {edu.passoutYear && <span className="text-[10px] font-semibold text-slate-400">{edu.passoutYear}</span>}
-                        </div>
-                        {edu.institute && (
-                          <p className="text-xs font-semibold text-slate-600 flex items-center gap-1">
-                            <GraduationCap className="h-3 w-3 text-slate-400" /> {edu.institute}
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-8 text-center text-slate-400 text-xs font-semibold">
-              Candidate profile details unavailable.
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      {/* Candidate Profile Drawer */}
+      <CandidateProfileDrawer
+        worker={workerProfile}
+        open={isWorkerSheetOpen}
+        onOpenChange={setIsWorkerSheetOpen}
+      />
 
       {/* Application Detail Dialog */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>

@@ -290,7 +290,7 @@ function formatJobSalary(j: any): string {
   const min = j.monthlyWageMin ?? j.dailyWageMin ?? j.yearlyWageMin ?? j.salaryMin ?? j.wageMin;
   const max = j.monthlyWageMax ?? j.dailyWageMax ?? j.yearlyWageMax ?? j.salaryMax ?? j.wageMax ?? min;
 
-  const period = (j.monthlyWageMin || j.wagePeriod === 'monthly') ? '/ mo' : (j.dailyWageMin || j.wagePeriod === 'daily') ? '/ day' : '/ yr';
+  const period = (j.monthlyWageMin || j.wagePeriod === 'monthly') ? 'per month' : (j.dailyWageMin || j.wagePeriod === 'daily') ? 'per day' : 'per annum';
 
   if (min !== undefined && min !== null && min > 0) {
     if (max && max > min) {

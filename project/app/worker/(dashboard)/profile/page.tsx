@@ -293,9 +293,65 @@ export default function WorkerProfilePage() {
   const handleOpenIndustryModal = () => { if (!profile) return; setSelectedIndustryIds(profile.preferredIndustryIds || []); setIndustryModalOpen(true); };
   const toggleIndustrySelection = (id: number) => setSelectedIndustryIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const updateIndustriesMutation = useMutation({
-    mutationFn: (preferredIndustryIds: number[]) => workerApi.updateProfile({ preferredIndustryIds }),
+    mutationFn: (preferredIndustryIds: number[]) => {
+      const industryNames = preferredIndustryIds
+        .map(id => masterIndustries.find(i => i.id === id)?.name)
+        .filter(Boolean) as string[];
+      return workerApi.updateProfile({
+        preferredIndustryIds,
+        industryIds: preferredIndustryIds,
+        industryNames,
+        preferredIndustries: industryNames,
+      });
+    },
     onSuccess: () => { toast.success('Industries updated'); setIndustryModalOpen(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update industries')),
+  });
+
+  // Preferred Job Roles
+  const masterJobRolesQuery = useQuery({ queryKey: ['master', 'job-roles'], queryFn: () => masterDataApi.raw('job-roles') });
+  const masterJobRoles: BackendLookup[] = (masterJobRolesQuery.data as BackendLookup[]) || [];
+  const [jobRolesModalOpen, setJobRolesModalOpen] = useState(false);
+  const [selectedJobRoleIds, setSelectedJobRoleIds] = useState<number[]>([]);
+  const [jobRoleSearch, setJobRoleSearch] = useState('');
+  const handleOpenJobRolesModal = () => { if (!profile) return; setSelectedJobRoleIds(profile.preferredJobRoleIds || []); setJobRolesModalOpen(true); };
+  const toggleJobRoleSelection = (id: number) => setSelectedJobRoleIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const updateJobRolesMutation = useMutation({
+    mutationFn: (preferredJobRoleIds: number[]) => {
+      const jobRoleNames = preferredJobRoleIds
+        .map(id => masterJobRoles.find(r => r.id === id)?.name)
+        .filter(Boolean) as string[];
+      return workerApi.updateProfile({
+        preferredJobRoleIds,
+        jobRoleIds: preferredJobRoleIds,
+        jobRoleNames,
+        preferredJobRoles: jobRoleNames,
+      });
+    },
+    onSuccess: () => { toast.success('Job roles updated'); setJobRolesModalOpen(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
+    onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update preferred job roles')),
+  });
+
+  // Preferred Departments / Functions
+  const [departmentsModalOpen, setDepartmentsModalOpen] = useState(false);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>([]);
+  const [departmentSearch, setDepartmentSearch] = useState('');
+  const handleOpenDepartmentsModal = () => { if (!profile) return; setSelectedDepartmentIds(profile.preferredDepartmentIds || []); setDepartmentsModalOpen(true); };
+  const toggleDepartmentSelection = (id: number) => setSelectedDepartmentIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const updateDepartmentsMutation = useMutation({
+    mutationFn: (departmentIds: number[]) => {
+      const departmentNames = departmentIds
+        .map(id => masterFunctions.find(f => f.id === id)?.name)
+        .filter(Boolean) as string[];
+      return workerApi.updateProfile({
+        departmentIds,
+        departmentNames,
+        preferredDepartmentIds: departmentIds,
+        preferredDepartments: departmentNames,
+      });
+    },
+    onSuccess: () => { toast.success('Departments updated'); setDepartmentsModalOpen(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
+    onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update preferred departments')),
   });
 
   const skillsWithScores = useMemo(() => {
@@ -483,6 +539,26 @@ export default function WorkerProfilePage() {
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {profile.preferredIndustries.length ? profile.preferredIndustries.map(ind => <span key={ind} className="bg-indigo-50 text-indigo-600 font-bold text-[11px] px-2.5 py-1 rounded-lg">{ind}</span>) : <span className="text-xs text-slate-400">None — click edit to add.</span>}
+                </div>
+              </Card>
+
+              <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                  <h3 className="font-extrabold text-slate-800 text-xs">Preferred Job Roles</h3>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-700 rounded-lg" onClick={handleOpenJobRolesModal}><Edit className="h-3.5 w-3.5" /></Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.preferredJobRoles && profile.preferredJobRoles.length ? profile.preferredJobRoles.map(role => <span key={role} className="bg-purple-50 text-purple-700 font-bold text-[11px] px-2.5 py-1 rounded-lg">{role}</span>) : <span className="text-xs text-slate-400">None — click edit to add.</span>}
+                </div>
+              </Card>
+
+              <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                  <h3 className="font-extrabold text-slate-800 text-xs">Preferred Departments / Functions</h3>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-700 rounded-lg" onClick={handleOpenDepartmentsModal}><Edit className="h-3.5 w-3.5" /></Button>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.preferredDepartments && profile.preferredDepartments.length ? profile.preferredDepartments.map(dept => <span key={dept} className="bg-blue-50 text-blue-700 font-bold text-[11px] px-2.5 py-1 rounded-lg">{dept}</span>) : <span className="text-xs text-slate-400">None — click edit to add.</span>}
                 </div>
               </Card>
             </div>
@@ -970,6 +1046,46 @@ export default function WorkerProfilePage() {
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" className="rounded-xl text-xs" onClick={() => setIndustryModalOpen(false)}>Cancel</Button>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateIndustriesMutation.mutate(selectedIndustryIds)} disabled={updateIndustriesMutation.isPending}>{updateIndustriesMutation.isPending ? 'Saving...' : 'Save Industries'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={jobRolesModalOpen} onOpenChange={setJobRolesModalOpen}>
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Preferred Job Roles</DialogTitle><DialogDescription className="text-xs text-slate-500">Select job roles you prefer to work in.</DialogDescription></DialogHeader>
+              <div className="space-y-4 py-3">
+                <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search job roles..." value={jobRoleSearch} onChange={e => setJobRoleSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs font-bold" /></div>
+                <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
+                  {masterJobRolesQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-purple-600" /></div> : masterJobRoles.filter(role => !jobRoleSearch || role.name?.toLowerCase().includes(jobRoleSearch.toLowerCase())).map(role => { const isSelected = selectedJobRoleIds.includes(role.id); return <div key={role.id} onClick={() => toggleJobRoleSelection(role.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{role.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleJobRoleSelection(role.id)} /></div>; })}
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedJobRoleIds.length}):</span>
+                  {selectedJobRoleIds.map(id => { const item = masterJobRoles.find(role => role.id === id); if (!item) return null; return <Badge key={id} className="bg-purple-100 text-purple-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleJobRoleSelection(id)} /></Badge>; })}
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" className="rounded-xl text-xs" onClick={() => setJobRolesModalOpen(false)}>Cancel</Button>
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateJobRolesMutation.mutate(selectedJobRoleIds)} disabled={updateJobRolesMutation.isPending}>{updateJobRolesMutation.isPending ? 'Saving...' : 'Save Job Roles'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={departmentsModalOpen} onOpenChange={setDepartmentsModalOpen}>
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle className="text-lg font-extrabold text-slate-800">Preferred Departments / Functions</DialogTitle><DialogDescription className="text-xs text-slate-500">Select departments/functions you prefer to work in.</DialogDescription></DialogHeader>
+              <div className="space-y-4 py-3">
+                <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search departments..." value={departmentSearch} onChange={e => setDepartmentSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs font-bold" /></div>
+                <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
+                  {functionsQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div> : masterFunctions.filter(dept => !departmentSearch || dept.name?.toLowerCase().includes(departmentSearch.toLowerCase())).map(dept => { const isSelected = selectedDepartmentIds.includes(dept.id); return <div key={dept.id} onClick={() => toggleDepartmentSelection(dept.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{dept.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleDepartmentSelection(dept.id)} /></div>; })}
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedDepartmentIds.length}):</span>
+                  {selectedDepartmentIds.map(id => { const item = masterFunctions.find(dept => dept.id === id); if (!item) return null; return <Badge key={id} className="bg-blue-100 text-blue-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleDepartmentSelection(id)} /></Badge>; })}
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" className="rounded-xl text-xs" onClick={() => setDepartmentsModalOpen(false)}>Cancel</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateDepartmentsMutation.mutate(selectedDepartmentIds)} disabled={updateDepartmentsMutation.isPending}>{updateDepartmentsMutation.isPending ? 'Saving...' : 'Save Departments'}</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
