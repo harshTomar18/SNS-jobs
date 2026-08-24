@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { contactApi } from '@/lib/scn-api';
+import { getApiErrorMessage } from '@/lib/api';
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function ContactPage() {
     message: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.phone || !form.message) {
       toast.error('Please fill in your name, phone number, and message.');
@@ -30,11 +32,21 @@ export default function ContactPage() {
     }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await contactApi.submit({
+        name: form.name,
+        phone: form.phone,
+        email: form.email || undefined,
+        subject: form.subject || undefined,
+        message: form.message,
+      });
       setSubmitted(true);
-      toast.success('Thank you! Your message has been sent to SCN Global Pvt Ltd (scnjob.com).');
-    }, 800);
+      toast.success(res?.message || 'Your message has been sent. Our team will get back to you shortly.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Could not send message. Please try again.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

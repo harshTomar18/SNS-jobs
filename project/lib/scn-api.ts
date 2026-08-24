@@ -1287,3 +1287,9 @@ export const masterDataApi = {
     );
   },
 };
+
+export const contactApi = {
+  submit(data: { name: string; phone: string; email?: string; subject?: string; message: string }) {
+    return apiPost<{ success: boolean; data?: any; message?: string }>('/contact', data);
+  },
+};

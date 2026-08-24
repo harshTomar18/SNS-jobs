@@ -57,10 +57,10 @@ function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
   const jobTitle = job?.title || '';
   const jobSkills = job?.skills || [];
   const common = jobSkills.filter(s => profileSkills.some(ps => ps.toLowerCase() === s.toLowerCase()));
-  
+
   let matchPercent = 75;
   let matchesText = '';
-  
+
   if (common.length > 0) {
     matchPercent = Math.min(99, 80 + common.length * 5);
     matchesText = `Matches your skill: ${common.slice(0, 3).join(', ')}`;
@@ -69,7 +69,7 @@ function getJobMatchDetails(job: Job, profileSkills: string[] = []) {
     const displayedSkills = jobSkills.length > 0 ? jobSkills.slice(0, 2).join(', ') : 'React, Node';
     matchesText = `Matches your interest in ${job?.industry || 'Tech'} and ${displayedSkills}`;
   }
-  
+
   return { matchPercent, matchesText };
 }
 
@@ -86,7 +86,7 @@ export default function WorkerJobsPage() {
   const [keyword, setKeyword] = useState('');
   const [location, setLocation] = useState('');
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
+
   const [experienceLimit, setExperienceLimit] = useState(10);
   const [salaryMinLimit, setSalaryMinLimit] = useState(0);
   const [selectedEnvironments, setSelectedEnvironments] = useState<string[]>([]);
@@ -104,7 +104,7 @@ export default function WorkerJobsPage() {
   const jobs: JobWithMeta[] = jobsQuery.data ?? [];
   const applications: Application[] = applicationsQuery.data ?? [];
   const profile = profileQuery.data as WorkerWithMeta | undefined;
-  
+
   const completion = profile?.profileCompletion || 85;
   const experienceYears = profile?.experienceYears || 5;
 
@@ -169,8 +169,8 @@ export default function WorkerJobsPage() {
       const kw = keyword.toLowerCase();
       result = result.filter(
         j => j.title.toLowerCase().includes(kw) ||
-             j.companyName.toLowerCase().includes(kw) ||
-             j.skills.some(s => s.toLowerCase().includes(kw))
+          j.companyName.toLowerCase().includes(kw) ||
+          j.skills.some(s => s.toLowerCase().includes(kw))
       );
     }
     if (location) {
@@ -321,7 +321,7 @@ export default function WorkerJobsPage() {
             {filteredJobs.map((job) => {
               const isSelected = activeJob?.id === job.id;
               const hasApplied = appliedJobIds.has(job.id);
-              
+
               const workerSkills = profile?.skills || [];
               const { matchPercent } = getJobMatchDetails(job, workerSkills);
 
@@ -332,13 +332,12 @@ export default function WorkerJobsPage() {
               return (
                 <Card
                   key={job.id}
-                  className={`p-6 bg-white border hover:border-blue-100 hover:shadow-md transition-all rounded-3xl flex flex-col items-stretch justify-between gap-4 cursor-pointer ${
-                    isSelected ? 'border-blue-200 ring-2 ring-blue-50/50 shadow-md' : 'border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)]'
-                  }`}
+                  className={`p-6 bg-white border hover:border-blue-100 hover:shadow-md transition-all rounded-3xl flex flex-col items-stretch justify-between gap-4 cursor-pointer ${isSelected ? 'border-blue-200 ring-2 ring-blue-50/50 shadow-md' : 'border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)]'
+                    }`}
                   onClick={() => setSelectedJobId(job.id)}
                 >
                   <div className="flex items-start gap-4">
-                    <CompanyLogo name={job.companyName} className="h-12 w-12 shrink-0 md:mt-1" />
+                    {/* <CompanyLogo name={job.companyName} className="h-12 w-12 shrink-0 md:mt-1" /> */}
                     <div className="space-y-3 flex-1 min-w-0">
                       {/* Title and Company */}
                       <div className="space-y-0.5">
@@ -375,10 +374,10 @@ export default function WorkerJobsPage() {
                   {/* Button Stack at the bottom of the card for sideby layout */}
                   <div className="flex flex-col items-center gap-2 pt-4 border-t border-slate-50 w-full shrink-0">
                     {/* Match Badge */}
-                    <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-blue-50 mb-1">
-                      ✦ {matchPercent}% Match
-                    </span>
-                    
+                    {/* <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-blue-50 mb-1">
+                      {matchPercent}% Match
+                    </span> */}
+
                     <div className="flex items-center gap-2 w-full">
                       <Button
                         variant="outline"
@@ -425,7 +424,7 @@ export default function WorkerJobsPage() {
         <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto rounded-3xl p-6 bg-white border border-slate-100">
           <DialogHeader className="flex flex-row items-center justify-between border-b border-slate-50 pb-3">
             <DialogTitle className="font-extrabold text-slate-800 text-lg">Filters</DialogTitle>
-            <button 
+            <button
               onClick={() => {
                 setSelectedEnvironments([]);
                 setSkills([]);
@@ -619,7 +618,7 @@ export default function WorkerJobsPage() {
                   </span>
                 ))}
               </div>
-              
+
               <div className="mt-2.5">
                 {isAddingSkill ? (
                   <input
