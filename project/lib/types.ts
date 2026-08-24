@@ -48,10 +48,15 @@ export interface Job {
   workingDays?: number;
   freshersOnly?: boolean;
   genderPreference?: 'MALE' | 'FEMALE' | 'ANY';
+  gender?: string;
+  workingStatus?: string;
   benefitNames?: string[];
   assetNames?: string[];
   openings: number;
   skills: string[];
+  qualifications?: string[];
+  languages?: string[];
+  highlights?: string[];
   description: string;
   responsibilities: string[];
   requirements: string[];

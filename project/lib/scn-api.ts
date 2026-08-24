@@ -355,6 +355,14 @@ export function toJob(job: BackendJob): JobWithMeta {
     .map((a: any) => (typeof a === 'string' ? a : a?.asset?.name || a?.name))
     .filter((a: any): a is string => Boolean(a));
 
+  const languagesList = ((job as any).languages || (job as any).languageNames || [])
+    .map((l: any) => (typeof l === 'string' ? l : l?.language?.name || l?.name))
+    .filter((l: any): l is string => Boolean(l));
+
+  const highlightsList = ((job as any).highlights || [])
+    .map((h: any) => (typeof h === 'string' ? h : String(h)))
+    .filter((h: any): h is string => Boolean(h));
+
   return {
     id: job.id,
     title,
@@ -377,10 +385,15 @@ export function toJob(job: BackendJob): JobWithMeta {
     workingDays: job.workingDays || undefined,
     freshersOnly: job.freshersOnly || undefined,
     genderPreference: job.gender || undefined,
+    gender: job.gender || undefined,
+    workingStatus: (job as any).workingStatus || undefined,
     benefitNames,
     assetNames,
     openings: job.headcountRequired,
     skills,
+    qualifications,
+    languages: languagesList,
+    highlights: highlightsList,
     description: job.description || 'No description provided.',
     responsibilities: job.responsibilities?.length
       ? job.responsibilities

@@ -222,6 +222,9 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
   // Highlights extraction
   const highlights = useMemo(() => {
     if (!job) return [];
+    if (job.highlights && job.highlights.length > 0) {
+      return job.highlights;
+    }
     const items: string[] = [];
     if (job.responsibilities && job.responsibilities.length > 0) {
       items.push(...job.responsibilities);
@@ -444,14 +447,31 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
           <p><strong>Industry Type:</strong> {job.industry}</p>
           <p><strong>Department / Function:</strong> {job.department || job.departmentName || (job as any).function?.name || (job as any).functionName || 'General'}</p>
           <p><strong>Employment Type:</strong> <span className="capitalize">{job.jobType}</span>, <span className="capitalize">{job.shift} Shift</span></p>
-          <p><strong>Working Days:</strong> {job.workingDays ? `${job.workingDays} Days` : '5 Days Working'}</p>
+          <p><strong>Working Days:</strong> {job.workingDays ? (typeof (job.workingDays as any) === 'string' && (job.workingDays as any).includes('_') ? (job.workingDays as any).replace('_', ' ').toLowerCase() : `${job.workingDays} Days Working`) : '5 Days Working'}</p>
+          {job.gender && <p><strong>Gender Requirement:</strong> <span className="capitalize">{job.gender.toLowerCase()}</span></p>}
+          {job.workingStatus && <p><strong>Working Status Required:</strong> <span className="capitalize">{job.workingStatus.replace('_', ' ').toLowerCase()}</span></p>}
+          {job.isFresherFriendly && <p><strong>Fresher Status:</strong> <span className="text-emerald-700 font-extrabold">Freshers Allowed</span></p>}
         </div>
 
-        {/* Education */}
+        {/* Education & Qualifications */}
         <div className="space-y-1.5 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-700">
-          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Education</h4>
-          <p><strong>UG / Qualifications:</strong> {Array.isArray((job as any).qualifications) && (job as any).qualifications.length > 0 ? (job as any).qualifications.join(', ') : 'Any Specialization / Graduate'}</p>
+          <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Education & Qualifications</h4>
+          <p><strong>Required Qualifications:</strong> {Array.isArray(job.qualifications) && job.qualifications.length > 0 ? job.qualifications.join(', ') : 'Any Specialization / Graduate'}</p>
         </div>
+
+        {/* Required Languages */}
+        {Array.isArray(job.languages) && job.languages.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-slate-100 text-xs font-semibold text-slate-700">
+            <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Required Languages</h4>
+            <div className="flex flex-wrap gap-2 pt-0.5">
+              {job.languages.map((lang, idx) => (
+                <Badge key={idx} variant="outline" className="rounded-full bg-blue-50 border-blue-100 text-blue-700 font-bold text-xs px-3.5 py-1">
+                  🌐 {lang}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Key Skills & Assets & Benefits */}
         <div className="space-y-3 pt-2 border-t border-slate-100">
