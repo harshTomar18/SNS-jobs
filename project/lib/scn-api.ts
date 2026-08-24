@@ -395,15 +395,8 @@ export function toJob(job: BackendJob): JobWithMeta {
     languages: languagesList,
     highlights: highlightsList,
     description: job.description || 'No description provided.',
-    responsibilities: job.responsibilities?.length
-      ? job.responsibilities
-      : job.description
-        ? job.description.split('\n').filter(Boolean).slice(0, 4)
-        : ['Review the job responsibilities with the recruiter.'],
-    requirements: job.requirements?.length ? job.requirements : [
-      ...qualifications.map((qualification) => `${qualification} preferred`),
-      ...skills.slice(0, 4).map((skill) => `${skill} experience`),
-    ].slice(0, 6),
+    responsibilities: Array.isArray(job.responsibilities) ? job.responsibilities : [],
+    requirements: Array.isArray(job.requirements) ? job.requirements : [],
     benefits: benefitNames,
     postedAt: job.createdAt,
     recruiterId: job.postedBy,

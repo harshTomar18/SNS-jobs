@@ -219,34 +219,10 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
     applyMutation.mutate(undefined);
   };
 
-  // Highlights extraction
+  // Highlights extraction - ONLY use API highlights
   const highlights = useMemo(() => {
     if (!job) return [];
-    if (job.highlights && job.highlights.length > 0) {
-      return job.highlights;
-    }
-    const items: string[] = [];
-    if (job.responsibilities && job.responsibilities.length > 0) {
-      items.push(...job.responsibilities);
-    }
-    if (job.requirements && job.requirements.length > 0) {
-      items.push(...job.requirements);
-    }
-    if (items.length < 2 && job.description) {
-      const lines = job.description
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => l.length > 10 && !l.toLowerCase().startsWith('role:') && !l.toLowerCase().includes('evaluation areas'));
-      items.push(...lines);
-    }
-    if (items.length < 2 && job.industry) {
-      items.push(`Full-time position with ${job.companyName || 'our team'} in ${job.industry}`);
-    }
-    if (items.length < 3 && ((job.assetNames && job.assetNames.length > 0) || (job.benefitNames && job.benefitNames.length > 0))) {
-      const perks = [...(job.benefitNames || []), ...(job.assetNames || [])].join(', ');
-      if (perks) items.push(`Provided assets & benefits: ${perks}`);
-    }
-    return items.slice(0, 4);
+    return Array.isArray(job.highlights) ? job.highlights : [];
   }, [job]);
 
   if (isLoading) {
@@ -360,38 +336,41 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
         </div>
       </Card>
 
-      {/* 2. Job Highlights & Match Score Card (Matching Image 2) */}
-      <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-5 text-left shadow-sm">
-        <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job highlights</h3>
-        <ul className="space-y-2.5 text-xs font-semibold text-slate-700">
-          {highlights.map((item, idx) => (
-            <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
-              <span className="text-blue-600 font-bold mt-0.5">•</span>
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
+      {/* 2. Job Highlights Card (Only shown if API provides highlights) */}
+      {highlights.length > 0 && (
+        <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-5 text-left shadow-sm">
+          <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job highlights</h3>
+          <ul className="space-y-2.5 text-xs font-semibold text-slate-700">
+            {highlights.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                <span className="text-blue-600 font-bold mt-0.5">•</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
-        {!isRecruiter && (
-          <div className="pt-4 border-t border-slate-100 space-y-3">
-            <h4 className="text-xs font-extrabold text-slate-800">Job match score</h4>
-            <div className="flex flex-wrap gap-2.5 text-xs font-bold">
-              <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Early Applicant
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Keyskills
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Location
-              </span>
-              <span className="flex items-center gap-1.5 text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
-                <X className="h-3.5 w-3.5 text-slate-400" /> Work Experience
-              </span>
-            </div>
+      {/* 3. Job match score Card */}
+      {!isRecruiter && (
+        <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-3 text-left shadow-sm">
+          <h4 className="text-xs font-extrabold text-slate-800">Job match score</h4>
+          <div className="flex flex-wrap gap-2.5 text-xs font-bold">
+            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Early Applicant
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Keyskills
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 fill-emerald-100" /> Location
+            </span>
+            <span className="flex items-center gap-1.5 text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full">
+              <X className="h-3.5 w-3.5 text-slate-400" /> Work Experience
+            </span>
           </div>
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* 3. Job Description Card (Matching Image 2 & 3) */}
       <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-6 text-left shadow-sm">
