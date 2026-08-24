@@ -752,6 +752,34 @@ function formatJobPayload(data: any) {
   const rawJobType = String(data.jobType || 'full_time').toLowerCase();
   const formattedJobType = rawJobType === 'full-time' || rawJobType === 'full_time' ? 'full_time' : rawJobType === 'part-time' || rawJobType === 'part_time' ? 'part_time' : rawJobType;
 
+  // Format array fields
+  const responsibilitiesArr = Array.isArray(data.responsibilities)
+    ? data.responsibilities
+    : typeof data.responsibilities === 'string'
+      ? data.responsibilities.split('\n').map((s: string) => s.trim()).filter(Boolean)
+      : undefined;
+
+  const requirementsArr = Array.isArray(data.requirements)
+    ? data.requirements
+    : typeof data.requirements === 'string'
+      ? data.requirements.split('\n').map((s: string) => s.trim()).filter(Boolean)
+      : undefined;
+
+  const highlightsArr = Array.isArray(data.highlights)
+    ? data.highlights
+    : typeof data.highlights === 'string'
+      ? data.highlights.split('\n').map((s: string) => s.trim()).filter(Boolean)
+      : data.benefitNames && data.benefitNames.length > 0
+        ? data.benefitNames
+        : undefined;
+
+  let languagesArr: string[] | undefined = undefined;
+  if (Array.isArray(data.languages)) {
+    languagesArr = data.languages;
+  } else if (Array.isArray(data.languageNames)) {
+    languagesArr = data.languageNames;
+  }
+
   const payload: any = {
     jobRoleName: roleName,
     industryId: data.industryId ? Number(data.industryId) : undefined,
@@ -764,16 +792,19 @@ function formatJobPayload(data: any) {
     shiftType: (data.shiftType || 'day').toLowerCase(),
     gender: (data.gender || 'ANY').toUpperCase(),
     headcountRequired: Number(data.headcountRequired || 1),
-    minExperienceMonths: data.freshersOnly ? undefined : (data.minExperienceMonths !== undefined ? Number(data.minExperienceMonths) : undefined),
+    minExperienceMonths: data.freshersOnly ? 0 : (data.minExperienceMonths !== undefined ? Number(data.minExperienceMonths) : 0),
     maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceMonths !== undefined ? Number(data.maxExperienceMonths) : undefined),
     freshersOnly: Boolean(data.freshersOnly),
     workingDays: workingDaysEnum,
     workingStatus: data.workingStatus || undefined,
     description: data.description,
-    responsibilities: data.responsibilities,
-    requirements: data.requirements,
-    skillIds: data.skillIds && data.skillIds.length > 0 ? data.skillIds : undefined,
-    qualificationIds: data.qualificationIds && data.qualificationIds.length > 0 ? data.qualificationIds : undefined,
+    responsibilities: responsibilitiesArr,
+    requirements: requirementsArr,
+    highlights: highlightsArr,
+    languages: languagesArr,
+    languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map((id: any) => Number(id)) : undefined,
+    skillIds: data.skillIds && data.skillIds.length > 0 ? data.skillIds.map((id: any) => Number(id)) : undefined,
+    qualificationIds: data.qualificationIds && data.qualificationIds.length > 0 ? data.qualificationIds.map((id: any) => Number(id)) : undefined,
     benefitNames: data.benefitNames,
     assetNames: data.assetNames,
     status: data.status ? statusToApi(data.status) : undefined,

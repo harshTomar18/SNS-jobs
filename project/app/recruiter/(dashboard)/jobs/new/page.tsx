@@ -91,6 +91,7 @@ const schema = z.object({
   assetNames: z.array(z.string()).default([]),
   languageIds: z.array(z.string()).default([]),
   description: z.string().min(10, 'Description must be at least 10 characters'),
+  highlights: z.string().optional(),
   responsibilities: z.string().optional(),
   requirements: z.string().optional(),
   benefits: z.string().optional(),
@@ -354,6 +355,11 @@ export default function CreateJobPage() {
         : String(existingJob.requirements || '');
       setValue('requirements', reqStr);
 
+      const hlStr = Array.isArray((existingJob as any).highlights)
+        ? (existingJob as any).highlights.join('\n')
+        : String((existingJob as any).highlights || '');
+      setValue('highlights', hlStr);
+
       const openings = (existingJob as any).openings || (existingJob as any).headcountRequired || 1;
       setValue('headcountRequired', Number(openings));
 
@@ -463,36 +469,45 @@ export default function CreateJobPage() {
       const selectedFunction = functions.find((f: any) => String(f.id) === data.functionId);
       const funcName = data.functionName || (selectedFunction && 'name' in selectedFunction ? selectedFunction.name : functionSearch);
 
-      const payload = {
-        jobRoleName: roleName,
-        description: data.description,
-        industryId: Number(data.industryId),
-        industryName: indName || undefined,
-        functionId: data.functionId ? Number(data.functionId) : undefined,
-        functionName: funcName || undefined,
-        locationId: Number(data.locationId),
-        jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
-        skillIds: data.skillIds.map(Number),
-        qualificationIds: data.qualificationIds.map(Number),
-        languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map(Number) : undefined,
-        wageMin: data.wageMin,
-        wageMax: data.wageMax,
-        wageType: data.wageType,
-        workingDays: data.workingDays,
-        workingStatus: data.workingStatus || undefined,
-        gender: data.gender,
-        freshersOnly: data.freshersOnly,
-        shiftType: data.shiftType,
-        jobType: data.jobType,
-        headcountRequired: data.headcountRequired,
-        minExperienceMonths: data.freshersOnly ? undefined : data.minExperienceYears * 12,
-        maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
-        benefitNames: data.benefitNames,
-        assetNames: data.assetNames,
-        responsibilities: splitLines(data.responsibilities),
-        requirements: splitLines(data.requirements),
-        benefits: splitLines(data.benefits),
-      };
+        const selectedLanguageNames = data.languageIds && data.languageIds.length > 0
+          ? data.languageIds.map((id) => {
+              const lang = languages.find((l: any) => String(l.id) === id);
+              return lang && 'name' in lang ? lang.name : id;
+            }).filter(Boolean)
+          : undefined;
+
+        const payload = {
+          jobRoleName: roleName,
+          description: data.description,
+          industryId: Number(data.industryId),
+          industryName: indName || undefined,
+          functionId: data.functionId ? Number(data.functionId) : undefined,
+          functionName: funcName || undefined,
+          locationId: Number(data.locationId),
+          jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
+          skillIds: data.skillIds.map(Number),
+          qualificationIds: data.qualificationIds.map(Number),
+          languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map(Number) : undefined,
+          languages: selectedLanguageNames,
+          wageMin: data.wageMin,
+          wageMax: data.wageMax,
+          wageType: data.wageType,
+          workingDays: data.workingDays,
+          workingStatus: data.workingStatus || undefined,
+          gender: data.gender,
+          freshersOnly: data.freshersOnly,
+          shiftType: data.shiftType,
+          jobType: data.jobType,
+          headcountRequired: data.headcountRequired,
+          minExperienceMonths: data.freshersOnly ? 0 : data.minExperienceYears * 12,
+          maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
+          benefitNames: data.benefitNames,
+          assetNames: data.assetNames,
+          responsibilities: splitLines(data.responsibilities),
+          requirements: splitLines(data.requirements),
+          highlights: data.highlights ? splitLines(data.highlights) : (data.benefitNames && data.benefitNames.length > 0 ? data.benefitNames : undefined),
+          benefits: splitLines(data.benefits),
+        };
 
       if (isEditing && editJobId) {
         return jobsApi.update(editJobId, payload);
@@ -1569,18 +1584,18 @@ export default function CreateJobPage() {
               <div className="grid gap-4 lg:grid-cols-3">
                 <div className="space-y-2">
                   <Label htmlFor="responsibilities" className="text-slate-700 font-extrabold text-xs">Responsibilities (One per line)*</Label>
-                  <Textarea id="responsibilities" rows={6} placeholder="e.g. Build UI pages" {...register('responsibilities')} className="rounded-xl border-slate-200" />
+                  <Textarea id="responsibilities" rows={6} placeholder="e.g. Design, develop, and maintain RESTful APIs" {...register('responsibilities')} className="rounded-xl border-slate-200" />
                   {errors.responsibilities && <p className="text-xs text-red-500 font-bold">{errors.responsibilities.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="requirements" className="text-slate-700 font-extrabold text-xs">Requirements (One per line)*</Label>
-                  <Textarea id="requirements" rows={6} placeholder="e.g. 3 years NextJS exp" {...register('requirements')} className="rounded-xl border-slate-200" />
+                  <Textarea id="requirements" rows={6} placeholder="e.g. 3 years Node.js experience" {...register('requirements')} className="rounded-xl border-slate-200" />
                   {errors.requirements && <p className="text-xs text-red-500 font-bold">{errors.requirements.message}</p>}
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="benefits" className="text-slate-700 font-extrabold text-xs">Benefits (One per line)</Label>
-                  <Textarea id="benefits" rows={6} placeholder="e.g. Medical insurance" {...register('benefits')} className="rounded-xl border-slate-200" />
-                </div> */}
+                <div className="space-y-2">
+                  <Label htmlFor="highlights" className="text-slate-700 font-extrabold text-xs">Job Highlights (One per line)</Label>
+                  <Textarea id="highlights" rows={6} placeholder="e.g. Fast growing startup&#10;Flexible working hours&#10;Immediate joining" {...register('highlights')} className="rounded-xl border-slate-200" />
+                </div>
               </div>
             </Card>
 
