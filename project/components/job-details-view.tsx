@@ -113,7 +113,7 @@ function formatSalaryDisplay(job?: JobWithMeta) {
   const min = job.salaryMin || (job as any).monthlyWageMin || (job as any).dailyWageMin || (job as any).yearlyWageMin || 0;
   const max = job.salaryMax || (job as any).monthlyWageMax || (job as any).dailyWageMax || (job as any).yearlyWageMax || 0;
   const period = String(job.wagePeriod || 'monthly').toLowerCase();
-  
+
   if (min === 0 && max === 0) return 'Salary not specified';
 
   const suffix = period === 'daily' ? 'per day' : period.includes('annual') || period.includes('year') ? 'per annum' : 'per month';
@@ -359,7 +359,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
           <h3 className="text-lg font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job description</h3>
           <div className="text-xs font-semibold text-slate-700 space-y-1.5 bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
             <p className="text-sm font-bold text-slate-900">{job.title}</p>
-            <p><strong>Company:</strong> {job.companyName}</p>
+            {/* <p><strong>Company:</strong> {job.companyName}</p> */}
             <p><strong>Location:</strong> {job.locality && !job.location.includes(job.locality) ? `${job.locality}, ${job.location}` : job.location}</p>
             <p><strong>Experience:</strong> {job.experienceMin}-{job.experienceMax} Years</p>
             <p><strong>Job Type:</strong> <span className="capitalize">{job.jobType}</span></p>

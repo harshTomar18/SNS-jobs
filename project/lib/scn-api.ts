@@ -303,8 +303,19 @@ export function toJob(job: BackendJob): JobWithMeta {
     .map((entry) => entry.skill?.name)
     .filter((name): name is string => Boolean(name));
   const qualifications = (job.qualifications || [])
-    .map((entry) => entry.qualification?.name)
-    .filter((name): name is string => Boolean(name));
+    .map((entry: any) => {
+      const q = entry.qualification || entry;
+      const name = q?.name;
+      const level = q?.level;
+      if (!name) return null;
+      if (level) {
+        const cleanLevel = level.replace(/_/g, ' ').toLowerCase();
+        const formattedLevel = cleanLevel.charAt(0).toUpperCase() + cleanLevel.slice(1);
+        return `${name} (${formattedLevel})`;
+      }
+      return name;
+    })
+    .filter((q): q is string => Boolean(q));
   const experienceMin = Math.floor((job.minExperienceMonths || 0) / 12);
   const locationParts = Array.from(new Set([job.location?.locality, job.location?.city, job.location?.state].filter(Boolean)));
   const locationName = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
