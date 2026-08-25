@@ -29,22 +29,23 @@ import {
 import { EmptyState } from '@/components/empty-state';
 import { getInitials, formatExpectedSalary } from '@/lib/format';
 import { CandidateProfileDrawer } from '@/components/candidate-profile-drawer';
-import { workerApi, masterDataApi, WorkerWithMeta } from '@/lib/scn-api';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
+import { workerApi, masterDataApi, WorkerWithMeta, WorkerSearchParams } from '@/lib/scn-api';
 import { cn } from '@/lib/utils';
 
 export default function RecruiterWorkerSearchPage() {
   const [search, setSearch] = useState('');
   const [cityFilter, setCityFilter] = useState('');
-  const [jobRoleFilter, setJobRoleFilter] = useState('all');
+  const [jobRoleFilters, setJobRoleFilters] = useState<string[]>([]);
   const [expFilter, setExpFilter] = useState('all');
-  const [industryFilter, setIndustryFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [skillFilter, setSkillFilter] = useState('all');
-  const [qualFilter, setQualFilter] = useState('all');
+  const [industryFilters, setIndustryFilters] = useState<string[]>([]);
+  const [departmentFilters, setDepartmentFilters] = useState<string[]>([]);
+  const [skillFilters, setSkillFilters] = useState<string[]>([]);
+  const [qualFilters, setQualFilters] = useState<string[]>([]);
   const [genderFilter, setGenderFilter] = useState('all');
   const [ageFilter, setAgeFilter] = useState('all');
-  const [langFilter, setLangFilter] = useState('all');
-  const [assetFilter, setAssetFilter] = useState('all');
+  const [langFilters, setLangFilters] = useState<string[]>([]);
+  const [assetFilters, setAssetFilters] = useState<string[]>([]);
   const [availFilter, setAvailFilter] = useState('all');
 
   const [selectedWorker, setSelectedWorker] = useState<WorkerWithMeta | null>(null);
@@ -58,16 +59,25 @@ export default function RecruiterWorkerSearchPage() {
   });
   const masterData = masterQuery.data;
 
-  // Build API search parameters
-  const apiSearchParams = useMemo(() => {
+  const resolveIds = (selectedNames: string[], masterList?: any[]) => {
+    if (!selectedNames.length) return undefined;
+    return selectedNames.map((name) => {
+      const match = (masterList || []).find(
+        (m: any) => String(m.id) === name || m.name?.toLowerCase() === name.toLowerCase()
+      );
+      return match ? match.id : name;
+    });
+  };
+
+  // Build draft API search parameters
+  const currentSearchParams = useMemo(() => {
     const params: any = { completeOnly: false };
 
     if (search.trim()) params.q = search.trim();
     if (cityFilter.trim() && cityFilter !== 'all') params.city = cityFilter.trim();
 
-    if (jobRoleFilter !== 'all') {
-      const matched = (masterData?.['job-roles'] || []).find((r: any) => String(r.id) === jobRoleFilter || r.name.toLowerCase() === jobRoleFilter.toLowerCase());
-      params.jobRoleIds = matched ? matched.id : jobRoleFilter;
+    if (jobRoleFilters.length > 0) {
+      params.jobRoleIds = resolveIds(jobRoleFilters, masterData?.['job-roles']);
     }
 
     if (expFilter !== 'all') {
@@ -77,24 +87,20 @@ export default function RecruiterWorkerSearchPage() {
       else if (expFilter === '5+') params.minExperienceMonths = 60;
     }
 
-    if (industryFilter !== 'all') {
-      const matched = (masterData?.industries || []).find((i: any) => String(i.id) === industryFilter || i.name.toLowerCase() === industryFilter.toLowerCase());
-      params.industryIds = matched ? matched.id : industryFilter;
+    if (industryFilters.length > 0) {
+      params.industryIds = resolveIds(industryFilters, masterData?.industries);
     }
 
-    if (departmentFilter !== 'all') {
-      const matched = (masterData?.['functions'] || masterData?.['departments'] || []).find((f: any) => String(f.id) === departmentFilter || f.name.toLowerCase() === departmentFilter.toLowerCase());
-      params.departmentIds = matched ? matched.id : departmentFilter;
+    if (departmentFilters.length > 0) {
+      params.departmentIds = resolveIds(departmentFilters, masterData?.['functions'] || masterData?.['departments']);
     }
 
-    if (skillFilter !== 'all') {
-      const matched = (masterData?.skills || []).find((s: any) => String(s.id) === skillFilter || s.name.toLowerCase() === skillFilter.toLowerCase());
-      params.skillIds = matched ? matched.id : skillFilter;
+    if (skillFilters.length > 0) {
+      params.skillIds = resolveIds(skillFilters, masterData?.skills);
     }
 
-    if (qualFilter !== 'all') {
-      const matched = (masterData?.qualifications || []).find((q: any) => String(q.id) === qualFilter || q.name.toLowerCase() === qualFilter.toLowerCase());
-      params.qualificationIds = matched ? matched.id : qualFilter;
+    if (qualFilters.length > 0) {
+      params.qualificationIds = resolveIds(qualFilters, masterData?.qualifications);
     }
 
     if (genderFilter !== 'all') {
@@ -107,24 +113,31 @@ export default function RecruiterWorkerSearchPage() {
       else if (ageFilter === '36+') { params.minAge = 36; }
     }
 
-    if (langFilter !== 'all') {
-      const matched = (masterData?.languages || []).find((l: any) => String(l.id) === langFilter || l.name.toLowerCase() === langFilter.toLowerCase());
-      params.languageIds = matched ? matched.id : langFilter;
+    if (langFilters.length > 0) {
+      params.languageIds = resolveIds(langFilters, masterData?.languages);
     }
 
-    if (assetFilter !== 'all') {
-      params.assets = assetFilter;
+    if (assetFilters.length > 0) {
+      params.assets = assetFilters;
     }
 
     return params;
-  }, [search, cityFilter, jobRoleFilter, expFilter, industryFilter, departmentFilter, skillFilter, qualFilter, genderFilter, ageFilter, langFilter, assetFilter, masterData]);
+  }, [search, cityFilter, jobRoleFilters, expFilter, industryFilters, departmentFilters, skillFilters, qualFilters, genderFilter, ageFilter, langFilters, assetFilters, masterData]);
+
+  // Active API parameters state updated on Search button click or initial load
+  const [activeApiParams, setActiveApiParams] = useState(currentSearchParams);
+
+  const handleSearchSubmit = () => {
+    setActiveApiParams(currentSearchParams);
+  };
 
   // Fetch candidates from API (/worker/search)
   const workersQuery = useQuery({
-    queryKey: ['workers', apiSearchParams],
-    queryFn: () => workerApi.search(apiSearchParams),
+    queryKey: ['workers', activeApiParams],
+    queryFn: () => workerApi.search(activeApiParams),
   });
   const workers = useMemo<WorkerWithMeta[]>(() => workersQuery.data ?? [], [workersQuery.data]);
+
 
 
   // Extract master data options with safe fallbacks
@@ -173,7 +186,6 @@ export default function RecruiterWorkerSearchPage() {
   const filteredWorkers = useMemo(() => {
     let result = workers;
 
-    // 1. Candidate Keyword Search (Name, Headline, Phone, Email, City, Skills, etc.)
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -189,17 +201,19 @@ export default function RecruiterWorkerSearchPage() {
       );
     }
 
-    // 2. Job Role Filter
-    if (jobRoleFilter !== 'all') {
-      const roleQ = jobRoleFilter.toLowerCase();
+    if (jobRoleFilters.length > 0) {
       result = result.filter((w) =>
-        (w.headline && w.headline.toLowerCase().includes(roleQ)) ||
-        ((w as any).preferredJobRoles && (w as any).preferredJobRoles.some((r: string) => r.toLowerCase().includes(roleQ))) ||
-        (w.experience && w.experience.some((exp) => exp.designation.toLowerCase().includes(roleQ)))
+        jobRoleFilters.some((roleQ) => {
+          const q = roleQ.toLowerCase();
+          return (
+            (w.headline && w.headline.toLowerCase().includes(q)) ||
+            ((w as any).preferredJobRoles && (w as any).preferredJobRoles.some((r: string) => r.toLowerCase().includes(q))) ||
+            (w.experience && w.experience.some((exp) => exp.designation.toLowerCase().includes(q)))
+          );
+        })
       );
     }
 
-    // 3. Experience Filter
     if (expFilter !== 'all') {
       result = result.filter((w) => {
         if (expFilter === 'fresher') return w.isFresher || w.experienceYears === 0;
@@ -210,46 +224,51 @@ export default function RecruiterWorkerSearchPage() {
       });
     }
 
-    // 4. Industry Filter
-    if (industryFilter !== 'all') {
-      const indQ = industryFilter.toLowerCase();
+    if (industryFilters.length > 0) {
       result = result.filter((w) =>
-        w.preferredIndustries.some((ind) => ind.toLowerCase().includes(indQ)) ||
-        (w.experience && w.experience.some((exp) => exp.industry && exp.industry.toLowerCase().includes(indQ)))
+        industryFilters.some((indQ) => {
+          const q = indQ.toLowerCase();
+          return (
+            w.preferredIndustries.some((ind) => ind.toLowerCase().includes(q)) ||
+            (w.experience && w.experience.some((exp) => exp.industry && exp.industry.toLowerCase().includes(q)))
+          );
+        })
       );
     }
 
-    // 5. Department Filter
-    if (departmentFilter !== 'all') {
-      const deptQ = departmentFilter.toLowerCase();
+    if (departmentFilters.length > 0) {
       result = result.filter((w) =>
-        (w.department && w.department.toLowerCase().includes(deptQ)) ||
-        ((w as any).preferredDepartments && (w as any).preferredDepartments.some((d: string) => d.toLowerCase().includes(deptQ))) ||
-        (w.experience && w.experience.some((exp) => exp.department && exp.department.toLowerCase().includes(deptQ)))
+        departmentFilters.some((deptQ) => {
+          const q = deptQ.toLowerCase();
+          return (
+            (w.department && w.department.toLowerCase().includes(q)) ||
+            ((w as any).preferredDepartments && (w as any).preferredDepartments.some((d: string) => d.toLowerCase().includes(q))) ||
+            (w.experience && w.experience.some((exp) => exp.department && exp.department.toLowerCase().includes(q)))
+          );
+        })
       );
     }
 
-    // 6. Skills Filter
-    if (skillFilter !== 'all') {
-      const skillQ = skillFilter.toLowerCase();
+    if (skillFilters.length > 0) {
       result = result.filter((w) =>
-        w.skills.some((s) => s.toLowerCase() === skillQ || s.toLowerCase().includes(skillQ))
-      );
-    }
-
-    // 7. Qualification Filter
-    if (qualFilter !== 'all') {
-      const qualQ = qualFilter.toLowerCase();
-      result = result.filter((w) =>
-        w.education.some((edu) =>
-          edu.degree.toLowerCase().includes(qualQ) ||
-          (edu.level && edu.level.toLowerCase().includes(qualQ)) ||
-          edu.field.toLowerCase().includes(qualQ)
+        skillFilters.some((skillQ) =>
+          w.skills.some((s) => s.toLowerCase().includes(skillQ.toLowerCase()))
         )
       );
     }
 
-    // 8. Gender Filter
+    if (qualFilters.length > 0) {
+      result = result.filter((w) =>
+        qualFilters.some((qualQ) =>
+          w.education.some((edu) =>
+            edu.degree.toLowerCase().includes(qualQ.toLowerCase()) ||
+            (edu.level && edu.level.toLowerCase().includes(qualQ.toLowerCase())) ||
+            edu.field.toLowerCase().includes(qualQ.toLowerCase())
+          )
+        )
+      );
+    }
+
     if (genderFilter !== 'all') {
       result = result.filter((w) => {
         const g = ((w as any).gender || '').toUpperCase();
@@ -257,7 +276,6 @@ export default function RecruiterWorkerSearchPage() {
       });
     }
 
-    // 9. Age Filter
     if (ageFilter !== 'all') {
       result = result.filter((w) => {
         if (!w.dob) return true;
@@ -270,61 +288,65 @@ export default function RecruiterWorkerSearchPage() {
       });
     }
 
-    // 10. Language Filter
-    if (langFilter !== 'all') {
-      const langQ = langFilter.toLowerCase();
+    if (langFilters.length > 0) {
       result = result.filter((w) =>
-        w.languages.some((l) => l.toLowerCase().includes(langQ))
+        langFilters.some((langQ) =>
+          w.languages.some((l) => l.toLowerCase().includes(langQ.toLowerCase()))
+        )
       );
     }
 
-    // 11. Assets Filter
-    if (assetFilter !== 'all') {
-      const assetQ = assetFilter.toLowerCase();
+    if (assetFilters.length > 0) {
       result = result.filter((w) =>
-        (w.bio && w.bio.toLowerCase().includes(assetQ)) ||
-        (w.headline && w.headline.toLowerCase().includes(assetQ)) ||
-        ((w as any).assets && (w as any).assets.some((a: string) => a.toLowerCase().includes(assetQ)))
+        assetFilters.some((assetQ) => {
+          const q = assetQ.toLowerCase();
+          return (
+            (w.bio && w.bio.toLowerCase().includes(q)) ||
+            (w.headline && w.headline.toLowerCase().includes(q)) ||
+            ((w as any).assets && (w as any).assets.some((a: string) => a.toLowerCase().includes(q)))
+          );
+        })
       );
     }
 
-    // Availability Filter
     if (availFilter !== 'all') {
       result = result.filter((w) => w.availability === availFilter);
     }
 
     return result;
-  }, [search, jobRoleFilter, expFilter, industryFilter, departmentFilter, skillFilter, qualFilter, genderFilter, ageFilter, langFilter, assetFilter, availFilter, workers]);
+  }, [search, jobRoleFilters, expFilter, industryFilters, departmentFilters, skillFilters, qualFilters, genderFilter, ageFilter, langFilters, assetFilters, availFilter, workers]);
 
-  // Count active filters
   const activeFilterCount = [
-    jobRoleFilter !== 'all',
+    jobRoleFilters.length > 0,
     expFilter !== 'all',
-    industryFilter !== 'all',
-    departmentFilter !== 'all',
-    skillFilter !== 'all',
-    qualFilter !== 'all',
+    industryFilters.length > 0,
+    departmentFilters.length > 0,
+    skillFilters.length > 0,
+    qualFilters.length > 0,
     genderFilter !== 'all',
     ageFilter !== 'all',
-    langFilter !== 'all',
-    assetFilter !== 'all',
+    langFilters.length > 0,
+    assetFilters.length > 0,
     availFilter !== 'all',
-    Boolean(search)
+    Boolean(search),
+    Boolean(cityFilter)
   ].filter(Boolean).length;
 
   const resetAllFilters = () => {
     setSearch('');
-    setJobRoleFilter('all');
+    setCityFilter('');
+    setJobRoleFilters([]);
     setExpFilter('all');
-    setIndustryFilter('all');
-    setDepartmentFilter('all');
-    setSkillFilter('all');
-    setQualFilter('all');
+    setIndustryFilters([]);
+    setDepartmentFilters([]);
+    setSkillFilters([]);
+    setQualFilters([]);
     setGenderFilter('all');
     setAgeFilter('all');
-    setLangFilter('all');
-    setAssetFilter('all');
+    setLangFilters([]);
+    setAssetFilters([]);
     setAvailFilter('all');
+    setActiveApiParams({ completeOnly: false });
   };
 
   return (
@@ -355,8 +377,8 @@ export default function RecruiterWorkerSearchPage() {
 
       {/* Main Search & Filter Control Container */}
       <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-        {/* Row 1: Candidate Search Input & Filter Toggle */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        {/* Row 1: Search Bar & Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
           <div className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -364,15 +386,23 @@ export default function RecruiterWorkerSearchPage() {
               placeholder="Search candidate name, phone, city, skills, headline..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(); }}
               className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
             />
           </div>
+          <Button
+            onClick={handleSearchSubmit}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shadow-sm flex items-center gap-2 shrink-0"
+          >
+            <Search className="h-4 w-4" />
+            <span>Search Candidates</span>
+          </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setShowFilters(!showFilters)}
             className={cn(
-              "text-xs font-bold rounded-xl h-10 px-4 transition-all border-slate-200",
+              "text-xs font-bold rounded-xl h-10 px-4 transition-all border-slate-200 shrink-0",
               showFilters ? "bg-indigo-50 text-indigo-600 border-indigo-200" : "text-slate-600 hover:bg-slate-50"
             )}
           >
@@ -384,23 +414,13 @@ export default function RecruiterWorkerSearchPage() {
         {/* Row 2: 11 Multi-Criteria Filters Panel */}
         {showFilters && (
           <div className="pt-4 border-t border-slate-100 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 text-left">
-            {/* 1. Job Role */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Job Role</label>
-              <div className="relative">
-                <select
-                  value={jobRoleFilter}
-                  onChange={(e) => setJobRoleFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Job Roles</option>
-                  {jobRolesList.map((role) => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 1. Job Role (Multi-Select) */}
+            <MultiSelectFilter
+              label="Job Role"
+              options={jobRolesList}
+              selectedValues={jobRoleFilters}
+              onChange={setJobRoleFilters}
+            />
 
             {/* 2. Experience */}
             <div className="space-y-1">
@@ -409,7 +429,7 @@ export default function RecruiterWorkerSearchPage() {
                 <select
                   value={expFilter}
                   onChange={(e) => setExpFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">All Experience</option>
                   <option value="fresher">Fresher (0 yrs)</option>
@@ -421,77 +441,37 @@ export default function RecruiterWorkerSearchPage() {
               </div>
             </div>
 
-            {/* 3. Industry */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Industry</label>
-              <div className="relative">
-                <select
-                  value={industryFilter}
-                  onChange={(e) => setIndustryFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Industries</option>
-                  {industriesList.map((ind) => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 3. Industry (Multi-Select) */}
+            <MultiSelectFilter
+              label="Industry"
+              options={industriesList}
+              selectedValues={industryFilters}
+              onChange={setIndustryFilters}
+            />
 
-            {/* 4. Department */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Department</label>
-              <div className="relative">
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Departments</option>
-                  {departmentsList.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 4. Department (Multi-Select) */}
+            <MultiSelectFilter
+              label="Department"
+              options={departmentsList}
+              selectedValues={departmentFilters}
+              onChange={setDepartmentFilters}
+            />
 
-            {/* 5. Skills */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Skills</label>
-              <div className="relative">
-                <select
-                  value={skillFilter}
-                  onChange={(e) => setSkillFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Skills</option>
-                  {skillsList.map((sk) => (
-                    <option key={sk} value={sk}>{sk}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 5. Skills (Multi-Select) */}
+            <MultiSelectFilter
+              label="Skills"
+              options={skillsList}
+              selectedValues={skillFilters}
+              onChange={setSkillFilters}
+            />
 
-            {/* 6. Qualification */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Qualification</label>
-              <div className="relative">
-                <select
-                  value={qualFilter}
-                  onChange={(e) => setQualFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Qualifications</option>
-                  {qualList.map((q) => (
-                    <option key={q} value={q}>{q}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 6. Qualification (Multi-Select) */}
+            <MultiSelectFilter
+              label="Qualification"
+              options={qualList}
+              selectedValues={qualFilters}
+              onChange={setQualFilters}
+            />
 
             {/* 7. Gender */}
             <div className="space-y-1">
@@ -500,7 +480,7 @@ export default function RecruiterWorkerSearchPage() {
                 <select
                   value={genderFilter}
                   onChange={(e) => setGenderFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">Any Gender</option>
                   <option value="MALE">Male</option>
@@ -510,14 +490,14 @@ export default function RecruiterWorkerSearchPage() {
               </div>
             </div>
 
-            {/* 8. Age */}
+            {/* 8. Age Range */}
             <div className="space-y-1">
               <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Age Range</label>
               <div className="relative">
                 <select
                   value={ageFilter}
                   onChange={(e) => setAgeFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">Any Age</option>
                   <option value="18-25">18 - 25 Years</option>
@@ -528,41 +508,21 @@ export default function RecruiterWorkerSearchPage() {
               </div>
             </div>
 
-            {/* 9. Languages */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Languages</label>
-              <div className="relative">
-                <select
-                  value={langFilter}
-                  onChange={(e) => setLangFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Languages</option>
-                  {languagesList.map((lang) => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 9. Languages (Multi-Select) */}
+            <MultiSelectFilter
+              label="Languages"
+              options={languagesList}
+              selectedValues={langFilters}
+              onChange={setLangFilters}
+            />
 
-            {/* 10. Assets */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Assets</label>
-              <div className="relative">
-                <select
-                  value={assetFilter}
-                  onChange={(e) => setAssetFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Assets</option>
-                  {assetsList.map((asset) => (
-                    <option key={asset} value={asset}>{asset}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 10. Assets (Multi-Select) */}
+            <MultiSelectFilter
+              label="Assets"
+              options={assetsList}
+              selectedValues={assetFilters}
+              onChange={setAssetFilters}
+            />
 
             {/* 11. Availability */}
             <div className="space-y-1">
@@ -571,7 +531,7 @@ export default function RecruiterWorkerSearchPage() {
                 <select
                   value={availFilter}
                   onChange={(e) => setAvailFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">All Availability</option>
                   <option value="immediate">Immediate</option>
@@ -584,6 +544,7 @@ export default function RecruiterWorkerSearchPage() {
           </div>
         )}
       </div>
+
 
       {/* Grid List of Candidate Cards */}
       {filteredWorkers.length === 0 ? (

@@ -1019,6 +1019,7 @@ export const workerApi = {
     isFresher?: boolean;
     workingStatus?: string;
     noticePeriodDays?: number;
+    assets?: string[];
   }) {
     const localityVal = (data.locality || data.currentLocality || '').trim();
     const stateVal = (data.state || '').trim();

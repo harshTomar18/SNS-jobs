@@ -19,6 +19,7 @@ import {
   Search,
   Phone,
   Mail,
+  Laptop,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ import { getInitials } from '@/lib/format';
 import { workerApi, masterDataApi, WorkerWithMeta, BackendLookup, BackendLocation, formatLocationString } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 import {
   Select,
   SelectContent,
@@ -77,6 +79,7 @@ export default function WorkerProfilePage() {
     isFresher: false,
     workingStatus: '' as '' | 'SERVING_NOTICE' | 'WORKING' | 'NOT_WORKING' | 'IMMEDIATE_JOINER',
     noticePeriodDays: 0,
+    assets: [] as string[],
   });
 
   const [stateInput, setStateInput] = useState('');
@@ -116,6 +119,7 @@ export default function WorkerProfilePage() {
       isFresher: profile.isFresher ?? false,
       workingStatus: (profile.workingStatus as any) || '',
       noticePeriodDays: profile.noticePeriodDays || 0,
+      assets: profile.assets || [],
     });
   }, [profile]);
 
@@ -161,6 +165,7 @@ export default function WorkerProfilePage() {
       isFresher: form.isFresher,
       workingStatus: form.workingStatus || undefined,
       noticePeriodDays: form.workingStatus === 'SERVING_NOTICE' ? (form.noticePeriodDays || undefined) : undefined,
+      assets: form.assets,
     }),
     onSuccess: () => { toast.success('Profile updated'); setEditing(false); queryClient.invalidateQueries({ queryKey: ['worker-profile'] }); },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update profile')),
@@ -354,6 +359,47 @@ export default function WorkerProfilePage() {
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update preferred departments')),
   });
 
+  // Assets (Fetched from GET /api/master/assets with defaults fallback)
+  const masterAssetsQuery = useQuery({ queryKey: ['master', 'assets'], queryFn: () => masterDataApi.raw('assets') });
+  const masterAssetsData: any[] = (masterAssetsQuery.data as any[]) || [];
+  const masterAssets: string[] = useMemo(() => {
+    const fromApi = masterAssetsData.map(a => typeof a === 'string' ? a : a.name).filter(Boolean);
+    const defaults = ['Laptop', 'Two-Wheeler / Bike', 'Android Smartphone', 'Safety Shoes / Helmet', 'Driving License', 'Car / Four-Wheeler', 'Desktop PC', 'Wi-Fi / Internet Connection'];
+    return Array.from(new Set([...fromApi, ...defaults])).sort();
+  }, [masterAssetsData]);
+
+  const [assetsModalOpen, setAssetsModalOpen] = useState(false);
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [assetSearch, setAssetSearch] = useState('');
+
+  const handleOpenAssetsModal = () => {
+    if (!profile) return;
+    setSelectedAssets(profile.assets || []);
+    setAssetSearch('');
+    setAssetsModalOpen(true);
+  };
+
+  const toggleAssetSelection = (assetName: string) => {
+    setSelectedAssets((prev) =>
+      prev.includes(assetName) ? prev.filter((a) => a !== assetName) : [...prev, assetName]
+    );
+  };
+
+  const updateAssetsMutation = useMutation({
+    mutationFn: (assets: string[]) => workerApi.updateProfile({ assets }),
+    onSuccess: () => {
+      toast.success('Assets updated');
+      setAssetsModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['worker-profile'] });
+    },
+    onError: (e) => toast.error(getApiErrorMessage(e, 'Could not update assets')),
+  });
+
+  const filteredMasterAssets = useMemo(() => {
+    if (!assetSearch.trim()) return masterAssets;
+    return masterAssets.filter(a => a.toLowerCase().includes(assetSearch.toLowerCase()));
+  }, [masterAssets, assetSearch]);
+
   const skillsWithScores = useMemo(() => {
     if (!profile?.skills) return [];
     return profile.skills.map((skill, index) => ({ name: skill, score: (skill.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 45) + 15 + index * 3 }));
@@ -529,6 +575,18 @@ export default function WorkerProfilePage() {
                   {profile.maritalStatus && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Marital Status</span><span className="font-bold text-slate-700 capitalize">{profile.maritalStatus}</span></div>}
                   {profile.category && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Category</span><span className="font-bold text-slate-700">{{ GEN: 'General', OBC: 'OBC', SC_ST: 'SC/ST' }[profile.category]}</span></div>}
                   {profile.jobPreference && <div className="flex justify-between text-xs"><span className="font-bold text-slate-400">Job Preference</span><span className="font-bold text-slate-700">{profile.jobPreference}</span></div>}
+                  {profile.assets && profile.assets.length > 0 && (
+                    <div className="flex flex-col gap-1 text-xs pt-1 border-t border-slate-50">
+                      <span className="font-bold text-slate-400 text-left">Assets & Vehicles</span>
+                      <div className="flex flex-wrap gap-1">
+                        {profile.assets.map(asset => (
+                          <span key={asset} className="bg-emerald-50 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                            {asset}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </Card>
               )}
 
@@ -633,6 +691,15 @@ export default function WorkerProfilePage() {
                           </Select>
                         </div>
                         <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-500">Job Preference</Label><Input placeholder="e.g. Full Time, Remote" value={form.jobPreference} className="rounded-xl border-slate-200 text-xs" onChange={e => setForm({ ...form, jobPreference: e.target.value })} /></div>
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <Label className="text-xs font-bold text-slate-500">Assets & Vehicles Owned</Label>
+                          <MultiSelectFilter
+                            label="Select Assets & Vehicles"
+                            options={masterAssets}
+                            selectedValues={form.assets}
+                            onChange={(assets) => setForm(p => ({ ...p, assets }))}
+                          />
+                        </div>
                         <div className="space-y-1.5 relative">
                           <Label className="text-xs font-bold text-slate-500">Department / Function</Label>
                           <div className="relative">
@@ -819,6 +886,31 @@ export default function WorkerProfilePage() {
                       <Languages className="h-3.5 w-3.5 text-slate-400 shrink-0" /><span>{lang}</span>
                     </span>
                   )) : <span className="text-xs text-slate-400">No languages added yet.</span>}
+                </div>
+              </Card>
+
+              {/* Assets & Equipment */}
+              <Card className="p-8 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Laptop className="h-5 w-5 text-emerald-600" />
+                    <h3 className="font-extrabold text-slate-800 text-lg">Assets & Vehicles</h3>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-700 rounded-lg" onClick={handleOpenAssetsModal}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {profile.assets?.length ? (
+                    profile.assets.map(asset => (
+                      <span key={asset} className="inline-flex items-center gap-1.5 bg-emerald-50/70 border border-emerald-100/80 text-emerald-800 font-extrabold text-xs px-3.5 py-1.5 rounded-xl shadow-xs">
+                        <Laptop className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                        <span>{asset}</span>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-xs text-slate-400">No assets specified (e.g. Laptop, Two-Wheeler / Bike, Smartphone, Safety Gear). Click edit icon to select.</span>
+                  )}
                 </div>
               </Card>
             </div>
@@ -1086,6 +1178,83 @@ export default function WorkerProfilePage() {
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" className="rounded-xl text-xs" onClick={() => setDepartmentsModalOpen(false)}>Cancel</Button>
                 <Button className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs px-5" onClick={() => updateDepartmentsMutation.mutate(selectedDepartmentIds)} disabled={updateDepartmentsMutation.isPending}>{updateDepartmentsMutation.isPending ? 'Saving...' : 'Save Departments'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Assets Update Dialog */}
+          <Dialog open={assetsModalOpen} onOpenChange={setAssetsModalOpen}>
+            <DialogContent className="w-[95vw] max-w-lg rounded-2xl p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-lg font-extrabold text-slate-800">Update Assets & Vehicles</DialogTitle>
+                <DialogDescription className="text-xs text-slate-500">
+                  Select assets or vehicles you own (e.g. Laptop, Bike, Smartphone, Safety Gear) to improve job matches.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <Input
+                    placeholder="Search assets (e.g. Laptop, Bike)..."
+                    value={assetSearch}
+                    onChange={(e) => setAssetSearch(e.target.value)}
+                    className="pl-9 rounded-xl border-slate-200 text-xs font-bold"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
+                  {masterAssetsQuery.isLoading ? (
+                    <div className="flex justify-center py-6">
+                      <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
+                    </div>
+                  ) : filteredMasterAssets.length === 0 ? (
+                    <div className="text-xs text-slate-400 text-center py-4">No matching assets found.</div>
+                  ) : (
+                    filteredMasterAssets.map((asset) => {
+                      const isSelected = selectedAssets.includes(asset);
+                      return (
+                        <div
+                          key={asset}
+                          onClick={() => toggleAssetSelection(asset)}
+                          className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold transition-all ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                              : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Laptop className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>{asset}</span>
+                          </div>
+                          <Checkbox checked={isSelected} onCheckedChange={() => toggleAssetSelection(asset)} />
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedAssets.length}):</span>
+                  {selectedAssets.map((asset) => (
+                    <Badge
+                      key={asset}
+                      className="bg-emerald-100 text-emerald-800 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"
+                    >
+                      <span>{asset}</span>
+                      <X className="h-3 w-3 cursor-pointer" onClick={() => toggleAssetSelection(asset)} />
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" className="rounded-xl text-xs" onClick={() => setAssetsModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs px-5 shadow-sm"
+                  onClick={() => updateAssetsMutation.mutate(selectedAssets)}
+                  disabled={updateAssetsMutation.isPending}
+                >
+                  {updateAssetsMutation.isPending ? 'Saving...' : 'Save Assets'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

@@ -29,6 +29,7 @@ interface DataTableProps<T> {
   searchKeys?: (keyof T)[];
   pagination?: boolean;
   pageSize?: number;
+  selectable?: boolean;
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
   emptyMessage?: string;
@@ -41,6 +42,7 @@ export function DataTable<T extends { id: string }>({
   searchKeys,
   pagination = true,
   pageSize = 10,
+  selectable = false,
   onEdit,
   onDelete,
   emptyMessage = 'No data found',
@@ -113,7 +115,7 @@ export function DataTable<T extends { id: string }>({
               className="pl-9"
             />
           </div>
-          {selected.length > 0 && (
+          {selectable && selected.length > 0 && (
             <span className="text-sm text-muted-foreground">
               {selected.length} selected
             </span>
@@ -126,12 +128,14 @@ export function DataTable<T extends { id: string }>({
           <table className="w-full">
             <thead className="border-b border-border bg-muted/50">
               <tr>
-                <th className="w-12 px-4 py-3">
-                  <Checkbox
-                    checked={selected.length === paginated.length && paginated.length > 0}
-                    onCheckedChange={toggleSelectAll}
-                  />
-                </th>
+                {selectable && (
+                  <th className="w-12 px-4 py-3">
+                    <Checkbox
+                      checked={selected.length === paginated.length && paginated.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </th>
+                )}
                 {columns.map((col) => (
                   <th
                     key={String(col.key)}
@@ -160,19 +164,21 @@ export function DataTable<T extends { id: string }>({
             <tbody className="divide-y divide-border">
               {paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length + 2} className="px-4 py-12 text-center text-sm text-muted-foreground">
+                  <td colSpan={columns.length + (selectable ? 1 : 0) + (onEdit || onDelete ? 1 : 0)} className="px-4 py-12 text-center text-sm text-muted-foreground">
                     {emptyMessage}
                   </td>
                 </tr>
               ) : (
                 paginated.map((row) => (
                   <tr key={row.id} className="transition-colors hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <Checkbox
-                        checked={selected.includes(row.id)}
-                        onCheckedChange={() => toggleSelect(row.id)}
-                      />
-                    </td>
+                    {selectable && (
+                      <td className="px-4 py-3">
+                        <Checkbox
+                          checked={selected.includes(row.id)}
+                          onCheckedChange={() => toggleSelect(row.id)}
+                        />
+                      </td>
+                    )}
                     {columns.map((col) => (
                       <td key={String(col.key)} className={cn('px-4 py-3 text-sm', col.className)}>
                         {col.render ? col.render(row) : String(row[col.key as keyof T] ?? '')}

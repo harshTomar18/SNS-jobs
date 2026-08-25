@@ -336,15 +336,14 @@ export default function WorkerJobsPage() {
                     }`}
                   onClick={() => setSelectedJobId(job.id)}
                 >
-                  <div className="flex items-start gap-4">
-                    {/* <CompanyLogo name={job.companyName} className="h-12 w-12 shrink-0 md:mt-1" /> */}
+                  <div className="flex items-start gap-3.5">
+                    <CompanyLogo name={job.companyName} className="h-11 w-11 shrink-0 mt-0.5" />
                     <div className="space-y-3 flex-1 min-w-0">
-                      {/* Title and Company */}
-                      <div className="space-y-0.5">
+                      {/* Job Title */}
+                      <div>
                         <h3 className="font-extrabold text-slate-800 text-base leading-tight hover:text-blue-600 transition-colors truncate">
                           {job.title}
                         </h3>
-                        <p className="text-xs text-slate-400 font-bold">{job.companyName}</p>
                       </div>
 
                       {/* Detail line */}

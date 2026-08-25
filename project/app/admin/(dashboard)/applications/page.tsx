@@ -45,6 +45,7 @@ import { applicationsApi, adminApi, masterDataApi, ApplicationSearchParams } fro
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { MultiSelectFilter } from '@/components/multi-select-filter';
 
 export default function AdminApplicationsPage() {
   const queryClient = useQueryClient();
@@ -55,17 +56,17 @@ export default function AdminApplicationsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Filter states
-  const [jobRoleFilter, setJobRoleFilter] = useState('all');
+  // Multi-select Filter states
+  const [jobRoleFilters, setJobRoleFilters] = useState<string[]>([]);
   const [expFilter, setExpFilter] = useState('all');
-  const [industryFilter, setIndustryFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [skillFilter, setSkillFilter] = useState('all');
-  const [qualFilter, setQualFilter] = useState('all');
+  const [industryFilters, setIndustryFilters] = useState<string[]>([]);
+  const [departmentFilters, setDepartmentFilters] = useState<string[]>([]);
+  const [skillFilters, setSkillFilters] = useState<string[]>([]);
+  const [qualFilters, setQualFilters] = useState<string[]>([]);
   const [genderFilter, setGenderFilter] = useState('all');
   const [ageFilter, setAgeFilter] = useState('all');
-  const [langFilter, setLangFilter] = useState('all');
-  const [assetFilter, setAssetFilter] = useState('all');
+  const [langFilters, setLangFilters] = useState<string[]>([]);
+  const [assetFilters, setAssetFilters] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
   // Detail Dialog state (Application View)
@@ -85,8 +86,18 @@ export default function AdminApplicationsPage() {
   });
   const masterData = masterQuery.data;
 
-  // Build API Search parameters for /applications/search (Admin: No default date filter)
-  const apiSearchParams = useMemo<ApplicationSearchParams>(() => {
+  const resolveIds = (selectedNames: string[], masterList?: any[]) => {
+    if (!selectedNames.length) return undefined;
+    return selectedNames.map((name) => {
+      const match = (masterList || []).find(
+        (m: any) => String(m.id) === name || m.name?.toLowerCase() === name.toLowerCase()
+      );
+      return match ? match.id : name;
+    });
+  };
+
+  // Build draft API Search parameters for /applications/search (Admin: No default date filter)
+  const currentSearchParams = useMemo<ApplicationSearchParams>(() => {
     const params: ApplicationSearchParams = {};
 
     if (timeFilter !== 'all') {
@@ -98,9 +109,8 @@ export default function AdminApplicationsPage() {
 
     if (search.trim()) params.q = search.trim();
 
-    if (jobRoleFilter !== 'all') {
-      const matched = (masterData?.['job-roles'] || []).find((r: any) => String(r.id) === jobRoleFilter || r.name.toLowerCase() === jobRoleFilter.toLowerCase());
-      params.jobRoleIds = matched ? matched.id : jobRoleFilter;
+    if (jobRoleFilters.length > 0) {
+      params.jobRoleIds = resolveIds(jobRoleFilters, masterData?.['job-roles']);
     }
 
     if (expFilter !== 'all') {
@@ -110,24 +120,20 @@ export default function AdminApplicationsPage() {
       else if (expFilter === '5+') params.minExperienceMonths = 60;
     }
 
-    if (industryFilter !== 'all') {
-      const matched = (masterData?.industries || []).find((i: any) => String(i.id) === industryFilter || i.name.toLowerCase() === industryFilter.toLowerCase());
-      params.industryIds = matched ? matched.id : industryFilter;
+    if (industryFilters.length > 0) {
+      params.industryIds = resolveIds(industryFilters, masterData?.industries);
     }
 
-    if (departmentFilter !== 'all') {
-      const matched = (masterData?.['functions'] || masterData?.['departments'] || []).find((f: any) => String(f.id) === departmentFilter || f.name.toLowerCase() === departmentFilter.toLowerCase());
-      params.departmentIds = matched ? matched.id : departmentFilter;
+    if (departmentFilters.length > 0) {
+      params.departmentIds = resolveIds(departmentFilters, masterData?.['functions'] || masterData?.['departments']);
     }
 
-    if (skillFilter !== 'all') {
-      const matched = (masterData?.skills || []).find((s: any) => String(s.id) === skillFilter || s.name.toLowerCase() === skillFilter.toLowerCase());
-      params.skillIds = matched ? matched.id : skillFilter;
+    if (skillFilters.length > 0) {
+      params.skillIds = resolveIds(skillFilters, masterData?.skills);
     }
 
-    if (qualFilter !== 'all') {
-      const matched = (masterData?.qualifications || []).find((q: any) => String(q.id) === qualFilter || q.name.toLowerCase() === qualFilter.toLowerCase());
-      params.qualificationIds = matched ? matched.id : qualFilter;
+    if (qualFilters.length > 0) {
+      params.qualificationIds = resolveIds(qualFilters, masterData?.qualifications);
     }
 
     if (genderFilter !== 'all') {
@@ -140,29 +146,34 @@ export default function AdminApplicationsPage() {
       else if (ageFilter === '36+') { params.minAge = 36; }
     }
 
-    if (langFilter !== 'all') {
-      const matched = (masterData?.languages || []).find((l: any) => String(l.id) === langFilter || l.name.toLowerCase() === langFilter.toLowerCase());
-      params.languageIds = matched ? matched.id : langFilter;
+    if (langFilters.length > 0) {
+      params.languageIds = resolveIds(langFilters, masterData?.languages);
     }
 
-    if (assetFilter !== 'all') {
-      params.assets = assetFilter;
+    if (assetFilters.length > 0) {
+      params.assets = assetFilters;
     }
 
     return params;
-  }, [search, timeFilter, jobRoleFilter, expFilter, industryFilter, departmentFilter, skillFilter, qualFilter, genderFilter, ageFilter, langFilter, assetFilter, masterData]);
+  }, [timeFilter, search, jobRoleFilters, expFilter, industryFilters, departmentFilters, skillFilters, qualFilters, genderFilter, ageFilter, langFilters, assetFilters, masterData]);
 
-  const applicationsQuery = useQuery({ 
-    queryKey: ['admin-applications', apiSearchParams], 
+  // Active API parameters state updated on Search button click or initial load
+  const [activeApiParams, setActiveApiParams] = useState(currentSearchParams);
+
+  const handleSearchSubmit = () => {
+    setActiveApiParams(currentSearchParams);
+  };
+
+  // Primary Query: Fetch applications across all recruiters using backend search endpoint
+  const applicationsQuery = useQuery({
+    queryKey: ['admin-applications-search', activeApiParams],
     queryFn: async () => {
       try {
-        const results = await applicationsApi.search(apiSearchParams);
-        if (results) return results;
-      } catch (e) {
-        console.warn('applicationsApi.search failed for admin, falling back to adminList', e);
+        return await applicationsApi.search(activeApiParams);
+      } catch (error) {
+        return await applicationsApi.recruiterList();
       }
-      return applicationsApi.adminList();
-    } 
+    },
   });
   const rawApps = useMemo<Application[]>(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
 
@@ -333,16 +344,16 @@ export default function AdminApplicationsPage() {
   };
 
   const activeFilterCount = [
-    jobRoleFilter !== 'all',
+    jobRoleFilters.length > 0,
     expFilter !== 'all',
-    industryFilter !== 'all',
-    departmentFilter !== 'all',
-    skillFilter !== 'all',
-    qualFilter !== 'all',
+    industryFilters.length > 0,
+    departmentFilters.length > 0,
+    skillFilters.length > 0,
+    qualFilters.length > 0,
     genderFilter !== 'all',
     ageFilter !== 'all',
-    langFilter !== 'all',
-    assetFilter !== 'all',
+    langFilters.length > 0,
+    assetFilters.length > 0,
     timeFilter !== 'all',
     statusFilter !== 'all',
     Boolean(search)
@@ -352,16 +363,17 @@ export default function AdminApplicationsPage() {
     setSearch('');
     setStatusFilter('all');
     setTimeFilter('all');
-    setJobRoleFilter('all');
+    setJobRoleFilters([]);
     setExpFilter('all');
-    setIndustryFilter('all');
-    setDepartmentFilter('all');
-    setSkillFilter('all');
-    setQualFilter('all');
+    setIndustryFilters([]);
+    setDepartmentFilters([]);
+    setSkillFilters([]);
+    setQualFilters([]);
     setGenderFilter('all');
     setAgeFilter('all');
-    setLangFilter('all');
-    setAssetFilter('all');
+    setLangFilters([]);
+    setAssetFilters([]);
+    setActiveApiParams({});
   };
 
   const renderStatusBadge = (status: ApplicationStatus) => {
@@ -433,18 +445,28 @@ export default function AdminApplicationsPage() {
 
       {/* Toolbar & Filters */}
       <div className="bg-white border border-slate-100/80 p-4 rounded-2xl shadow-sm space-y-4">
-        <div className="flex flex-row items-center justify-between flex-wrap gap-4">
+        <div className="flex flex-row items-center justify-between flex-wrap gap-3">
           {/* Left: Search input */}
           <div className="relative flex-1 min-w-[240px]">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by candidate, recruiter, job title, or ID..."
+              placeholder="Search by candidate name, job, recruiter, or ID"
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(); }}
               className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
             />
           </div>
+
+          {/* Search Button */}
+          <Button
+            onClick={handleSearchSubmit}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl h-10 px-5 shadow-sm flex items-center gap-2 shrink-0 text-xs"
+          >
+            <Search className="h-4 w-4" />
+            <span>Search Applications</span>
+          </Button>
 
           {/* Right: Dropdowns & Filter Toggle */}
           <div className="flex items-center gap-3 flex-wrap">
@@ -453,7 +475,7 @@ export default function AdminApplicationsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-                className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300"
+                className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300 h-10"
               >
                 <option value="all">All Status</option>
                 <option value="applied">In Review (Applied)</option>
@@ -470,7 +492,7 @@ export default function AdminApplicationsPage() {
               <select
                 value={timeFilter}
                 onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
-                className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300"
+                className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300 h-10"
               >
                 <option value="all">All Time (No Filter)</option>
                 <option value="15">Last 15 Days</option>
@@ -499,23 +521,13 @@ export default function AdminApplicationsPage() {
         {/* Expandable Multi-Criteria Filters Panel */}
         {showFilters && (
           <div className="pt-4 border-t border-slate-100 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 text-left">
-            {/* 1. Job Role */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Job Role</label>
-              <div className="relative">
-                <select
-                  value={jobRoleFilter}
-                  onChange={(e) => setJobRoleFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Job Roles</option>
-                  {jobRolesList.map((role) => (
-                    <option key={role} value={role}>{role}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 1. Job Role (Multi-Select) */}
+            <MultiSelectFilter
+              label="Job Role"
+              options={jobRolesList}
+              selectedValues={jobRoleFilters}
+              onChange={setJobRoleFilters}
+            />
 
             {/* 2. Experience */}
             <div className="space-y-1">
@@ -524,7 +536,7 @@ export default function AdminApplicationsPage() {
                 <select
                   value={expFilter}
                   onChange={(e) => setExpFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">All Experience</option>
                   <option value="fresher">Fresher (0 Yrs)</option>
@@ -536,77 +548,37 @@ export default function AdminApplicationsPage() {
               </div>
             </div>
 
-            {/* 3. Industry */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Industry</label>
-              <div className="relative">
-                <select
-                  value={industryFilter}
-                  onChange={(e) => setIndustryFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Industries</option>
-                  {industriesList.map((ind) => (
-                    <option key={ind} value={ind}>{ind}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 3. Industry (Multi-Select) */}
+            <MultiSelectFilter
+              label="Industry"
+              options={industriesList}
+              selectedValues={industryFilters}
+              onChange={setIndustryFilters}
+            />
 
-            {/* 4. Department */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Department</label>
-              <div className="relative">
-                <select
-                  value={departmentFilter}
-                  onChange={(e) => setDepartmentFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Departments</option>
-                  {departmentsList.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 4. Department (Multi-Select) */}
+            <MultiSelectFilter
+              label="Department"
+              options={departmentsList}
+              selectedValues={departmentFilters}
+              onChange={setDepartmentFilters}
+            />
 
-            {/* 5. Skills */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Skills</label>
-              <div className="relative">
-                <select
-                  value={skillFilter}
-                  onChange={(e) => setSkillFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Skills</option>
-                  {skillsList.map((sk) => (
-                    <option key={sk} value={sk}>{sk}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 5. Skills (Multi-Select) */}
+            <MultiSelectFilter
+              label="Skills"
+              options={skillsList}
+              selectedValues={skillFilters}
+              onChange={setSkillFilters}
+            />
 
-            {/* 6. Qualification */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Qualification</label>
-              <div className="relative">
-                <select
-                  value={qualFilter}
-                  onChange={(e) => setQualFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Qualifications</option>
-                  {qualList.map((q) => (
-                    <option key={q} value={q}>{q}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 6. Qualification (Multi-Select) */}
+            <MultiSelectFilter
+              label="Qualification"
+              options={qualList}
+              selectedValues={qualFilters}
+              onChange={setQualFilters}
+            />
 
             {/* 7. Gender */}
             <div className="space-y-1">
@@ -615,7 +587,7 @@ export default function AdminApplicationsPage() {
                 <select
                   value={genderFilter}
                   onChange={(e) => setGenderFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">Any Gender</option>
                   <option value="MALE">Male</option>
@@ -625,14 +597,14 @@ export default function AdminApplicationsPage() {
               </div>
             </div>
 
-            {/* 8. Age */}
+            {/* 8. Age Range */}
             <div className="space-y-1">
               <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Age Range</label>
               <div className="relative">
                 <select
                   value={ageFilter}
                   onChange={(e) => setAgeFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
+                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500 h-9"
                 >
                   <option value="all">Any Age</option>
                   <option value="18-25">18 - 25 Years</option>
@@ -643,41 +615,21 @@ export default function AdminApplicationsPage() {
               </div>
             </div>
 
-            {/* 9. Languages */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Languages</label>
-              <div className="relative">
-                <select
-                  value={langFilter}
-                  onChange={(e) => setLangFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Languages</option>
-                  {languagesList.map((lang) => (
-                    <option key={lang} value={lang}>{lang}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 9. Languages (Multi-Select) */}
+            <MultiSelectFilter
+              label="Languages"
+              options={languagesList}
+              selectedValues={langFilters}
+              onChange={setLangFilters}
+            />
 
-            {/* 10. Assets */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Assets</label>
-              <div className="relative">
-                <select
-                  value={assetFilter}
-                  onChange={(e) => setAssetFilter(e.target.value)}
-                  className="w-full appearance-none bg-slate-50/70 border border-slate-200 rounded-xl py-2 pl-3 pr-8 text-xs font-bold text-slate-700 focus:outline-none focus:bg-white focus:border-indigo-500"
-                >
-                  <option value="all">All Assets</option>
-                  {assetsList.map((asset) => (
-                    <option key={asset} value={asset}>{asset}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
-            </div>
+            {/* 10. Assets (Multi-Select) */}
+            <MultiSelectFilter
+              label="Assets"
+              options={assetsList}
+              selectedValues={assetFilters}
+              onChange={setAssetFilters}
+            />
           </div>
         )}
       </div>
