@@ -583,7 +583,7 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     avatarUrl: profile.profilePhotoUrl || undefined,
     profilePhotoUrl: profile.profilePhotoUrl || undefined,
     resumeUrl: profile.resumeUrl || undefined,
-    headline: profile.headline || 'Worker profile',
+    headline: profile.headline || 'Candidate Profile',
     bio: profile.summary || '',
     education: (profile.education || []).map((entry) => ({
       id: entry.id,
@@ -703,7 +703,7 @@ export function toApplication(application: BackendApplication): Application {
     })),
     workerCity: fullAppLocation,
     workerExperienceYears: workerProfile?.totalExperienceMonths ? Math.floor(workerProfile.totalExperienceMonths / 12) : 0,
-    workerHeadline: workerProfile?.headline || 'Worker Profile',
+    workerHeadline: workerProfile?.headline || 'Candidate Profile',
     workerProfile: workerProfile ? toWorkerProfile(workerProfile) : undefined,
   };
 }

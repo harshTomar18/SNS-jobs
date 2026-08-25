@@ -551,7 +551,7 @@ export default function WorkerProfilePage() {
                       <h2 className="text-xl sm:text-2xl font-black text-slate-800 break-words">{profile.fullName}</h2>
                       {profile.isFresher && <Badge className="bg-green-50 text-green-600 border-none text-[10px] font-bold rounded-full px-2.5 py-0.5">FRESHER</Badge>}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Worker Profile'}</p>
+                    <p className="text-xs sm:text-sm text-slate-600 font-semibold max-w-xl">{profile.headline || 'Candidate Profile'}</p>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-bold">
                       {profile.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />{profile.phone}</span>}
                       {profile.alternatePhone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />Alt: {profile.alternatePhone}</span>}
