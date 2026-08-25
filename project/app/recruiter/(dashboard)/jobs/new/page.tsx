@@ -1355,9 +1355,9 @@ export default function CreateJobPage() {
                 <Select value={formData.wageType || 'monthly'} onValueChange={(val: 'monthly' | 'annual' | 'daily') => setValue('wageType', val, { shouldValidate: true })}>
                   <SelectTrigger className="rounded-xl border-slate-200"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Per month salary (₹)</SelectItem>
-                    <SelectItem value="annual">Per annum salary (₹)</SelectItem>
-                    <SelectItem value="daily">Per day (₹)</SelectItem>
+                    <SelectItem value="monthly">Per Month Salary (₹)</SelectItem>
+                    <SelectItem value="annual">Per Annum Salary (₹)</SelectItem>
+                    <SelectItem value="daily">Per Day Salary (₹)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
