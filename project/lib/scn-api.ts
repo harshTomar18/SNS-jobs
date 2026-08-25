@@ -870,7 +870,7 @@ function formatJobPayload(data: any) {
     shiftType: (data.shiftType || 'day').toLowerCase(),
     gender: (data.gender || 'ANY').toUpperCase(),
     headcountRequired: Number(data.headcountRequired || 1),
-    minExperienceMonths: data.freshersOnly ? 0 : (data.minExperienceMonths !== undefined ? Number(data.minExperienceMonths) : 0),
+    minExperienceMonths: data.freshersOnly ? undefined : (data.minExperienceMonths !== undefined ? Number(data.minExperienceMonths) : undefined),
     maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceMonths !== undefined ? Number(data.maxExperienceMonths) : undefined),
     freshersOnly: Boolean(data.freshersOnly),
     workingDays: workingDaysEnum,

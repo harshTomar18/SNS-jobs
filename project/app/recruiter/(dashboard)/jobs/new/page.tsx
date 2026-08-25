@@ -511,7 +511,7 @@ export default function CreateJobPage() {
           shiftType: data.shiftType,
           jobType: data.jobType,
           headcountRequired: data.headcountRequired,
-          minExperienceMonths: data.freshersOnly ? 0 : data.minExperienceYears * 12,
+          minExperienceMonths: data.freshersOnly ? undefined : (data.minExperienceYears !== undefined ? data.minExperienceYears * 12 : undefined),
           maxExperienceMonths: data.freshersOnly ? undefined : (data.maxExperienceYears !== undefined ? data.maxExperienceYears * 12 : undefined),
           benefitNames: data.benefitNames,
           assetNames: data.assetNames,
