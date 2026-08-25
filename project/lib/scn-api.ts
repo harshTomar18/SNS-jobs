@@ -1343,7 +1343,7 @@ export const masterDataApi = {
     return this.raw('qualifications');
   },
   async all() {
-    const [industries, locations, skills, jobRoles, languages, qualifications, benefits, assets] = await Promise.all([
+    const [industries, locations, skills, jobRoles, languages, qualifications, benefits, assets, functions] = await Promise.all([
       this.list('industries'),
       this.list('locations'),
       this.list('skills'),
@@ -1352,6 +1352,7 @@ export const masterDataApi = {
       this.list('qualifications'),
       this.list('benefits').catch(() => []),
       this.list('assets').catch(() => []),
+      this.list('functions').catch(() => []),
     ]);
 
     return {
@@ -1363,6 +1364,8 @@ export const masterDataApi = {
       qualifications,
       benefits,
       assets,
+      functions,
+      departments: functions,
     };
   },
   create(resource: MasterResource, data: { name?: string; level?: string; state?: string; city?: string; locality?: string }) {

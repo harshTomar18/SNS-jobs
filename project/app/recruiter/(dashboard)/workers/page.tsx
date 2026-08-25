@@ -154,9 +154,10 @@ export default function RecruiterWorkerSearchPage() {
   }, [masterData, workers]);
 
   const departmentsList = useMemo(() => {
+    const fromMaster = (masterData?.['functions'] || masterData?.['departments'] || []).map((d: any) => d.name);
     const fromWorkers = workers.map((w) => w.department).concat(workers.flatMap((w) => (w as any).preferredDepartments || [])).filter(Boolean) as string[];
-    return Array.from(new Set([...fromWorkers, 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production', 'Fleet Operations', 'Food & Beverage', 'Store Operations', 'Quality Assurance', 'Data Operations', 'Delivery', 'Software Development', 'Patient Care', 'Security', 'Site Operations', 'Housekeeping', 'Sales'])).filter(Boolean).sort();
-  }, [workers]);
+    return Array.from(new Set([...fromMaster, ...fromWorkers, 'Administration & Facilities', 'Customer Support', 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production', 'Fleet Operations', 'Food & Beverage', 'Store Operations', 'Quality Assurance', 'Data Operations', 'Delivery', 'Software Development', 'Patient Care', 'Security', 'Site Operations', 'Housekeeping', 'Sales'])).filter(Boolean).sort();
+  }, [masterData, workers]);
 
   const skillsList = useMemo(() => {
     const fromMaster = (masterData?.skills || []).map((s: any) => s.name);

@@ -371,8 +371,9 @@ export default function RecruiterApplicationsPage() {
 
   const departmentsList = useMemo(() => {
     const fromMaster = (masterData?.['functions'] || masterData?.['departments'] || []).map((d: any) => d.name);
-    return Array.from(new Set([...fromMaster, 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production', 'Fleet Operations', 'Food & Beverage', 'Store Operations', 'Software Development'])).filter(Boolean).sort();
-  }, [masterData]);
+    const fromApps = (applications || []).map((a: any) => a.job?.functionName || a.job?.departmentName || a.job?.department).filter(Boolean);
+    return Array.from(new Set([...fromMaster, ...fromApps, 'Administration & Facilities', 'Customer Support', 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production', 'Fleet Operations', 'Food & Beverage', 'Store Operations', 'Software Development', 'Quality Assurance', 'Data Operations', 'Delivery', 'Patient Care', 'Security', 'Site Operations', 'Housekeeping', 'Sales'])).filter(Boolean).sort();
+  }, [masterData, applications]);
 
   const skillsList = useMemo(() => {
     const fromMaster = (masterData?.skills || []).map((s: any) => s.name);
