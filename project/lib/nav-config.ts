@@ -19,6 +19,8 @@ export const adminNavItems: NavItem[] = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Recruiters', href: '/admin/recruiters', icon: User },
   { label: 'Candidates', href: '/admin/workers', icon: Briefcase },
+  { label: 'Applications', href: '/admin/applications', icon: FileText },
   { label: 'Jobs', href: '/admin/jobs', icon: Briefcase },
   { label: 'Master Data', href: '/admin/master-data', icon: FileText },
 ];
+

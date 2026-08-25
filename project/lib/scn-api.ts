@@ -242,6 +242,59 @@ export interface DashboardStats {
   applicationsByStatus: Record<string, number>;
 }
 
+export interface WorkerSearchParams {
+  q?: string;
+  city?: string;
+  jobRoleIds?: string | number | (string | number)[];
+  languageIds?: string | number | (string | number)[];
+  minExperienceMonths?: number | string;
+  industryIds?: string | number | (string | number)[];
+  departmentIds?: string | number | (string | number)[];
+  skillIds?: string | number | (string | number)[];
+  qualificationIds?: string | number | (string | number)[];
+  gender?: string;
+  minAge?: number | string;
+  maxAge?: number | string;
+  assets?: string | string[];
+  completeOnly?: boolean;
+  skillId?: number;
+}
+
+export interface ApplicationSearchParams {
+  days?: number | string;
+  q?: string;
+  city?: string;
+  jobRoleIds?: string | number | (string | number)[];
+  languageIds?: string | number | (string | number)[];
+  minExperienceMonths?: number | string;
+  industryIds?: string | number | (string | number)[];
+  departmentIds?: string | number | (string | number)[];
+  skillIds?: string | number | (string | number)[];
+  qualificationIds?: string | number | (string | number)[];
+  gender?: string;
+  minAge?: number | string;
+  maxAge?: number | string;
+  assets?: string | string[];
+  status?: string;
+}
+
+function formatSearchParams(params?: Record<string, any>) {
+  if (!params) return undefined;
+  const clean: Record<string, any> = {};
+  Object.entries(params).forEach(([key, val]) => {
+    if (val !== undefined && val !== null && val !== '' && val !== 'all') {
+      if (Array.isArray(val)) {
+        if (val.length > 0) {
+          clean[key] = val.join(',');
+        }
+      } else {
+        clean[key] = val;
+      }
+    }
+  });
+  return Object.keys(clean).length > 0 ? clean : undefined;
+}
+
 const apiJobTypeToUi = (value?: BackendJob['jobType']): Job['jobType'] => {
   if (value === 'part_time') return 'part-time';
   if (value === 'contract') return 'contract';
@@ -916,6 +969,11 @@ export const applicationsApi = {
   withdraw(id: string) {
     return apiDelete<{ withdrawn: boolean }>(`/applications/${id}`);
   },
+  async search(params?: ApplicationSearchParams) {
+    const formattedParams = formatSearchParams(params);
+    const rawApps = await apiGet<BackendApplication[]>('/applications/search', { params: formattedParams });
+    return (Array.isArray(rawApps) ? rawApps : []).map(toApplication);
+  },
 };
 
 export const workerApi = {
@@ -1065,9 +1123,10 @@ export const workerApi = {
     const raw = await apiGet<Record<string, BackendLookup[]>>('/master/qualifications');
     return raw;
   },
-  async search(params?: { q?: string; skillId?: number; city?: string; completeOnly?: boolean }) {
-    const workers = await apiGet<BackendWorkerProfile[]>('/worker/search', { params });
-    return workers.map(toWorkerProfile);
+  async search(params?: WorkerSearchParams) {
+    const formattedParams = formatSearchParams(params);
+    const workers = await apiGet<BackendWorkerProfile[]>('/worker/search', { params: formattedParams });
+    return (Array.isArray(workers) ? workers : []).map(toWorkerProfile);
   },
 };
 

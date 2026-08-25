@@ -33,6 +33,7 @@ import { BulkCandidateImportModal } from '@/components/admin/bulk-candidate-impo
 
 export default function AdminWorkersPage() {
   const [search, setSearch] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
   const [jobRoleFilter, setJobRoleFilter] = useState('all');
   const [expFilter, setExpFilter] = useState('all');
   const [industryFilter, setIndustryFilter] = useState('all');
@@ -50,20 +51,81 @@ export default function AdminWorkersPage() {
   const [showFilters, setShowFilters] = useState(true);
   const [showBulkImport, setShowBulkImport] = useState(false);
 
-  // Fetch candidates from API (/worker/search)
-  const workersQuery = useQuery({
-    queryKey: ['admin-workers', search],
-    queryFn: () => workerApi.search({ q: search || undefined, completeOnly: false }),
-  });
-  const workers = useMemo<WorkerWithMeta[]>(() => workersQuery.data ?? [], [workersQuery.data]);
-
   // Fetch master data for dropdown options
   const masterQuery = useQuery({
     queryKey: ['master-data-all'],
     queryFn: () => masterDataApi.all(),
   });
-
   const masterData = masterQuery.data;
+
+  // Build API search parameters
+  const apiSearchParams = useMemo(() => {
+    const params: any = { completeOnly: false };
+
+    if (search.trim()) params.q = search.trim();
+    if (cityFilter.trim() && cityFilter !== 'all') params.city = cityFilter.trim();
+
+    if (jobRoleFilter !== 'all') {
+      const matched = (masterData?.['job-roles'] || []).find((r: any) => String(r.id) === jobRoleFilter || r.name.toLowerCase() === jobRoleFilter.toLowerCase());
+      params.jobRoleIds = matched ? matched.id : jobRoleFilter;
+    }
+
+    if (expFilter !== 'all') {
+      if (expFilter === 'fresher') params.minExperienceMonths = 0;
+      else if (expFilter === '1-3') params.minExperienceMonths = 12;
+      else if (expFilter === '3-5') params.minExperienceMonths = 36;
+      else if (expFilter === '5+') params.minExperienceMonths = 60;
+    }
+
+    if (industryFilter !== 'all') {
+      const matched = (masterData?.industries || []).find((i: any) => String(i.id) === industryFilter || i.name.toLowerCase() === industryFilter.toLowerCase());
+      params.industryIds = matched ? matched.id : industryFilter;
+    }
+
+    if (departmentFilter !== 'all') {
+      const matched = (masterData?.['functions'] || masterData?.['departments'] || []).find((f: any) => String(f.id) === departmentFilter || f.name.toLowerCase() === departmentFilter.toLowerCase());
+      params.departmentIds = matched ? matched.id : departmentFilter;
+    }
+
+    if (skillFilter !== 'all') {
+      const matched = (masterData?.skills || []).find((s: any) => String(s.id) === skillFilter || s.name.toLowerCase() === skillFilter.toLowerCase());
+      params.skillIds = matched ? matched.id : skillFilter;
+    }
+
+    if (qualFilter !== 'all') {
+      const matched = (masterData?.qualifications || []).find((q: any) => String(q.id) === qualFilter || q.name.toLowerCase() === qualFilter.toLowerCase());
+      params.qualificationIds = matched ? matched.id : qualFilter;
+    }
+
+    if (genderFilter !== 'all') {
+      params.gender = genderFilter.toLowerCase();
+    }
+
+    if (ageFilter !== 'all') {
+      if (ageFilter === '18-25') { params.minAge = 18; params.maxAge = 25; }
+      else if (ageFilter === '26-35') { params.minAge = 26; params.maxAge = 35; }
+      else if (ageFilter === '36+') { params.minAge = 36; }
+    }
+
+    if (langFilter !== 'all') {
+      const matched = (masterData?.languages || []).find((l: any) => String(l.id) === langFilter || l.name.toLowerCase() === langFilter.toLowerCase());
+      params.languageIds = matched ? matched.id : langFilter;
+    }
+
+    if (assetFilter !== 'all') {
+      params.assets = assetFilter;
+    }
+
+    return params;
+  }, [search, cityFilter, jobRoleFilter, expFilter, industryFilter, departmentFilter, skillFilter, qualFilter, genderFilter, ageFilter, langFilter, assetFilter, masterData]);
+
+  // Fetch candidates from API (/worker/search)
+  const workersQuery = useQuery({
+    queryKey: ['admin-workers', apiSearchParams],
+    queryFn: () => workerApi.search(apiSearchParams),
+  });
+  const workers = useMemo<WorkerWithMeta[]>(() => workersQuery.data ?? [], [workersQuery.data]);
+
 
   // Extract master data options with safe fallbacks
   const jobRolesList = useMemo(() => {

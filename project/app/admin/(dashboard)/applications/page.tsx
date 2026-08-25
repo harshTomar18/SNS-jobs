@@ -15,15 +15,10 @@ import {
   ChevronDown,
   Clock,
   UserCheck,
-  Phone,
-  Mail,
   MapPin,
-  Briefcase,
-  GraduationCap,
-  Award,
-  Globe,
   Filter,
-  RotateCcw
+  RotateCcw,
+  Building
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,23 +38,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { Separator } from '@/components/ui/separator';
-import { EmptyState } from '@/components/empty-state';
 import { Application, ApplicationStatus, WorkerProfile } from '@/lib/types';
-import { getInitials, formatExpectedSalary } from '@/lib/format';
+import { getInitials } from '@/lib/format';
 import { CandidateProfileDrawer } from '@/components/candidate-profile-drawer';
 import { applicationsApi, adminApi, masterDataApi, ApplicationSearchParams } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
-export default function RecruiterApplicationsPage() {
+export default function AdminApplicationsPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
@@ -81,9 +68,6 @@ export default function RecruiterApplicationsPage() {
   const [assetFilter, setAssetFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Selected applications checkboxes state
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  
   // Detail Dialog state (Application View)
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -101,7 +85,7 @@ export default function RecruiterApplicationsPage() {
   });
   const masterData = masterQuery.data;
 
-  // Build API Search parameters for /applications/search
+  // Build API Search parameters for /applications/search (Admin: No default date filter)
   const apiSearchParams = useMemo<ApplicationSearchParams>(() => {
     const params: ApplicationSearchParams = {};
 
@@ -169,19 +153,18 @@ export default function RecruiterApplicationsPage() {
   }, [search, timeFilter, jobRoleFilter, expFilter, industryFilter, departmentFilter, skillFilter, qualFilter, genderFilter, ageFilter, langFilter, assetFilter, masterData]);
 
   const applicationsQuery = useQuery({ 
-    queryKey: ['recruiter-applications', apiSearchParams], 
+    queryKey: ['admin-applications', apiSearchParams], 
     queryFn: async () => {
       try {
         const results = await applicationsApi.search(apiSearchParams);
         if (results) return results;
       } catch (e) {
-        console.warn('applicationsApi.search failed, falling back to recruiterList', e);
+        console.warn('applicationsApi.search failed for admin, falling back to adminList', e);
       }
-      return applicationsApi.recruiterList();
+      return applicationsApi.adminList();
     } 
   });
   const rawApps = useMemo<Application[]>(() => applicationsQuery.data ?? [], [applicationsQuery.data]);
-
 
   // Worker Detail Query for Candidate Profile Drawer
   const workerDetailQuery = useQuery({
@@ -229,11 +212,7 @@ export default function RecruiterApplicationsPage() {
       applicationsApi.updateStatus(id, status, notes),
     onSuccess: (updatedApp) => {
       toast.success('Application status updated');
-      queryClient.setQueryData(['recruiter-applications'], (old: Application[] | undefined) => {
-        if (!old) return old;
-        return old.map(app => app.id === updatedApp.id ? updatedApp : app);
-      });
-      queryClient.invalidateQueries({ queryKey: ['recruiter-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-applications'] });
     },
     onError: (error) => toast.error(getApiErrorMessage(error, 'Could not update application')),
   });
@@ -265,6 +244,7 @@ export default function RecruiterApplicationsPage() {
     const now = Date.now();
     if (timeFilter === 'day') return now - appliedTime <= 24 * 60 * 60 * 1000;
     if (timeFilter === 'week') return now - appliedTime <= 7 * 24 * 60 * 60 * 1000;
+    if (timeFilter === '15') return now - appliedTime <= 15 * 24 * 60 * 60 * 1000;
     if (timeFilter === 'month') return now - appliedTime <= 30 * 24 * 60 * 60 * 1000;
     return true;
   };
@@ -290,13 +270,50 @@ export default function RecruiterApplicationsPage() {
         const query = search.toLowerCase();
         const matchesName = app.workerName.toLowerCase().includes(query);
         const matchesJob = app.job.title.toLowerCase().includes(query);
+        const matchesRecruiter = (app.job.recruiterName || '').toLowerCase().includes(query) || (app.job.companyName || '').toLowerCase().includes(query);
         const matchesId = app.id.toLowerCase().includes(query);
-        if (!matchesName && !matchesJob && !matchesId) return false;
+        if (!matchesName && !matchesJob && !matchesRecruiter && !matchesId) return false;
       }
 
       return true;
     });
   }, [activeTab, statusFilter, timeFilter, search, applications]);
+
+  // Master data lists for dropdowns
+  const jobRolesList = useMemo(() => {
+    const fromMaster = (masterData?.['job-roles'] || []).map((r: any) => r.name);
+    return Array.from(new Set([...fromMaster, 'Chat Support Executive', 'Stock Clerk', 'Hospital Receptionist', 'IT Helpdesk Executive', 'Production Line Worker', 'Delivery Driver'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const industriesList = useMemo(() => {
+    const fromMaster = (masterData?.industries || []).map((i: any) => i.name);
+    return Array.from(new Set([...fromMaster, 'BPO / Customer Support', 'Retail', 'Healthcare', 'IT Services', 'Manufacturing', 'Logistics & Supply Chain'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const departmentsList = useMemo(() => {
+    const fromMaster = (masterData?.['functions'] || masterData?.['departments'] || []).map((d: any) => d.name);
+    return Array.from(new Set([...fromMaster, 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const skillsList = useMemo(() => {
+    const fromMaster = (masterData?.skills || []).map((s: any) => s.name);
+    return Array.from(new Set([...fromMaster, 'Communication', 'Customer Service', 'Inventory Management', 'MS Office', 'JavaScript'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const qualList = useMemo(() => {
+    const fromMaster = (masterData?.qualifications || []).map((q: any) => q.name);
+    return Array.from(new Set([...fromMaster, '10th Pass', '12th Pass', 'Graduate', 'Post Graduate', 'Diploma'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const languagesList = useMemo(() => {
+    const fromMaster = (masterData?.languages || []).map((l: any) => l.name);
+    return Array.from(new Set([...fromMaster, 'English', 'Hindi', 'Tamil', 'Kannada', 'Telugu'])).filter(Boolean).sort();
+  }, [masterData]);
+
+  const assetsList = useMemo(() => {
+    const fromMaster = (masterData?.assets || []).map((a: any) => a.name);
+    return Array.from(new Set([...fromMaster, 'Laptop', 'Two-Wheeler / Bike', 'Android Smartphone'])).filter(Boolean).sort();
+  }, [masterData]);
 
   // Pagination calculation
   const totalItems = filteredApps.length;
@@ -304,22 +321,6 @@ export default function RecruiterApplicationsPage() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const paginatedApps = filteredApps.slice(startIndex, endIndex);
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(paginatedApps.map(a => a.id));
-    } else {
-      setSelectedIds([]);
-    }
-  };
-
-  const handleSelectOne = (id: string, checked: boolean) => {
-    if (checked) {
-      setSelectedIds(prev => [...prev, id]);
-    } else {
-      setSelectedIds(prev => prev.filter(x => x !== id));
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString([], { month: 'short', day: '2-digit' });
@@ -330,58 +331,6 @@ export default function RecruiterApplicationsPage() {
     setSelectedWorkerId(app.workerId);
     setIsWorkerSheetOpen(true);
   };
-
-  const renderStatusBadge = (status: ApplicationStatus) => {
-    if (status === 'shortlisted' || status === 'accepted') {
-      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SHORTLISTED</Badge>;
-    }
-    if (status === 'notshortlisted' || status === 'not_shortlisted' || status === 'rejected') {
-      return <Badge variant="outline" className="bg-red-50 text-red-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">NOT SHORTLISTED</Badge>;
-    }
-    if (status === 'selected_for_interview' || status === 'interview') {
-      return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SELECTED FOR INTERVIEW</Badge>;
-    }
-    if (status === 'resume_viewed') {
-      return <Badge variant="outline" className="bg-amber-50 text-amber-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">RESUME VIEWED</Badge>;
-    }
-    return <Badge variant="outline" className="bg-blue-50/70 text-blue-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">IN REVIEW</Badge>;
-  };
-
-  // Extract master data options with safe fallbacks
-  const jobRolesList = useMemo(() => {
-    const fromMaster = (masterData?.['job-roles'] || []).map((r: any) => r.name);
-    return Array.from(new Set([...fromMaster, 'Chat Support Executive', 'Stock Clerk', 'Hospital Receptionist', 'IT Helpdesk Executive', 'Production Line Worker', 'Delivery Driver', 'Cook', 'Store Supervisor', 'Quality Control Inspector', 'Data Entry Operator', 'Delivery Executive', 'Junior Software Developer'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const industriesList = useMemo(() => {
-    const fromMaster = (masterData?.industries || []).map((i: any) => i.name);
-    return Array.from(new Set([...fromMaster, 'BPO / Customer Support', 'Retail', 'Healthcare', 'IT Services', 'Manufacturing', 'Logistics & Supply Chain', 'Hospitality', 'Construction', 'Security Services', 'E-commerce'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const departmentsList = useMemo(() => {
-    const fromMaster = (masterData?.['functions'] || masterData?.['departments'] || []).map((d: any) => d.name);
-    return Array.from(new Set([...fromMaster, 'Customer Service', 'Warehouse Operations', 'Front Office', 'Technical Support', 'Production', 'Fleet Operations', 'Food & Beverage', 'Store Operations', 'Software Development'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const skillsList = useMemo(() => {
-    const fromMaster = (masterData?.skills || []).map((s: any) => s.name);
-    return Array.from(new Set([...fromMaster, 'Communication', 'Customer Service', 'Inventory Management', 'MS Office', 'JavaScript', 'Node.js', 'SQL', 'English Communication'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const qualList = useMemo(() => {
-    const fromMaster = (masterData?.qualifications || []).map((q: any) => q.name);
-    return Array.from(new Set([...fromMaster, '10th Pass', '12th Pass', 'Graduate', 'Post Graduate', 'Diploma', 'B.Tech', 'B.Com', 'B.A.', 'B.Sc'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const languagesList = useMemo(() => {
-    const fromMaster = (masterData?.languages || []).map((l: any) => l.name);
-    return Array.from(new Set([...fromMaster, 'English', 'Hindi', 'Tamil', 'Kannada', 'Telugu', 'Marathi', 'Bengali'])).filter(Boolean).sort();
-  }, [masterData]);
-
-  const assetsList = useMemo(() => {
-    const fromMaster = (masterData?.assets || []).map((a: any) => a.name);
-    return Array.from(new Set([...fromMaster, 'Laptop', 'Two-Wheeler / Bike', 'Android Smartphone', 'Safety Shoes / Helmet', 'Driving License'])).filter(Boolean).sort();
-  }, [masterData]);
 
   const activeFilterCount = [
     jobRoleFilter !== 'all',
@@ -415,13 +364,29 @@ export default function RecruiterApplicationsPage() {
     setAssetFilter('all');
   };
 
+  const renderStatusBadge = (status: ApplicationStatus) => {
+    if (status === 'shortlisted' || status === 'accepted') {
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SHORTLISTED</Badge>;
+    }
+    if (status === 'notshortlisted' || status === 'not_shortlisted' || status === 'rejected') {
+      return <Badge variant="outline" className="bg-red-50 text-red-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">NOT SHORTLISTED</Badge>;
+    }
+    if (status === 'selected_for_interview' || status === 'interview') {
+      return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">SELECTED FOR INTERVIEW</Badge>;
+    }
+    if (status === 'resume_viewed') {
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">RESUME VIEWED</Badge>;
+    }
+    return <Badge variant="outline" className="bg-blue-50/70 text-blue-600 font-extrabold text-[9px] px-3.5 py-1.5 rounded-full border-none shadow-sm tracking-wider uppercase">IN REVIEW</Badge>;
+  };
+
   return (
     <div className="space-y-8 pb-12">
       {/* Header Container */}
       <div className="flex flex-row items-center justify-between flex-wrap gap-4 border-b border-slate-50 pb-6">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Applications</h1>
-          <p className="text-slate-400 text-sm font-semibold mt-1">Review and manage worker candidate submissions</p>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Applications Oversight</h1>
+          <p className="text-slate-400 text-sm font-semibold mt-1">Global search across candidate applications across all recruiters</p>
         </div>
         <div className="flex items-center gap-3">
           {activeFilterCount > 0 && (
@@ -435,8 +400,8 @@ export default function RecruiterApplicationsPage() {
               Reset ({activeFilterCount})
             </Button>
           )}
-          <Badge variant="outline" className="bg-slate-100/80 text-slate-500 text-[10px] font-extrabold px-3 py-1.5 rounded-full border-none shadow-sm">
-            {counts.all.toLocaleString()} TOTAL
+          <Badge variant="outline" className="bg-indigo-50 text-indigo-600 border-indigo-100 text-xs font-extrabold px-3.5 py-1.5 rounded-full shadow-sm">
+            {counts.all.toLocaleString()} ALL APPLICANTS
           </Badge>
         </div>
       </div>
@@ -453,7 +418,7 @@ export default function RecruiterApplicationsPage() {
         ].map(tab => (
           <button
             key={tab.value}
-            onClick={() => { setActiveTab(tab.value); setCurrentPage(1); setSelectedIds([]); }}
+            onClick={() => { setActiveTab(tab.value); setCurrentPage(1); }}
             className={cn(
               "px-4 py-3 text-xs font-bold transition-all border-b-2 whitespace-nowrap -mb-1",
               activeTab === tab.value 
@@ -466,6 +431,7 @@ export default function RecruiterApplicationsPage() {
         ))}
       </div>
 
+      {/* Toolbar & Filters */}
       <div className="bg-white border border-slate-100/80 p-4 rounded-2xl shadow-sm space-y-4">
         <div className="flex flex-row items-center justify-between flex-wrap gap-4">
           {/* Left: Search input */}
@@ -473,7 +439,7 @@ export default function RecruiterApplicationsPage() {
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by candidate name, job, or ID"
+              placeholder="Search by candidate, recruiter, job title, or ID..."
               value={search}
               onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-10 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
@@ -499,14 +465,14 @@ export default function RecruiterApplicationsPage() {
               <ChevronDown className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
 
-            {/* Time / Days Dropdown */}
+            {/* Time / Days Dropdown (Admin default: All time) */}
             <div className="relative">
               <select
                 value={timeFilter}
                 onChange={(e) => { setTimeFilter(e.target.value); setCurrentPage(1); }}
                 className="appearance-none bg-white border border-slate-200 rounded-xl py-2.5 pl-4 pr-10 text-xs font-bold text-slate-600 shadow-sm focus:outline-none focus:border-slate-300"
               >
-                <option value="all">All Time</option>
+                <option value="all">All Time (No Filter)</option>
                 <option value="15">Last 15 Days</option>
                 <option value="30">Last 30 Days</option>
                 <option value="week">Last 7 Days</option>
@@ -716,17 +682,16 @@ export default function RecruiterApplicationsPage() {
         )}
       </div>
 
-
       {/* Applications Data Table */}
       <Card className="border border-slate-100 rounded-2xl shadow-sm overflow-hidden bg-white">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[850px]">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50">
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">CANDIDATE</th>
-                <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">APPLIED FOR</th>
+                <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">APPLIED JOB</th>
+                <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">RECRUITER / COMPANY</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">DATE</th>
-                <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">EXPERIENCE</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4">LOCATION</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4 text-center">STATUS</th>
                 <th className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-6 py-4 text-center">ACTIONS</th>
@@ -759,12 +724,13 @@ export default function RecruiterApplicationsPage() {
                     <span className="text-sm font-bold text-slate-700">{app.job.title}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-slate-500">{formatDate(app.appliedAt)}</span>
+                    <div className="flex items-center gap-1.5 text-slate-600">
+                      <Building className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="text-xs font-semibold">{app.job.recruiterName || app.job.companyName || 'SCN Recruiter'}</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-semibold text-slate-600">
-                      {app.workerExperienceYears !== undefined ? `${app.workerExperienceYears} Years` : 'N/A'}
-                    </span>
+                    <span className="text-xs font-bold text-slate-500">{formatDate(app.appliedAt)}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-bold text-slate-700">{app.workerCity || 'Location not specified'}</span>
@@ -803,9 +769,6 @@ export default function RecruiterApplicationsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => updateStatus(app.id, 'selected_for_interview')}>
                           <UserCheck className="mr-2 h-4 w-4 text-indigo-500" /> Selected for Interview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(app.id, 'resume_viewed')}>
-                          <FileText className="mr-2 h-4 w-4 text-amber-500" /> Resume Viewed
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -890,7 +853,7 @@ export default function RecruiterApplicationsPage() {
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl bg-white border border-slate-100 rounded-2xl shadow-xl p-6">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-slate-800">Candidate Application Detail</DialogTitle>
+            <DialogTitle className="text-lg font-bold text-slate-800">Application Overview</DialogTitle>
           </DialogHeader>
           
           {selectedApp && (
@@ -908,7 +871,7 @@ export default function RecruiterApplicationsPage() {
                   <h3 className="text-base font-extrabold text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">{selectedApp.workerName}</h3>
                   <p className="text-xs text-slate-400 font-semibold mt-0.5">{selectedApp.workerHeadline || 'Candidate Profile'}</p>
                   <p className="text-xs text-slate-400 font-semibold mt-1 flex items-center gap-1">
-                    <MapPinIcon /> {selectedApp.workerCity || 'Location not specified'} • {selectedApp.workerExperienceYears} Years Experience
+                    <MapPin className="h-3 w-3 text-slate-400 inline" /> {selectedApp.workerCity || 'Location not specified'} • {selectedApp.workerExperienceYears} Years Experience
                   </p>
                 </div>
                 {renderStatusBadge(selectedApp.status)}
@@ -948,14 +911,6 @@ export default function RecruiterApplicationsPage() {
                 >
                   <UserCheck className="mr-1.5 h-4 w-4 text-indigo-600" /> Selected for Interview
                 </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => updateStatus(selectedApp.id, 'resume_viewed')}
-                  className="border-amber-200 text-amber-700 hover:bg-amber-50/50 font-bold rounded-lg"
-                >
-                  <FileText className="mr-1.5 h-4 w-4 text-amber-600" /> Resume Viewed
-                </Button>
                 {selectedApp.resumeUrl && (
                   <Button size="sm" variant="outline" className="font-bold border-slate-200 rounded-lg ml-auto" asChild>
                     <a href={selectedApp.resumeUrl} target="_blank" rel="noreferrer">
@@ -990,14 +945,5 @@ export default function RecruiterApplicationsPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function MapPinIcon() {
-  return (
-    <svg className="h-3 w-3 text-slate-400 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-    </svg>
   );
 }
