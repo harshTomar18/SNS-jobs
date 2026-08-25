@@ -858,11 +858,25 @@ function formatJobPayload(data: any) {
     languagesArr = data.languageNames;
   }
 
+  const cleanIndIds = data.industryIds
+    ? (Array.isArray(data.industryIds) ? data.industryIds : [data.industryIds])
+        .map((id: any) => Number(id))
+        .filter((id: number) => !isNaN(id) && id > 0)
+    : (data.industryId ? [Number(data.industryId)] : undefined);
+
+  const cleanFuncIds = data.functionIds
+    ? (Array.isArray(data.functionIds) ? data.functionIds : [data.functionIds])
+        .map((id: any) => Number(id))
+        .filter((id: number) => !isNaN(id) && id > 0)
+    : (data.functionId ? [Number(data.functionId)] : undefined);
+
   const payload: any = {
     jobRoleName: roleName,
-    industryId: data.industryId ? Number(data.industryId) : undefined,
+    industryId: cleanIndIds && cleanIndIds.length > 0 ? cleanIndIds[0] : (data.industryId ? Number(data.industryId) : undefined),
+    industryIds: cleanIndIds && cleanIndIds.length > 0 ? cleanIndIds : undefined,
     industryName: data.industryName || undefined,
-    functionId: data.functionId ? Number(data.functionId) : undefined,
+    functionId: cleanFuncIds && cleanFuncIds.length > 0 ? cleanFuncIds[0] : (data.functionId ? Number(data.functionId) : undefined),
+    functionIds: cleanFuncIds && cleanFuncIds.length > 0 ? cleanFuncIds : undefined,
     functionName: data.functionName || undefined,
     locationId: Number(data.locationId),
     jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,

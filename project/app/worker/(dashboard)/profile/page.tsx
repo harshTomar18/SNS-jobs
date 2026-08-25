@@ -506,9 +506,9 @@ export default function WorkerProfilePage() {
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
             </div>
 
-            <div className="p-4 sm:p-8 relative -mt-10 sm:-mt-14 z-10">
-              <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 w-full">
-                <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 text-left flex-1 min-w-0 w-full">
+            <div className="p-4 sm:p-6 relative -mt-12 sm:-mt-16 z-10">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-4 w-full">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 text-left flex-1 min-w-0 w-full">
                   <div className="relative shrink-0 z-10 group">
                     <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-white shadow-md bg-slate-100 relative rounded-full overflow-hidden">
                       <AvatarImage src={profile.profilePhotoUrl || profile.avatarUrl || undefined} alt={profile.fullName} className="object-cover h-full w-full" />
@@ -556,7 +556,7 @@ export default function WorkerProfilePage() {
                     }
                     .dp-camera-uploader [data-ut-element="allowed-content"] { display: none !important; }
                   `}</style>
-                  <div className="pb-1 space-y-2 flex-1 min-w-0 text-left w-full">
+                  <div className="pt-1 sm:pt-2 pb-1 space-y-2 flex-1 min-w-0 text-left w-full">
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 break-words">{profile.fullName}</h2>
                       {profile.isFresher && <Badge className="bg-green-50 text-green-600 border-none text-[10px] font-bold rounded-full px-2.5 py-0.5">FRESHER</Badge>}

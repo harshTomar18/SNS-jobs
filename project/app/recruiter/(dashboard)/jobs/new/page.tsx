@@ -68,8 +68,10 @@ const QUAL_CATEGORY_ORDER = ['TEN', 'TWELVE', 'DIPLOMA', 'GRADUATE', 'POST_GRADU
 
 const schema = z.object({
   jobRoleName: z.string().min(2, 'Job role / title is required'),
-  industryId: z.string().min(1, 'Industry is required'),
+  industryId: z.string().optional(),
+  industryIds: z.array(z.string()).default([]),
   functionId: z.string().optional(),
+  functionIds: z.array(z.string()).default([]),
   functionName: z.string().optional(),
   locationId: z.string().min(1, 'Location is required'),
   jobRoleId: z.string().optional(),
@@ -306,6 +308,8 @@ export default function CreateJobPage() {
   const selectedSkillIds = formData.skillIds || [];
   const selectedQualificationIds = formData.qualificationIds || [];
   const selectedLanguageIds = formData.languageIds || [];
+  const selectedIndustryIds = formData.industryIds || (formData.industryId ? [formData.industryId] : []);
+  const selectedFunctionIds = formData.functionIds || (formData.functionId ? [formData.functionId] : []);
 
   useEffect(() => {
     if (existingJob) {
@@ -488,12 +492,22 @@ export default function CreateJobPage() {
           .map((id: any) => Number(id))
           .filter((n: number) => !isNaN(n) && n > 0);
 
+        const cleanIndIds = (data.industryIds && data.industryIds.length > 0 ? data.industryIds : (data.industryId ? [data.industryId] : []))
+          .map((id: any) => Number(id))
+          .filter((n: number) => !isNaN(n) && n > 0);
+
+        const cleanFuncIds = (data.functionIds && data.functionIds.length > 0 ? data.functionIds : (data.functionId ? [data.functionId] : []))
+          .map((id: any) => Number(id))
+          .filter((n: number) => !isNaN(n) && n > 0);
+
         const payload = {
           jobRoleName: roleName,
           description: data.description,
-          industryId: Number(data.industryId),
+          industryId: cleanIndIds.length > 0 ? cleanIndIds[0] : (data.industryId ? Number(data.industryId) : undefined),
+          industryIds: cleanIndIds.length > 0 ? cleanIndIds : undefined,
           industryName: indName || undefined,
-          functionId: data.functionId ? Number(data.functionId) : undefined,
+          functionId: cleanFuncIds.length > 0 ? cleanFuncIds[0] : (data.functionId ? Number(data.functionId) : undefined),
+          functionIds: cleanFuncIds.length > 0 ? cleanFuncIds : undefined,
           functionName: funcName || undefined,
           locationId: Number(data.locationId),
           jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
@@ -535,10 +549,29 @@ export default function CreateJobPage() {
     onError: (error) => toast.error(getApiErrorMessage(error, isEditing ? 'Failed to update job' : 'Failed to publish job')),
   });
 
-  const toggleId = (field: 'skillIds' | 'qualificationIds' | 'languageIds', id: string) => {
+  const toggleId = (field: 'skillIds' | 'qualificationIds' | 'languageIds' | 'industryIds' | 'functionIds', id: string) => {
     const current: string[] = getValues(field) || [];
     const updated = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
     setValue(field, updated, { shouldValidate: true, shouldDirty: true, shouldTouch: true });
+
+    if (field === 'industryIds') {
+      if (updated.length > 0) {
+        setValue('industryId', updated[0], { shouldValidate: true });
+      } else {
+        setValue('industryId', '', { shouldValidate: true });
+      }
+    }
+
+    if (field === 'functionIds') {
+      if (updated.length > 0) {
+        setValue('functionId', updated[0]);
+        const funcObj = functions.find((f: any) => String(f.id) === updated[0]);
+        if (funcObj && 'name' in funcObj) setValue('functionName', funcObj.name);
+      } else {
+        setValue('functionId', '');
+        setValue('functionName', '');
+      }
+    }
   };
 
   const toggleBenefit = (benefit: string) => {
@@ -713,52 +746,76 @@ export default function CreateJobPage() {
                   {errors.headcountRequired && <p className="text-xs text-red-500 font-bold">{errors.headcountRequired.message}</p>}
                 </div>
 
-                {/* Function / Department Searchable Dropdown */}
+                {/* Function / Department Searchable Multi-Select Dropdown */}
                 <div className="space-y-2 relative">
                   <Label className="text-slate-700 font-extrabold text-xs">Department / Function</Label>
+
+                  {/* Selected Department Badges */}
+                  {selectedFunctionIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-indigo-50/50 border border-indigo-100 rounded-xl mb-1">
+                      {selectedFunctionIds.map((id) => {
+                        const funcItem = functions.find((f: any) => String(f.id) === id);
+                        const name = funcItem && 'name' in funcItem ? funcItem.name : id;
+                        return (
+                          <Badge
+                            key={id}
+                            className="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-xs"
+                          >
+                            {name}
+                            <button
+                              type="button"
+                              onClick={() => toggleId('functionIds', id)}
+                              className="hover:bg-indigo-300/50 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="relative">
                     <input
                       type="text"
                       autoComplete="off"
-                      placeholder="Type or select function (e.g. Marketing, Software Engineering)..."
+                      placeholder="Type or search department/function..."
                       className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                       value={functionSearch}
                       onChange={(e) => {
                         setFunctionSearch(e.target.value);
-                        setValue('functionName', e.target.value);
                         setIsFunctionOpen(true);
                       }}
                       onFocus={() => setIsFunctionOpen(true)}
-                      onBlur={() => setTimeout(() => setIsFunctionOpen(false), 200)}
+                      onBlur={() => setTimeout(() => setIsFunctionOpen(false), 250)}
                     />
                     <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                   </div>
                   {isFunctionOpen && (
-                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    <div className="absolute left-0 right-0 top-[100%] mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                       {functions
                         .filter((func: any) => !functionSearch || (func.name || '').toLowerCase().includes(functionSearch.toLowerCase()))
-                        .map((func: any) => (
-                          <button
-                            key={func.id}
-                            type="button"
-                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setValue('functionId', String(func.id));
-                              setValue('functionName', func.name || String(func.id));
-                              setFunctionSearch(func.name || String(func.id));
-                              setIsFunctionOpen(false);
-                            }}
-                            onClick={() => {
-                              setValue('functionId', String(func.id));
-                              setValue('functionName', func.name || String(func.id));
-                              setFunctionSearch(func.name || String(func.id));
-                              setIsFunctionOpen(false);
-                            }}
-                          >
-                            {'name' in func ? func.name : String(func.id)}
-                          </button>
-                        ))}
+                        .map((func: any) => {
+                          const id = String(func.id);
+                          const isSelected = selectedFunctionIds.includes(id);
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              className={cn(
+                                "w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center justify-between transition-colors",
+                                isSelected ? "bg-indigo-50 text-indigo-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                              )}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                toggleId('functionIds', id);
+                              }}
+                            >
+                              <span>{'name' in func ? func.name : id}</span>
+                              {isSelected && <span className="text-indigo-600 font-bold">✓</span>}
+                            </button>
+                          );
+                        })}
                     </div>
                   )}
                 </div>
@@ -847,9 +904,35 @@ export default function CreateJobPage() {
                 <span>2. Location & Industry</span>
               </div>
               <div className="space-y-4">
-                {/* Industry Selection */}
+                {/* Industry Multi-Select Dropdown */}
                 <div className="space-y-2 max-w-md relative">
                   <Label className="text-slate-700 font-extrabold text-xs">Industry *</Label>
+
+                  {/* Selected Industry Badges */}
+                  {selectedIndustryIds.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 p-2 bg-blue-50/50 border border-blue-100 rounded-xl mb-1">
+                      {selectedIndustryIds.map((id) => {
+                        const indItem = industries.find((ind: any) => String(ind.id) === id);
+                        const name = indItem && 'name' in indItem ? indItem.name : id;
+                        return (
+                          <Badge
+                            key={id}
+                            className="bg-blue-100 hover:bg-blue-200 text-blue-800 border-none font-bold text-xs py-1 px-2.5 rounded-full flex items-center gap-1.5 shadow-xs"
+                          >
+                            {name}
+                            <button
+                              type="button"
+                              onClick={() => toggleId('industryIds', id)}
+                              className="hover:bg-blue-300/50 rounded-full p-0.5"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   <div className="relative">
                     <input
                       type="text"
@@ -862,36 +945,38 @@ export default function CreateJobPage() {
                         setIsIndustryOpen(true);
                       }}
                       onFocus={() => setIsIndustryOpen(true)}
-                      onBlur={() => setTimeout(() => setIsIndustryOpen(false), 200)}
+                      onBlur={() => setTimeout(() => setIsIndustryOpen(false), 250)}
                     />
                     <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                   </div>
                   {isIndustryOpen && (
-                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    <div className="absolute left-0 right-0 top-[100%] mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                       {industries
                         .filter((ind: any) => !industrySearch || (ind.name || '').toLowerCase().includes(industrySearch.toLowerCase()))
-                        .map((ind: any) => (
-                          <button
-                            key={ind.id}
-                            type="button"
-                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setValue('industryId', String(ind.id), { shouldValidate: true });
-                              setIndustrySearch(ind.name || String(ind.id));
-                              setIsIndustryOpen(false);
-                            }}
-                            onClick={() => {
-                              setValue('industryId', String(ind.id), { shouldValidate: true });
-                              setIndustrySearch(ind.name || String(ind.id));
-                              setIsIndustryOpen(false);
-                            }}
-                          >
-                            {'name' in ind ? ind.name : String(ind.id)}
-                          </button>
-                        ))}
+                        .map((ind: any) => {
+                          const id = String(ind.id);
+                          const isSelected = selectedIndustryIds.includes(id);
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              className={cn(
+                                "w-full text-left px-3.5 py-2 text-xs font-semibold flex items-center justify-between transition-colors",
+                                isSelected ? "bg-blue-50 text-blue-700 font-bold" : "text-slate-700 hover:bg-slate-50"
+                              )}
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                toggleId('industryIds', id);
+                              }}
+                            >
+                              <span>{'name' in ind ? ind.name : id}</span>
+                              {isSelected && <span className="text-blue-600 font-bold">✓</span>}
+                            </button>
+                          );
+                        })}
                     </div>
                   )}
+                  {errors.industryIds && <p className="text-xs text-red-500 font-bold">{errors.industryIds.message}</p>}
                   {errors.industryId && <p className="text-xs text-red-500 font-bold">{errors.industryId.message}</p>}
                 </div>
 
