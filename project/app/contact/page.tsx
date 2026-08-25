@@ -12,6 +12,7 @@ import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { contactApi } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
+import { AppLogo } from '@/components/app-logo';
 
 export default function ContactPage() {
   const [loading, setLoading] = useState(false);
@@ -289,7 +290,7 @@ export default function ContactPage() {
       <footer className="border-t border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 dark:text-slate-400">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-8 w-8 object-contain drop-shadow-sm" />
+            <AppLogo className="h-8 w-8 object-contain drop-shadow-sm" />
             <span className="font-extrabold text-slate-800 dark:text-slate-100">SCN Global Pvt Ltd (SCNJOBS)</span>
           </div>
           <p>© 2026 SCNJOBS. All rights reserved. Helpline: +91 8588892236</p>

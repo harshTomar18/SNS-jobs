@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
 import { getInitials } from '@/lib/format';
+import { AppLogo } from '@/components/app-logo';
 
 export interface NavItem {
   label: string;
@@ -58,7 +59,7 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
       {isWorker ? (
         <div className="flex items-center justify-between gap-2 px-5 py-6">
           <Link href={roleHomeRoutes[role]} className="flex items-center gap-3">
-            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
+            <AppLogo className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
             <div className="flex flex-col">
               <span className="text-lg font-extrabold tracking-tight text-slate-800 leading-none">SCNJOBS</span>
               <span className="text-[10px] font-medium text-slate-400 mt-1 block">Recruitment Suite</span>
@@ -77,7 +78,7 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
       ) : (
         <div className="flex h-16 items-center justify-between gap-2 border-b border-border px-5">
           <Link href={roleHomeRoutes[role]} className="flex items-center gap-2">
-            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
+            <AppLogo className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
             <span className="text-lg font-extrabold tracking-tight">SCNJOBS</span>
           </Link>
           <Button

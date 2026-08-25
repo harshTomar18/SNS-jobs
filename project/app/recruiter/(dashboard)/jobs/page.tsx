@@ -15,6 +15,7 @@ import {
   MapPin, 
   Rocket, 
   Archive, 
+  RotateCcw,
   Download,
   SlidersHorizontal,
   ChevronLeft,
@@ -294,9 +295,16 @@ export default function RecruiterJobsPage() {
                             <Archive className="mr-2 h-4 w-4" />Close
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(job.id)}>
-                          <Trash2 className="mr-2 h-4 w-4" />Delete Draft
-                        </DropdownMenuItem>
+                        {job.status === 'closed' && (
+                          <DropdownMenuItem onClick={() => statusMutation.mutate({ id: job.id, status: 'published' })}>
+                            <RotateCcw className="mr-2 h-4 w-4 text-emerald-600 font-bold" />Reactivate Job
+                          </DropdownMenuItem>
+                        )}
+                        {job.status === 'draft' && (
+                          <DropdownMenuItem className="text-destructive" onClick={() => deleteMutation.mutate(job.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" />Delete Draft
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>

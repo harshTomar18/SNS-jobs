@@ -192,17 +192,50 @@ export default function WorkerProfilePage() {
 
   // Experience
   const [expModalOpen, setExpModalOpen] = useState(false);
-  const [expForm, setExpForm] = useState({ companyName: '', jobTitle: '', fromDate: '', toDate: '', isCurrent: false, description: '' });
+  const [expForm, setExpForm] = useState<{
+    companyName: string;
+    jobTitle: string;
+    fromDate: string;
+    toDate: string;
+    isCurrent: boolean;
+    description: string;
+    industryId: number | null;
+    industryName: string;
+    departmentId: number | null;
+    departmentName: string;
+  }>({
+    companyName: '',
+    jobTitle: '',
+    fromDate: '',
+    toDate: '',
+    isCurrent: false,
+    description: '',
+    industryId: null,
+    industryName: '',
+    departmentId: null,
+    departmentName: '',
+  });
+
   const addExperienceMutation = useMutation({
     mutationFn: () => workerApi.addExperience({
-      companyName: expForm.companyName, jobTitle: expForm.jobTitle,
+      companyName: expForm.companyName,
+      jobTitle: expForm.jobTitle,
       fromDate: expForm.fromDate ? new Date(expForm.fromDate).toISOString() : new Date().toISOString(),
       toDate: expForm.isCurrent || !expForm.toDate ? undefined : new Date(expForm.toDate).toISOString(),
-      isCurrent: expForm.isCurrent, description: expForm.description || undefined,
+      isCurrent: expForm.isCurrent,
+      description: expForm.description || undefined,
+      industryId: expForm.industryId || undefined,
+      industryName: expForm.industryName || undefined,
+      departmentId: expForm.departmentId || undefined,
+      departmentName: expForm.departmentName || undefined,
     }),
     onSuccess: () => {
-      toast.success('Experience added'); setExpModalOpen(false);
-      setExpForm({ companyName: '', jobTitle: '', fromDate: '', toDate: '', isCurrent: false, description: '' });
+      toast.success('Experience added');
+      setExpModalOpen(false);
+      setExpForm({
+        companyName: '', jobTitle: '', fromDate: '', toDate: '', isCurrent: false, description: '',
+        industryId: null, industryName: '', departmentId: null, departmentName: ''
+      });
       queryClient.invalidateQueries({ queryKey: ['worker-profile'] });
     },
     onError: (e) => toast.error(getApiErrorMessage(e, 'Could not add experience')),
@@ -222,6 +255,19 @@ export default function WorkerProfilePage() {
 
   const handleOpenLangModal = () => {
     if (!profile) return;
+    if (profile.languageDetails && profile.languageDetails.length > 0) {
+      const mapped = profile.languageDetails
+        .map(ld => {
+          const masterItem = masterLanguages.find(ml => ml.name?.toLowerCase() === ld.name?.toLowerCase());
+          return masterItem ? { languageId: masterItem.id, proficiency: ld.proficiency || 'fluent' } : null;
+        })
+        .filter((item): item is { languageId: number; proficiency: string } => Boolean(item));
+      if (mapped.length > 0) {
+        setSelectedLangs(mapped);
+        setLangModalOpen(true);
+        return;
+      }
+    }
     const ids = profile.languageIds?.length
       ? profile.languageIds
       : masterLanguages.filter(ml => ml.name && profile.languages.map(l => l.toLowerCase()).includes(ml.name.toLowerCase())).map(ml => ml.id);
@@ -813,6 +859,20 @@ export default function WorkerProfilePage() {
                           <div className="space-y-1">
                             <h4 className="font-extrabold text-slate-800 text-sm">{exp.designation}</h4>
                             <p className="text-xs font-bold text-blue-600">{exp.company}</p>
+                            {(exp.industry || exp.department) && (
+                              <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                {exp.industry && (
+                                  <span className="bg-indigo-50 text-indigo-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                    {exp.industry}
+                                  </span>
+                                )}
+                                {exp.department && (
+                                  <span className="bg-purple-50 text-purple-700 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                    {exp.department}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <p className="text-[10px] text-slate-400 font-bold">{exp.startDate ? new Date(exp.startDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : ''} — {exp.current ? 'Present' : exp.endDate ? new Date(exp.endDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : 'Present'}</p>
                             {exp.description && <p className="text-[11px] text-slate-500 font-bold mt-2 whitespace-pre-line">{exp.description}</p>}
                           </div>
@@ -877,7 +937,7 @@ export default function WorkerProfilePage() {
                       <span>{item.name}</span>
                       {item.proficiency && (
                         <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-100/80 px-2 py-0.5 rounded-md ml-0.5">
-                          {item.proficiency}
+                          {item.proficiency === 'none' ? 'No' : item.proficiency === 'basic' ? 'Basic' : item.proficiency === 'good' ? 'Good' : item.proficiency === 'fluent' ? 'Fluent' : item.proficiency === 'excellent' ? 'Excellent' : item.proficiency}
                         </span>
                       )}
                     </span>
@@ -1035,6 +1095,59 @@ export default function WorkerProfilePage() {
                 <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">Job Title *</Label><Input placeholder="e.g. Senior Designer" value={expForm.jobTitle} onChange={e => setExpForm({ ...expForm, jobTitle: e.target.value })} className="rounded-xl border-slate-200 text-xs" /></div>
                 <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">Company Name *</Label><Input placeholder="e.g. Apple Inc." value={expForm.companyName} onChange={e => setExpForm({ ...expForm, companyName: e.target.value })} className="rounded-xl border-slate-200 text-xs" /></div>
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600">Industry</Label>
+                    <Select
+                      value={expForm.industryId ? String(expForm.industryId) : ''}
+                      onValueChange={(val) => {
+                        const selected = masterIndustries.find(i => String(i.id) === val);
+                        setExpForm(p => ({
+                          ...p,
+                          industryId: selected ? selected.id : null,
+                          industryName: selected ? selected.name : '',
+                        }));
+                      }}
+                    >
+                      <SelectTrigger className="rounded-xl border-slate-200 text-xs h-9">
+                        <SelectValue placeholder="Select industry..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 overflow-y-auto">
+                        {masterIndustries.map((ind) => (
+                          <SelectItem key={ind.id} value={String(ind.id)}>
+                            {ind.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold text-slate-600">Department / Function</Label>
+                    <Select
+                      value={expForm.departmentId ? String(expForm.departmentId) : ''}
+                      onValueChange={(val) => {
+                        const selected = masterFunctions.find(f => String(f.id) === val);
+                        setExpForm(p => ({
+                          ...p,
+                          departmentId: selected ? selected.id : null,
+                          departmentName: selected ? selected.name : '',
+                        }));
+                      }}
+                    >
+                      <SelectTrigger className="rounded-xl border-slate-200 text-xs h-9">
+                        <SelectValue placeholder="Select department..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-60 overflow-y-auto">
+                        {masterFunctions.map((fn) => (
+                          <SelectItem key={fn.id} value={String(fn.id)}>
+                            {fn.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">Start Date *</Label><Input type="date" value={expForm.fromDate} onChange={e => setExpForm({ ...expForm, fromDate: e.target.value })} className="rounded-xl border-slate-200 text-xs" /></div>
                   <div className="space-y-1.5"><Label className="text-xs font-bold text-slate-600">End Date</Label><Input type="date" disabled={expForm.isCurrent} value={expForm.toDate} onChange={e => setExpForm({ ...expForm, toDate: e.target.value })} className="rounded-xl border-slate-200 text-xs disabled:opacity-50" /></div>
                 </div>
@@ -1096,12 +1209,15 @@ export default function WorkerProfilePage() {
                             <span className="font-bold text-blue-900 shrink-0">{langItem.name}</span>
                             <div className="flex items-center gap-2">
                               <Select value={item.proficiency} onValueChange={(val) => updateProficiency(item.languageId, val)}>
-                                <SelectTrigger className="h-8 w-32 rounded-lg bg-white border-blue-200 text-xs font-bold text-blue-700">
-                                  <SelectValue />
+                                <SelectTrigger className="h-8 w-44 rounded-lg bg-white border-blue-200 text-xs font-bold text-blue-700">
+                                  <SelectValue placeholder="Select proficiency" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="fluent" className="text-xs font-bold">Fluent</SelectItem>
-                                  <SelectItem value="basic" className="text-xs font-bold">Basic</SelectItem>
+                                  <SelectItem value="none" className="text-xs font-bold">No {langItem.name}</SelectItem>
+                                  <SelectItem value="basic" className="text-xs font-bold">Basic {langItem.name}</SelectItem>
+                                  <SelectItem value="good" className="text-xs font-bold">Good {langItem.name}</SelectItem>
+                                  <SelectItem value="fluent" className="text-xs font-bold">Fluent {langItem.name}</SelectItem>
+                                  <SelectItem value="excellent" className="text-xs font-bold">Excellent {langItem.name}</SelectItem>
                                 </SelectContent>
                               </Select>
                               <X className="h-4 w-4 text-blue-400 hover:text-blue-600 cursor-pointer shrink-0" onClick={() => toggleLangSelection(item.languageId)} />

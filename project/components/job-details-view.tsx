@@ -44,11 +44,13 @@ import { getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { Application } from '@/lib/types';
 
+import { AppLogo } from '@/components/app-logo';
+
 // Helper component for logos
 function CompanyLogo({ name, className = 'h-16 w-16' }: { name?: string; className?: string }) {
   return (
-    <div className={`${className} flex items-center justify-center rounded-2xl bg-white border border-slate-100 shadow-sm p-1.5 overflow-hidden shrink-0`}>
-      <img src="/logo.png" alt={name || 'SCN Jobs'} className="w-full h-full object-contain" />
+    <div className={`${className} flex items-center justify-center rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 shadow-sm p-1.5 overflow-hidden shrink-0`}>
+      <AppLogo className="w-full h-full object-contain" />
     </div>
   );
 }

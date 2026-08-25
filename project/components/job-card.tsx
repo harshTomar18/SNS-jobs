@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { AppLogo } from '@/components/app-logo';
 
 interface JobCardProps {
   job: Job & { hasApplied?: boolean };
@@ -42,8 +43,8 @@ export function JobCard({ job, variant = 'default', className, hrefPrefix = '/jo
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white p-1 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
-            <img src="/logo.png" alt={job.companyName || 'SCN Jobs'} className="w-full h-full object-contain" />
+          <div className="h-12 w-12 rounded-xl border border-slate-100 bg-white dark:bg-slate-800 dark:border-slate-700 p-1 shadow-sm flex items-center justify-center shrink-0 overflow-hidden">
+            <AppLogo className="w-full h-full object-contain" />
           </div>
           <div>
             <Link href={`${hrefPrefix}/${job.id}`}>

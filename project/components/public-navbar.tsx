@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth-context';
 import { getInitials } from '@/lib/format';
+import { AppLogo } from '@/components/app-logo';
 
 const navLinks = [
   { label: 'Find Jobs', href: '/jobs' },
@@ -40,7 +41,7 @@ export function PublicNavbar() {
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-8">
           <Link href="/" className="flex items-center gap-2">
-            <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm" />
+            <AppLogo className="h-10 w-10 object-contain drop-shadow-sm" />
             <span className="text-xl font-extrabold tracking-tight text-slate-800 dark:text-white">SCNJOBS</span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">

@@ -12,6 +12,8 @@ import {
   Building2, Briefcase, Apple, PlayCircle, Code, CreditCard, ShoppingCart
 } from "lucide-react";
 
+import { AppLogo } from '@/components/app-logo';
+
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
 /* ------------------------------------------------------------------ */
@@ -544,7 +546,7 @@ export default function SCNJobsLanding() {
       >
         <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "inherit" }}>
-            <img src="/logo.png?v=3" alt="SCNJOBS" style={{ width: 38, height: 38, objectFit: "contain" }} />
+            <AppLogo style={{ width: 38, height: 38, objectFit: "contain" }} />
             <span className="disp" style={{ fontWeight: 800, fontSize: 19, letterSpacing: "-0.01em" }}>SCN Jobs</span>
           </Link>
 
@@ -1138,7 +1140,7 @@ export default function SCNJobsLanding() {
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 40 }} className="footer-grid">
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
-                <img src="/logo.png?v=3" alt="SCNJOBS" style={{ width: 40, height: 40, objectFit: "contain" }} />
+                <AppLogo style={{ width: 40, height: 40, objectFit: "contain" }} />
                 <span className="disp" style={{ fontWeight: 800, fontSize: 17 }}>SCNJOBS</span>
               </div>
               <p style={{ fontSize: 13.5, color: pal.textMuted, lineHeight: 1.65, maxWidth: 260 }}>

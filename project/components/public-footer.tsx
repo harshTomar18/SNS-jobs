@@ -42,6 +42,8 @@ const footerSections = [
   },
 ];
 
+import { AppLogo } from '@/components/app-logo';
+
 export function PublicFooter() {
   return (
     <footer className="border-t border-border bg-card/30">
@@ -49,7 +51,7 @@ export function PublicFooter() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-6">
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-2">
-              <img src="/logo.png?v=3" alt="SCNJOBS" className="h-10 w-10 object-contain drop-shadow-sm" />
+              <AppLogo className="h-10 w-10 object-contain drop-shadow-sm" />
               <span className="text-xl font-bold tracking-tight">SCNJOBS</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm text-muted-foreground">
