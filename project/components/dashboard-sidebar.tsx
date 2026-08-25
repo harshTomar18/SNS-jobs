@@ -178,13 +178,6 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
         </div>
       ) : (
         <div className="border-t border-border p-3">
-          <Link
-            href={roleHomeRoutes[role]}
-            className="mb-2 flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Link>
           <div className="flex items-center gap-3 rounded-lg px-3 py-2">
             <Avatar className="h-9 w-9">
               <AvatarImage src={user?.avatarUrl} alt={user?.name} />
