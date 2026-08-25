@@ -476,6 +476,18 @@ export default function CreateJobPage() {
             }).filter(Boolean)
           : undefined;
 
+        const cleanSkillIds = (data.skillIds || [])
+          .map((id: any) => Number(id))
+          .filter((n: number) => !isNaN(n) && n > 0);
+
+        const cleanQualIds = (data.qualificationIds || [])
+          .map((id: any) => Number(id))
+          .filter((n: number) => !isNaN(n) && n > 0);
+
+        const cleanLangIds = (data.languageIds || [])
+          .map((id: any) => Number(id))
+          .filter((n: number) => !isNaN(n) && n > 0);
+
         const payload = {
           jobRoleName: roleName,
           description: data.description,
@@ -485,9 +497,9 @@ export default function CreateJobPage() {
           functionName: funcName || undefined,
           locationId: Number(data.locationId),
           jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
-          skillIds: data.skillIds.map(Number),
-          qualificationIds: data.qualificationIds.map(Number),
-          languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map(Number) : undefined,
+          skillIds: cleanSkillIds.length > 0 ? cleanSkillIds : undefined,
+          qualificationIds: cleanQualIds.length > 0 ? cleanQualIds : undefined,
+          languageIds: cleanLangIds.length > 0 ? cleanLangIds : undefined,
           languages: selectedLanguageNames,
           wageMin: data.wageMin,
           wageMax: data.wageMax,

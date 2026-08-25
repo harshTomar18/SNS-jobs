@@ -880,9 +880,21 @@ function formatJobPayload(data: any) {
     requirements: requirementsArr,
     highlights: highlightsArr,
     languages: languagesArr,
-    languageIds: data.languageIds && data.languageIds.length > 0 ? data.languageIds.map((id: any) => Number(id)) : undefined,
-    skillIds: data.skillIds && data.skillIds.length > 0 ? data.skillIds.map((id: any) => Number(id)) : undefined,
-    qualificationIds: data.qualificationIds && data.qualificationIds.length > 0 ? data.qualificationIds.map((id: any) => Number(id)) : undefined,
+    languageIds: data.languageIds
+      ? (Array.isArray(data.languageIds) ? data.languageIds : [data.languageIds])
+          .map((id: any) => Number(id))
+          .filter((id: number) => !isNaN(id) && id > 0)
+      : undefined,
+    skillIds: data.skillIds
+      ? (Array.isArray(data.skillIds) ? data.skillIds : [data.skillIds])
+          .map((id: any) => Number(id))
+          .filter((id: number) => !isNaN(id) && id > 0)
+      : undefined,
+    qualificationIds: data.qualificationIds
+      ? (Array.isArray(data.qualificationIds) ? data.qualificationIds : [data.qualificationIds])
+          .map((id: any) => Number(id))
+          .filter((id: number) => !isNaN(id) && id > 0)
+      : undefined,
     benefitNames: data.benefitNames,
     assetNames: data.assetNames,
     status: data.status ? statusToApi(data.status) : undefined,
