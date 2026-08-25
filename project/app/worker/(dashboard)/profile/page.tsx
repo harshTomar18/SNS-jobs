@@ -588,7 +588,23 @@ export default function WorkerProfilePage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto mt-2 sm:mt-0">
-                  <Button variant="outline" className="w-full sm:w-auto bg-[#e2e8f0] text-slate-700 font-bold border-transparent hover:bg-slate-300 rounded-xl py-4 sm:py-5 px-5 sm:px-6 text-xs" onClick={() => setEditing(p => !p)}>{editing ? 'Cancel' : 'Edit Profile'}</Button>
+                  <Button
+                    type="button"
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-extrabold shadow-md shadow-blue-600/20 rounded-xl py-2.5 px-5 text-xs transition-all border-none flex items-center justify-center gap-2"
+                    onClick={() => setEditing((p) => !p)}
+                  >
+                    {editing ? (
+                      <>
+                        <X className="h-3.5 w-3.5" />
+                        Cancel
+                      </>
+                    ) : (
+                      <>
+                        <Edit className="h-3.5 w-3.5" />
+                        Edit Profile
+                      </>
+                    )}
+                  </Button>
                 </div>
               </div>
             </div>
