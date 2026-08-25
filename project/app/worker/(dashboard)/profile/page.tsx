@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/components/page-header';
 import { getInitials } from '@/lib/format';
-import { workerApi, masterDataApi, WorkerWithMeta, BackendLookup, BackendLocation } from '@/lib/scn-api';
+import { workerApi, masterDataApi, WorkerWithMeta, BackendLookup, BackendLocation, formatLocationString } from '@/lib/scn-api';
 import { getApiErrorMessage } from '@/lib/api';
 import { toast } from 'sonner';
 import {
@@ -464,7 +464,7 @@ export default function WorkerProfilePage() {
                       {profile.phone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />{profile.phone}</span>}
                       {profile.alternatePhone && <span className="flex items-center gap-1 shrink-0"><Phone className="h-3.5 w-3.5 text-slate-400" />Alt: {profile.alternatePhone}</span>}
                       {profile.email && <span className="flex items-center gap-1 shrink-0 break-all"><Mail className="h-3.5 w-3.5 text-slate-400" />{profile.email}</span>}
-                      <span className="flex items-center gap-1 shrink-0"><MapPin className="h-3.5 w-3.5 text-slate-400" />{[profile.locality, profile.city, profile.state].filter(Boolean).join(', ') || 'Location Not Set'}</span>
+                      <span className="flex items-center gap-1 shrink-0"><MapPin className="h-3.5 w-3.5 text-slate-400" />{formatLocationString(profile.locality, profile.city, profile.state) || 'Location Not Set'}</span>
                       {profile.resumeUrl && <a href={profile.resumeUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline shrink-0"><LinkIcon className="h-3.5 w-3.5" />View Resume</a>}
                     </div>
                     <div className="flex flex-wrap gap-2 pt-1">

@@ -336,6 +336,26 @@ const localPart = (email: string) =>
     .replace(/[._-]+/g, ' ')
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+export function formatLocationString(...parts: (string | null | undefined)[]): string {
+  const seen = new Set<string>();
+  const uniqueTokens: string[] = [];
+
+  for (const part of parts) {
+    if (!part) continue;
+    const tokens = part.split(',').map((t) => t.trim()).filter(Boolean);
+    for (const token of tokens) {
+      const lower = token.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        uniqueTokens.push(token);
+      }
+    }
+  }
+
+  return uniqueTokens.join(', ');
+}
+
+
 export function toUser(user: BackendUser | any, rootData?: any): User {
   if (!user && rootData?.user) {
     user = rootData.user;
@@ -384,8 +404,7 @@ export function toJob(job: BackendJob): JobWithMeta {
     })
     .filter((q): q is string => Boolean(q));
   const experienceMin = Math.floor((job.minExperienceMonths || 0) / 12);
-  const locationParts = Array.from(new Set([job.location?.locality, job.location?.city, job.location?.state].filter(Boolean)));
-  const locationName = locationParts.length > 0 ? locationParts.join(', ') : 'Location not specified';
+  const locationName = formatLocationString(job.location?.locality, job.location?.city, job.location?.state) || 'Location not specified';
   const title = job.title || job.jobRole?.name || (job as any).jobRoleName || 'Job Listing';
 
   // Handle new 3 independent range pairs (daily, monthly, yearly)
@@ -513,10 +532,10 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
     .map((entry) => {
       if (!entry.location) return null;
       const { id, locality, city, state } = entry.location;
-      const parts = Array.from(new Set([locality, city, state].filter(Boolean)));
+      const label = formatLocationString(locality, city, state);
       return {
         id,
-        label: parts.join(', '),
+        label,
       };
     })
     .filter((entry): entry is { id: number; label: string } => Boolean(entry));
@@ -546,16 +565,11 @@ export function toWorkerProfile(profile: BackendWorkerProfile): WorkerWithMeta {
       : item.name,
   );
 
-  const rawLocParts = Array.from(
-    new Set([
-      (profile as any).currentLocality || (profile as any).locality,
-      profile.city,
-      profile.state,
-    ].filter(Boolean))
-  );
-  const fullWorkerLocationStr = rawLocParts.length > 0
-    ? rawLocParts.join(', ')
-    : (preferredLocations[0] || profile.city || 'Location not specified');
+  const fullWorkerLocationStr = formatLocationString(
+    (profile as any).currentLocality || (profile as any).locality,
+    profile.city,
+    profile.state,
+  ) || (preferredLocations[0] ? formatLocationString(preferredLocations[0]) : 'Location not specified');
 
   return {
     id: profile.id,
@@ -659,36 +673,14 @@ export function toApplication(application: BackendApplication): Application {
       },
     ];
 
-  const appLocParts = Array.from(
-    new Set(
-      [
-        (workerProfile as any)?.currentLocality || (workerProfile as any)?.locality,
-        workerProfile?.city,
-        workerProfile?.state,
-      ].filter(Boolean)
-    )
-  );
-
-  let fullAppLocation = '';
-  if (appLocParts.length > 0) {
-    fullAppLocation = appLocParts.join(', ');
-  } else if ((workerProfile as any)?.preferredLocations?.length) {
-    const firstPref = (workerProfile as any).preferredLocations[0];
-    if (typeof firstPref === 'string') {
-      fullAppLocation = firstPref;
-    } else if (firstPref?.location) {
-      const parts = Array.from(
-        new Set([firstPref.location.locality, firstPref.location.city, firstPref.location.state].filter(Boolean))
-      );
-      fullAppLocation = parts.join(', ');
-    } else if (firstPref?.name) {
-      fullAppLocation = firstPref.name;
-    }
-  }
-
-  if (!fullAppLocation) {
-    fullAppLocation = workerProfile?.city || 'Location not specified';
-  }
+  const fullAppLocation = formatLocationString(
+    (workerProfile as any)?.currentLocality || (workerProfile as any)?.locality,
+    workerProfile?.city,
+    workerProfile?.state,
+    (workerProfile as any)?.preferredLocations?.[0]?.location?.locality,
+    (workerProfile as any)?.preferredLocations?.[0]?.location?.city,
+    (workerProfile as any)?.preferredLocations?.[0]?.location?.state,
+  ) || 'Location not specified';
 
   return {
     id: application.id,
