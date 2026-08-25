@@ -1581,20 +1581,20 @@ export default function CreateJobPage() {
                 <Textarea id="description" rows={5} placeholder="Describe the role details..." {...register('description')} className="rounded-xl border-slate-200" />
                 {errors.description && <p className="text-xs text-red-500 font-bold">{errors.description.message}</p>}
               </div>
-              <div className="grid gap-4 lg:grid-cols-3">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="responsibilities" className="text-slate-700 font-extrabold text-xs">Responsibilities (One per line)*</Label>
-                  <Textarea id="responsibilities" rows={6} placeholder="e.g. Design, develop, and maintain RESTful APIs" {...register('responsibilities')} className="rounded-xl border-slate-200" />
+                  <Textarea id="responsibilities" rows={4} placeholder="e.g. Design, develop, and maintain RESTful APIs" {...register('responsibilities')} className="rounded-xl border-slate-200" />
                   {errors.responsibilities && <p className="text-xs text-red-500 font-bold">{errors.responsibilities.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="requirements" className="text-slate-700 font-extrabold text-xs">Requirements (One per line)*</Label>
-                  <Textarea id="requirements" rows={6} placeholder="e.g. 3 years Node.js experience" {...register('requirements')} className="rounded-xl border-slate-200" />
+                  <Textarea id="requirements" rows={4} placeholder="e.g. 3 years Node.js experience" {...register('requirements')} className="rounded-xl border-slate-200" />
                   {errors.requirements && <p className="text-xs text-red-500 font-bold">{errors.requirements.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="highlights" className="text-slate-700 font-extrabold text-xs">Job Highlights (One per line)</Label>
-                  <Textarea id="highlights" rows={6} placeholder="e.g. Fast growing startup&#10;Flexible working hours&#10;Immediate joining" {...register('highlights')} className="rounded-xl border-slate-200" />
+                  <Textarea id="highlights" rows={4} placeholder="e.g. Fast growing startup&#10;Flexible working hours&#10;Immediate joining" {...register('highlights')} className="rounded-xl border-slate-200" />
                 </div>
               </div>
             </Card>
