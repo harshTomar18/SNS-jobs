@@ -165,39 +165,6 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
           </div>
         )} */}
       </nav>
-
-      {isWorker ? (
-        <div className="p-4 border-t-0">
-          {/* <Link
-            href="/recruiter/jobs/new"
-            onClick={closeOnMobile}
-            className="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl text-center shadow-md shadow-blue-100 transition-all text-sm"
-          >
-            <span>Post a Job</span>
-          </Link> */}
-        </div>
-      ) : (
-        <div className="border-t border-border p-3">
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={user?.avatarUrl} alt={user?.name} />
-              <AvatarFallback>{user ? getInitials(user.name) : <User className="h-4 w-4" />}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 truncate">
-              <p className="truncate text-sm font-medium">{user?.name}</p>
-              <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={logout}
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
     </aside>
   );
 }
