@@ -123,8 +123,11 @@ export default function CreateJobPage() {
   const editJobId = searchParams?.get('id') || null;
   const isEditing = Boolean(editJobId);
   const [skillSearch, setSkillSearch] = useState('');
+  const [isSkillOpen, setIsSkillOpen] = useState(false);
   const [qualSearch, setQualSearch] = useState('');
+  const [isQualOpen, setIsQualOpen] = useState(false);
   const [langSearch, setLangSearch] = useState('');
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [selectedQualLevel, setSelectedQualLevel] = useState<string>('ALL');
 
   const [jobRoleSearch, setJobRoleSearch] = useState('');
@@ -1168,7 +1171,7 @@ export default function CreateJobPage() {
                 <Code className="h-5 w-5" />
                 <span>3. Skills & Qualifications</span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-3 relative">
                 <Label className="text-slate-700 font-extrabold text-xs">Required Skills</Label>
 
                 {/* Render Selected Skills as dismissible badges */}
@@ -1198,51 +1201,61 @@ export default function CreateJobPage() {
 
                 {/* Search Input Box */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Search and select skills..."
+                    autoComplete="off"
+                    placeholder="Type to search and select skills..."
                     value={skillSearch}
-                    onChange={(e) => setSkillSearch(e.target.value)}
-                    className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
+                    onChange={(e) => {
+                      setSkillSearch(e.target.value);
+                      setIsSkillOpen(true);
+                    }}
+                    onFocus={() => setIsSkillOpen(true)}
+                    onBlur={() => setTimeout(() => setIsSkillOpen(false), 250)}
+                    className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 pl-10 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                   />
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                 </div>
 
-                {/* Skills Dropdown / Suggestions Grid with Search */}
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
-                  {skillSuggestions.length > 0 ? (
-                    skillSuggestions.map((skill: any) => {
-                      const id = String(skill.id);
-                      const isSelected = selectedSkillIds.includes(id);
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            toggleId('skillIds', id);
-                          }}
-                          className={cn(
-                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
-                            isSelected
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          )}
-                        >
-                          {isSelected ? '✓ ' : '+ '}
-                          {'name' in skill ? skill.name : id}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <span className="text-[10px] text-slate-400 italic py-1">
-                      {skillSearch.trim() !== '' ? 'No matching skills found.' : 'No skills available.'}
-                    </span>
-                  )}
-                </div>
+                {/* Skills Multi-Select Dropdown Menu */}
+                {isSkillOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    {skillSuggestions.length > 0 ? (
+                      skillSuggestions.map((skill: any) => {
+                        const id = String(skill.id);
+                        const isSelected = selectedSkillIds.includes(id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className={cn(
+                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleId('skillIds', id);
+                            }}
+                          >
+                            <span>{'name' in skill ? skill.name : id}</span>
+                            <div className={cn(
+                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                            )}>
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching skills found</div>
+                    )}
+                  </div>
+                )}
               </div>
               <Separator className="my-2 bg-slate-50" />
-              <div className="space-y-3">
+              <div className="space-y-3 relative">
                 <Label className="text-slate-700 font-extrabold text-xs">Qualifications Required</Label>
 
                 {/* Render Selected Qualifications as dismissible badges */}
@@ -1306,55 +1319,64 @@ export default function CreateJobPage() {
 
                 {/* Search Input Box */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder={`Search ${selectedQualLevel !== 'ALL' ? QUAL_CATEGORY_LABELS[selectedQualLevel] || selectedQualLevel : 'qualifications'}...`}
                     value={qualSearch}
-                    onChange={(e) => setQualSearch(e.target.value)}
-                    className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
+                    onChange={(e) => {
+                      setQualSearch(e.target.value);
+                      setIsQualOpen(true);
+                    }}
+                    onFocus={() => setIsQualOpen(true)}
+                    onBlur={() => setTimeout(() => setIsQualOpen(false), 250)}
+                    className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 pl-10 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                   />
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                 </div>
 
-                {/* Suggestions List */}
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
-                  {qualSuggestions.length > 0 ? (
-                    qualSuggestions.map((qualification: any) => {
-                      const id = String(qualification.id);
-                      const isSelected = selectedQualificationIds.includes(id);
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onClick={() => {
-                            toggleId('qualificationIds', id);
-                          }}
-                          className={cn(
-                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
-                            isSelected
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          )}
-                        >
-                          {isSelected ? '✓ ' : '+ '}
-                          {'name' in qualification ? qualification.name : id}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <span className="text-[10px] text-slate-400 italic py-1">
-                      {selectedQualLevel !== 'ALL' || qualSearch.trim() !== ''
-                        ? 'No matching qualifications found for this level.'
-                        : 'Select a qualification level above or type to search...'}
-                    </span>
-                  )}
-                </div>
+                {/* Qualifications Multi-Select Dropdown Menu */}
+                {isQualOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    {qualSuggestions.length > 0 ? (
+                      qualSuggestions.map((qualification: any) => {
+                        const id = String(qualification.id);
+                        const isSelected = selectedQualificationIds.includes(id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className={cn(
+                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleId('qualificationIds', id);
+                            }}
+                          >
+                            <span>{'name' in qualification ? qualification.name : id}</span>
+                            <div className={cn(
+                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                            )}>
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching qualifications found</div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <Separator className="my-2 bg-slate-50" />
 
               {/* Required Languages Section */}
-              <div className="space-y-3">
+              <div className="space-y-3 relative">
                 <Label className="text-slate-700 font-extrabold text-xs">Required Languages</Label>
 
                 {/* Selected Languages dismissible badges */}
@@ -1384,46 +1406,58 @@ export default function CreateJobPage() {
 
                 {/* Search Input Box */}
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder="Search and add required languages (English, Hindi, Tamil, etc.)..."
                     value={langSearch}
-                    onChange={(e) => setLangSearch(e.target.value)}
-                    className="w-full bg-[#f4f5f7] border border-transparent rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold text-slate-700 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-200 transition-all shadow-inner"
+                    onChange={(e) => {
+                      setLangSearch(e.target.value);
+                      setIsLangOpen(true);
+                    }}
+                    onFocus={() => setIsLangOpen(true)}
+                    onBlur={() => setTimeout(() => setIsLangOpen(false), 250)}
+                    className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 pl-10 pr-10 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all shadow-sm"
                   />
+                  <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                 </div>
 
-                {/* Language Suggestions Grid */}
-                <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto border border-slate-100/80 p-3 rounded-xl bg-slate-50/30">
-                  {langSuggestions.length > 0 ? (
-                    langSuggestions.map((lang: any) => {
-                      const id = String(lang.id);
-                      const isSelected = selectedLanguageIds.includes(id);
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            toggleId('languageIds', id);
-                          }}
-                          className={cn(
-                            'px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-all',
-                            isSelected
-                              ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                              : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300'
-                          )}
-                        >
-                          {isSelected ? '✓ ' : '+ '}
-                          {'name' in lang ? lang.name : id}
-                        </button>
-                      );
-                    })
-                  ) : (
-                    <span className="text-[10px] text-slate-400 italic py-1">No matching languages found.</span>
-                  )}
-                </div>
+                {/* Languages Multi-Select Dropdown Menu */}
+                {isLangOpen && (
+                  <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                    {langSuggestions.length > 0 ? (
+                      langSuggestions.map((lang: any) => {
+                        const id = String(lang.id);
+                        const isSelected = selectedLanguageIds.includes(id);
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className={cn(
+                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                            )}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              toggleId('languageIds', id);
+                            }}
+                          >
+                            <span>{'name' in lang ? lang.name : id}</span>
+                            <div className={cn(
+                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                            )}>
+                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                            </div>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching languages found</div>
+                    )}
+                  </div>
+                )}
               </div>
             </Card>
 
