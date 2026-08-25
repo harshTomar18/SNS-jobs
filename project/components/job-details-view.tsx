@@ -287,7 +287,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
       {/* 2. Job Highlights Card (Only shown if API provides highlights) */}
       {highlights.length > 0 && (
         <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-5 text-left shadow-sm">
-          <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job highlights</h3>
+          <h3 className="text-base font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job Highlights</h3>
           <ul className="space-y-2.5 text-xs font-semibold text-slate-700">
             {highlights.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
@@ -304,7 +304,7 @@ export function JobDetailsView({ jobId, backUrl = '/jobs', hrefPrefix = '/jobs' 
       {/* 3. Job Description Card (Matching Image 2 & 3) */}
       <Card className="p-6 md:p-8 bg-white border border-slate-200/80 rounded-3xl space-y-6 text-left shadow-sm">
         <div className="space-y-3">
-          <h3 className="text-lg font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job description</h3>
+          <h3 className="text-lg font-extrabold text-slate-800 border-b border-slate-100 pb-3">Job Description</h3>
           <div className="text-xs font-semibold text-slate-700 space-y-1.5 bg-slate-50/60 p-4 rounded-2xl border border-slate-100">
             <p className="text-sm font-bold text-slate-900">{job.title}</p>
             {/* <p><strong>Company:</strong> {job.companyName}</p> */}

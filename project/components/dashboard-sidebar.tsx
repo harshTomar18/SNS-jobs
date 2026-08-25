@@ -62,7 +62,7 @@ export function DashboardSidebar({ items, role, isOpen = true, onClose }: Dashbo
             <AppLogo className="h-10 w-10 object-contain drop-shadow-sm shrink-0" />
             <div className="flex flex-col">
               <span className="text-lg font-extrabold tracking-tight text-slate-800 leading-none">SCNJOBS</span>
-              <span className="text-[10px] font-medium text-slate-400 mt-1 block">Recruitment Suite</span>
+              <span className="text-[10px] font-semibold text-slate-400 mt-1 block">Find Your Dream Job</span>
             </div>
           </Link>
           <Button
