@@ -396,12 +396,6 @@ export function BulkMasterDataImportModal({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {!['languages', 'assets', 'benefits'].includes(resource) && (
-                <Button variant="outline" size="sm" onClick={downloadSampleTemplate}>
-                  <Download className="mr-1.5 h-3.5 w-3.5" />
-                  Template
-                </Button>
-              )}
               <label>
                 <Input
                   type="file"
