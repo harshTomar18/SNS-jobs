@@ -125,10 +125,12 @@ export default function MasterDataPage() {
         description="Manage platform-wide reference data, benefits, assets, and locations"
         action={
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => setShowBulkModal(true)}>
-              <Upload className="mr-2 h-4 w-4" />
-              Bulk Import {currentTab.label}
-            </Button>
+            {!['languages', 'assets', 'benefits'].includes(activeTab) && (
+              <Button variant="outline" onClick={() => setShowBulkModal(true)}>
+                <Upload className="mr-2 h-4 w-4" />
+                Bulk Import {currentTab.label}
+              </Button>
+            )}
             <Button onClick={() => { setEditingItem(null); setShowCreate(true); }}>
               <Plus className="mr-2 h-4 w-4" />
               Add {currentTab.label.replace(/s$/, '')}
