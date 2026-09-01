@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
 import { workerApi, masterDataApi, MasterRawItem, BackendLocation, BackendLookup } from '@/lib/scn-api';
 import { useQuery } from '@tanstack/react-query';
@@ -592,19 +593,32 @@ export default function WorkerOnboardingPage() {
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
-                        ) : filteredStates.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
-                          filteredStates.map((state: string) => (
-                            <button
-                              key={state}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => handleStateChange(state)}
-                            >
-                              {state}
-                            </button>
-                          ))
+                          <>
+                            {filteredStates.map((state: string) => (
+                              <button
+                                key={state}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleStateChange(state)}
+                              >
+                                {state}
+                              </button>
+                            ))}
+                            {stateInput.trim() !== '' && !states.some((s: string) => s.toLowerCase() === stateInput.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                onMouseDown={() => {
+                                  handleStateChange(stateInput.trim());
+                                  setIsStateOpen(false);
+                                }}
+                              >
+                                <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{stateInput.trim()}&quot;</span>
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -642,25 +656,38 @@ export default function WorkerOnboardingPage() {
                       />
                       <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                     </div>
-                    {isCityOpen && selectedState && (
+                    {isCityOpen && (selectedState || stateInput.trim()) && (
                       <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                         {isLoadingCities ? (
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
-                        ) : filteredCities.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
-                          filteredCities.map((city: string) => (
-                            <button
-                              key={city}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => handleCityChange(city)}
-                            >
-                              {city}
-                            </button>
-                          ))
+                          <>
+                            {filteredCities.map((city: string) => (
+                              <button
+                                key={city}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleCityChange(city)}
+                              >
+                                {city}
+                              </button>
+                            ))}
+                            {cityInput.trim() !== '' && !cities.some((c: string) => c.toLowerCase() === cityInput.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                onMouseDown={() => {
+                                  handleCityChange(cityInput.trim());
+                                  setIsCityOpen(false);
+                                }}
+                              >
+                                <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{cityInput.trim()}&quot;</span>
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -699,25 +726,38 @@ export default function WorkerOnboardingPage() {
                       />
                       <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                     </div>
-                    {isLocalityOpen && selectedCity && (
+                    {isLocalityOpen && (selectedCity || cityInput.trim()) && (
                       <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                         {isLoadingLocalities ? (
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
-                        ) : filteredLocalities.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — your entry will be saved as-is</div>
                         ) : (
-                          filteredLocalities.map((loc: BackendLocation) => (
-                            <button
-                              key={loc.id}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => handleLocalityChange(loc.locality)}
-                            >
-                              {loc.locality}
-                            </button>
-                          ))
+                          <>
+                            {filteredLocalities.map((loc: BackendLocation) => (
+                              <button
+                                key={loc.id}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => handleLocalityChange(loc.locality)}
+                              >
+                                {loc.locality}
+                              </button>
+                            ))}
+                            {localityInput.trim() !== '' && !localities.some((l: BackendLocation) => l.locality.toLowerCase() === localityInput.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                onMouseDown={() => {
+                                  handleLocalityChange(localityInput.trim());
+                                  setIsLocalityOpen(false);
+                                }}
+                              >
+                                <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{localityInput.trim()}&quot;</span>
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -752,23 +792,37 @@ export default function WorkerOnboardingPage() {
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
-                        ) : filteredIndustries.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
                         ) : (
-                          filteredIndustries.map((ind: BackendLookup) => (
-                            <button
-                              key={ind.id}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => {
-                                setIndInput(ind.name);
-                                setValue('industryName', ind.name);
-                                setIsIndOpen(false);
-                              }}
-                            >
-                              {ind.name}
-                            </button>
-                          ))
+                          <>
+                            {filteredIndustries.map((ind: BackendLookup) => (
+                              <button
+                                key={ind.id}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => {
+                                  setIndInput(ind.name);
+                                  setValue('industryName', ind.name);
+                                  setIsIndOpen(false);
+                                }}
+                              >
+                                {ind.name}
+                              </button>
+                            ))}
+                            {indInput.trim() !== '' && !filteredIndustries.some((ind: BackendLookup) => ind.name.toLowerCase() === indInput.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                onMouseDown={() => {
+                                  setIndInput(indInput.trim());
+                                  setValue('industryName', indInput.trim());
+                                  setIsIndOpen(false);
+                                }}
+                              >
+                                <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{indInput.trim()}&quot;</span>
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -803,23 +857,37 @@ export default function WorkerOnboardingPage() {
                           <div className="flex items-center justify-center p-2.5">
                             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                           </div>
-                        ) : filteredFunctions.length === 0 ? (
-                          <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
                         ) : (
-                          filteredFunctions.map((fn: BackendLookup) => (
-                            <button
-                              key={fn.id}
-                              type="button"
-                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                              onMouseDown={() => {
-                                setDeptInput(fn.name);
-                                setValue('departmentName', fn.name);
-                                setIsDeptOpen(false);
-                              }}
-                            >
-                              {fn.name}
-                            </button>
-                          ))
+                          <>
+                            {filteredFunctions.map((fn: BackendLookup) => (
+                              <button
+                                key={fn.id}
+                                type="button"
+                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                onMouseDown={() => {
+                                  setDeptInput(fn.name);
+                                  setValue('departmentName', fn.name);
+                                  setIsDeptOpen(false);
+                                }}
+                              >
+                                {fn.name}
+                              </button>
+                            ))}
+                            {deptInput.trim() !== '' && !filteredFunctions.some((fn: BackendLookup) => fn.name.toLowerCase() === deptInput.trim().toLowerCase()) && (
+                              <button
+                                type="button"
+                                className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                onMouseDown={() => {
+                                  setDeptInput(deptInput.trim());
+                                  setValue('departmentName', deptInput.trim());
+                                  setIsDeptOpen(false);
+                                }}
+                              >
+                                <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{deptInput.trim()}&quot;</span>
+                                <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -927,30 +995,44 @@ export default function WorkerOnboardingPage() {
                         <div className="absolute left-0 right-0 top-[68px] z-50 max-h-52 overflow-y-auto space-y-1 border rounded-md p-2 border-border bg-popover text-popover-foreground shadow-xl">
                           {qualGroupsQuery.isLoading ? (
                             <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>
-                          ) : !(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel)).filter((q: any) => !qualSearch || (q.name || '').toLowerCase().includes(qualSearch.toLowerCase())).length ? (
-                            <p className="text-xs text-muted-foreground text-center py-3">No matching qualifications found.</p>
                           ) : (
-                            (qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
-                              .filter((q: any) => {
-                                if (!qualSearch) return true;
-                                const name = 'name' in q ? q.name : String(q.id);
-                                return name.toLowerCase().includes(qualSearch.toLowerCase());
-                              })
-                              .map((q: any) => (
+                            <>
+                              {(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel))
+                                .filter((q: any) => {
+                                  if (!qualSearch) return true;
+                                  const name = 'name' in q ? q.name : String(q.id);
+                                  return name.toLowerCase().includes(qualSearch.toLowerCase());
+                                })
+                                .map((q: any) => (
+                                  <button
+                                    key={q.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setValue('qualificationId', String(q.id));
+                                      setQualSearch(q.name || String(q.id));
+                                      setIsQualOpen(false);
+                                    }}
+                                    className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
+                                      }`}
+                                  >
+                                    {'name' in q ? q.name : String(q.id)}
+                                  </button>
+                                ))}
+                              {qualSearch.trim() !== '' && !(qualGroups[selectedQualLevel] || qualifications.filter((q: any) => q.level === selectedQualLevel)).some((q: any) => (q.name || '').toLowerCase() === qualSearch.trim().toLowerCase()) && (
                                 <button
-                                  key={q.id}
                                   type="button"
                                   onClick={() => {
-                                    setValue('qualificationId', String(q.id));
-                                    setQualSearch(q.name || String(q.id));
+                                    setValue('qualificationId', undefined as any);
+                                    setQualSearch(qualSearch.trim());
                                     setIsQualOpen(false);
                                   }}
-                                  className={`w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-colors ${watch('qualificationId') === String(q.id) ? 'bg-primary text-primary-foreground font-semibold' : 'hover:bg-muted'
-                                    }`}
+                                  className="w-full text-left px-3 py-2 rounded-md text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 flex items-center justify-between transition-colors mt-1"
                                 >
-                                  {'name' in q ? q.name : String(q.id)}
+                                  <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{qualSearch.trim()}&quot;</span>
+                                  <Badge className="bg-primary/20 text-primary text-[10px] font-bold border-none">Custom</Badge>
                                 </button>
-                              ))
+                              )}
+                            </>
                           )}
                         </div>
                       )}

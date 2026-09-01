@@ -22,7 +22,8 @@ import {
   X,
   Loader2,
   ChevronRight,
-  Check
+  Check,
+  Plus
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -218,6 +219,35 @@ export default function CreateJobPage() {
     const loc = localities.find((l: BackendLocation) => String(l.id) === locationId);
     setLocalityInput(loc ? loc.locality : '');
     setValue('locationId', locationId, { shouldValidate: true });
+  };
+
+  const handleCustomLocality = async (customLocality: string) => {
+    const st = selectedState || stateInput.trim();
+    const ct = selectedCity || cityInput.trim();
+    if (!st || !ct || !customLocality) return;
+
+    setLocalityInput(customLocality);
+    setIsLocalityOpen(false);
+
+    try {
+      const created = await masterDataApi.create('locations', {
+        state: st,
+        city: ct,
+        locality: customLocality,
+      });
+      if (created && 'id' in created) {
+        const locId = String(created.id);
+        setSelectedLocalityId(locId);
+        setValue('locationId', locId, { shouldValidate: true });
+        return;
+      }
+    } catch (err) {
+      // ignore
+    }
+
+    const fallbackId = localities.length > 0 ? String(localities[0].id) : (locations.length > 0 ? String(locations[0].id) : '1');
+    setSelectedLocalityId(fallbackId);
+    setValue('locationId', fallbackId, { shouldValidate: true });
   };
 
   const industriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
@@ -503,6 +533,16 @@ export default function CreateJobPage() {
           .map((id: any) => Number(id))
           .filter((n: number) => !isNaN(n) && n > 0);
 
+        const selectedSkillNames = (data.skillIds || []).map((id) => {
+          const skill = skills.find((s: any) => String(s.id) === id);
+          return skill && 'name' in skill ? skill.name : id;
+        }).filter(Boolean);
+
+        const selectedQualNames = (data.qualificationIds || []).map((id) => {
+          const qual = qualifications.find((q: any) => String(q.id) === id);
+          return qual && 'name' in qual ? qual.name : id;
+        }).filter(Boolean);
+
         const payload = {
           jobRoleName: roleName,
           description: data.description,
@@ -515,7 +555,9 @@ export default function CreateJobPage() {
           locationId: Number(data.locationId),
           jobRoleId: data.jobRoleId ? Number(data.jobRoleId) : undefined,
           skillIds: cleanSkillIds.length > 0 ? cleanSkillIds : undefined,
+          skills: selectedSkillNames.length > 0 ? selectedSkillNames : undefined,
           qualificationIds: cleanQualIds.length > 0 ? cleanQualIds : undefined,
+          qualifications: selectedQualNames.length > 0 ? selectedQualNames : undefined,
           languageIds: cleanLangIds.length > 0 ? cleanLangIds : undefined,
           languages: selectedLanguageNames,
           wageMin: data.wageMin,
@@ -711,34 +753,53 @@ export default function CreateJobPage() {
                     />
                     <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                   </div>
-                  {isJobRoleOpen && (
-                    <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                      {jobRoles
-                        .filter((role: any) => !jobRoleSearch || (role.name || '').toLowerCase().includes(jobRoleSearch.toLowerCase()))
-                        .map((role: any) => (
+                    {isJobRoleOpen && (
+                      <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                        {jobRoles
+                          .filter((role: any) => !jobRoleSearch || (role.name || '').toLowerCase().includes(jobRoleSearch.toLowerCase()))
+                          .map((role: any) => (
+                            <button
+                              key={role.id}
+                              type="button"
+                              className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                setValue('jobRoleId', String(role.id));
+                                setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
+                                setJobRoleSearch(role.name || String(role.id));
+                                setIsJobRoleOpen(false);
+                              }}
+                              onClick={() => {
+                                setValue('jobRoleId', String(role.id));
+                                setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
+                                setJobRoleSearch(role.name || String(role.id));
+                                setIsJobRoleOpen(false);
+                              }}
+                            >
+                              {'name' in role ? role.name : String(role.id)}
+                            </button>
+                          ))}
+                        {jobRoleSearch.trim() !== '' && !jobRoles.some((role: any) => (role.name || '').toLowerCase() === jobRoleSearch.trim().toLowerCase()) && (
                           <button
-                            key={role.id}
                             type="button"
-                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
                             onMouseDown={(e) => {
                               e.preventDefault();
-                              setValue('jobRoleId', String(role.id));
-                              setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
-                              setJobRoleSearch(role.name || String(role.id));
-                              setIsJobRoleOpen(false);
-                            }}
-                            onClick={() => {
-                              setValue('jobRoleId', String(role.id));
-                              setValue('jobRoleName', role.name || String(role.id), { shouldValidate: true });
-                              setJobRoleSearch(role.name || String(role.id));
+                              setValue('jobRoleId', undefined);
+                              setValue('jobRoleName', jobRoleSearch.trim(), { shouldValidate: true });
+                              setJobRoleSearch(jobRoleSearch.trim());
                               setIsJobRoleOpen(false);
                             }}
                           >
-                            {'name' in role ? role.name : String(role.id)}
+                            <span className="flex items-center gap-1.5">
+                              <Plus className="h-3.5 w-3.5 text-blue-600" />
+                              Add &quot;{jobRoleSearch.trim()}&quot;
+                            </span>
+                            <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
                           </button>
-                        ))}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
                   {errors.jobRoleName && <p className="text-xs text-red-500 font-bold">{errors.jobRoleName.message}</p>}
                 </div>
 
@@ -819,6 +880,23 @@ export default function CreateJobPage() {
                             </button>
                           );
                         })}
+                      {functionSearch.trim() !== '' && !functions.some((func: any) => (func.name || '').toLowerCase() === functionSearch.trim().toLowerCase()) && !selectedFunctionIds.includes(functionSearch.trim()) && (
+                        <button
+                          type="button"
+                          className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('functionIds', functionSearch.trim());
+                            setFunctionSearch('');
+                          }}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                            Add &quot;{functionSearch.trim()}&quot;
+                          </span>
+                          <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -977,6 +1055,23 @@ export default function CreateJobPage() {
                             </button>
                           );
                         })}
+                      {industrySearch.trim() !== '' && !industries.some((ind: any) => (ind.name || '').toLowerCase() === industrySearch.trim().toLowerCase()) && !selectedIndustryIds.includes(industrySearch.trim()) && (
+                        <button
+                          type="button"
+                          className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('industryIds', industrySearch.trim());
+                            setIndustrySearch('');
+                          }}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Plus className="h-3.5 w-3.5 text-blue-600" />
+                            Add &quot;{industrySearch.trim()}&quot;
+                          </span>
+                          <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                        </button>
+                      )}
                     </div>
                   )}
                   {errors.industryIds && <p className="text-xs text-red-500 font-bold">{errors.industryIds.message}</p>}
@@ -1024,22 +1119,39 @@ export default function CreateJobPage() {
                             <div className="flex items-center justify-center p-2.5">
                               <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                             </div>
-                          ) : filteredStates.length === 0 ? (
-                            <div className="text-xs text-slate-400 p-2.5 text-center">No states found</div>
                           ) : (
-                            filteredStates.map((state: string) => (
-                              <button
-                                key={state}
-                                type="button"
-                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  handleStateChange(state);
-                                }}
-                              >
-                                {state}
-                              </button>
-                            ))
+                            <>
+                              {filteredStates.map((state: string) => (
+                                <button
+                                  key={state}
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleStateChange(state);
+                                  }}
+                                >
+                                  {state}
+                                </button>
+                              ))}
+                              {stateInput.trim() !== '' && !states.some((s: string) => s.toLowerCase() === stateInput.trim().toLowerCase()) && (
+                                <button
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleStateChange(stateInput.trim());
+                                    setIsStateOpen(false);
+                                  }}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                                    Add &quot;{stateInput.trim()}&quot;
+                                  </span>
+                                  <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -1075,28 +1187,45 @@ export default function CreateJobPage() {
                         />
                         <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                       </div>
-                      {isCityOpen && selectedState && (
+                      {isCityOpen && (selectedState || stateInput.trim()) && (
                         <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                           {isLoadingCities ? (
                             <div className="flex items-center justify-center p-2.5">
                               <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                             </div>
-                          ) : filteredCities.length === 0 ? (
-                            <div className="text-xs text-slate-400 p-2.5 text-center">No cities found</div>
                           ) : (
-                            filteredCities.map((city: string) => (
-                              <button
-                                key={city}
-                                type="button"
-                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  handleCityChange(city);
-                                }}
-                              >
-                                {city}
-                              </button>
-                            ))
+                            <>
+                              {filteredCities.map((city: string) => (
+                                <button
+                                  key={city}
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleCityChange(city);
+                                  }}
+                                >
+                                  {city}
+                                </button>
+                              ))}
+                              {cityInput.trim() !== '' && !cities.some((c: string) => c.toLowerCase() === cityInput.trim().toLowerCase()) && (
+                                <button
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleCityChange(cityInput.trim());
+                                    setIsCityOpen(false);
+                                  }}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                                    Add &quot;{cityInput.trim()}&quot;
+                                  </span>
+                                  <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -1133,28 +1262,44 @@ export default function CreateJobPage() {
                         />
                         <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                       </div>
-                      {isLocalityOpen && selectedCity && (
+                      {isLocalityOpen && (selectedCity || cityInput.trim()) && (
                         <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
                           {isLoadingLocalities ? (
                             <div className="flex items-center justify-center p-2.5">
                               <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
                             </div>
-                          ) : filteredLocalities.length === 0 ? (
-                            <div className="text-xs text-slate-400 p-2.5 text-center">No localities found</div>
                           ) : (
-                            filteredLocalities.map((loc: BackendLocation) => (
-                              <button
-                                key={loc.id}
-                                type="button"
-                                className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                onMouseDown={(e) => {
-                                  e.preventDefault();
-                                  handleLocalityChange(String(loc.id));
-                                }}
-                              >
-                                {loc.locality}
-                              </button>
-                            ))
+                            <>
+                              {filteredLocalities.map((loc: BackendLocation) => (
+                                <button
+                                  key={loc.id}
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleLocalityChange(String(loc.id));
+                                  }}
+                                >
+                                  {loc.locality}
+                                </button>
+                              ))}
+                              {localityInput.trim() !== '' && !localities.some((l: BackendLocation) => l.locality.toLowerCase() === localityInput.trim().toLowerCase()) && (
+                                <button
+                                  type="button"
+                                  className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    handleCustomLocality(localityInput.trim());
+                                  }}
+                                >
+                                  <span className="flex items-center gap-1.5">
+                                    <Plus className="h-3.5 w-3.5 text-blue-600" />
+                                    Add &quot;{localityInput.trim()}&quot;
+                                  </span>
+                                  <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                </button>
+                              )}
+                            </>
                           )}
                         </div>
                       )}
@@ -1221,35 +1366,48 @@ export default function CreateJobPage() {
                 {/* Skills Multi-Select Dropdown Menu */}
                 {isSkillOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                    {skillSuggestions.length > 0 ? (
-                      skillSuggestions.map((skill: any) => {
-                        const id = String(skill.id);
-                        const isSelected = selectedSkillIds.includes(id);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            className={cn(
-                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
-                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                            )}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              toggleId('skillIds', id);
-                            }}
-                          >
-                            <span>{'name' in skill ? skill.name : id}</span>
-                            <div className={cn(
-                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
-                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
-                            )}>
-                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching skills found</div>
+                    {skillSuggestions.map((skill: any) => {
+                      const id = String(skill.id);
+                      const isSelected = selectedSkillIds.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={cn(
+                            'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                            isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                          )}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('skillIds', id);
+                          }}
+                        >
+                          <span>{'name' in skill ? skill.name : id}</span>
+                          <div className={cn(
+                            'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                          )}>
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {skillSearch.trim() !== '' && !skills.some((skill: any) => (skill.name || '').toLowerCase() === skillSearch.trim().toLowerCase()) && !selectedSkillIds.includes(skillSearch.trim()) && (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleId('skillIds', skillSearch.trim());
+                          setSkillSearch('');
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                          Add &quot;{skillSearch.trim()}&quot;
+                        </span>
+                        <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                      </button>
                     )}
                   </div>
                 )}
@@ -1339,35 +1497,48 @@ export default function CreateJobPage() {
                 {/* Qualifications Multi-Select Dropdown Menu */}
                 {isQualOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                    {qualSuggestions.length > 0 ? (
-                      qualSuggestions.map((qualification: any) => {
-                        const id = String(qualification.id);
-                        const isSelected = selectedQualificationIds.includes(id);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            className={cn(
-                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
-                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                            )}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              toggleId('qualificationIds', id);
-                            }}
-                          >
-                            <span>{'name' in qualification ? qualification.name : id}</span>
-                            <div className={cn(
-                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
-                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
-                            )}>
-                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching qualifications found</div>
+                    {qualSuggestions.map((qualification: any) => {
+                      const id = String(qualification.id);
+                      const isSelected = selectedQualificationIds.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={cn(
+                            'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                            isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                          )}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('qualificationIds', id);
+                          }}
+                        >
+                          <span>{'name' in qualification ? qualification.name : id}</span>
+                          <div className={cn(
+                            'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                          )}>
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {qualSearch.trim() !== '' && !qualifications.some((q: any) => (q.name || '').toLowerCase() === qualSearch.trim().toLowerCase()) && !selectedQualificationIds.includes(qualSearch.trim()) && (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleId('qualificationIds', qualSearch.trim());
+                          setQualSearch('');
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                          Add &quot;{qualSearch.trim()}&quot;
+                        </span>
+                        <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                      </button>
                     )}
                   </div>
                 )}
@@ -1426,35 +1597,48 @@ export default function CreateJobPage() {
                 {/* Languages Multi-Select Dropdown Menu */}
                 {isLangOpen && (
                   <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-[220px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                    {langSuggestions.length > 0 ? (
-                      langSuggestions.map((lang: any) => {
-                        const id = String(lang.id);
-                        const isSelected = selectedLanguageIds.includes(id);
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            className={cn(
-                              'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
-                              isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
-                            )}
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              toggleId('languageIds', id);
-                            }}
-                          >
-                            <span>{'name' in lang ? lang.name : id}</span>
-                            <div className={cn(
-                              'h-4 w-4 rounded border flex items-center justify-center transition-all',
-                              isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
-                            )}>
-                              {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
-                            </div>
-                          </button>
-                        );
-                      })
-                    ) : (
-                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching languages found</div>
+                    {langSuggestions.map((lang: any) => {
+                      const id = String(lang.id);
+                      const isSelected = selectedLanguageIds.includes(id);
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          className={cn(
+                            'w-full text-left px-3.5 py-2.5 text-xs font-semibold flex items-center justify-between transition-colors',
+                            isSelected ? 'bg-indigo-50/60 text-indigo-700 font-bold' : 'text-slate-700 hover:bg-slate-50'
+                          )}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            toggleId('languageIds', id);
+                          }}
+                        >
+                          <span>{'name' in lang ? lang.name : id}</span>
+                          <div className={cn(
+                            'h-4 w-4 rounded border flex items-center justify-center transition-all',
+                            isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'border-slate-300 bg-white'
+                          )}>
+                            {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                    {langSearch.trim() !== '' && !languages.some((l: any) => (l.name || '').toLowerCase() === langSearch.trim().toLowerCase()) && !selectedLanguageIds.includes(langSearch.trim()) && (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleId('languageIds', langSearch.trim());
+                          setLangSearch('');
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                          Add &quot;{langSearch.trim()}&quot;
+                        </span>
+                        <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                      </button>
                     )}
                   </div>
                 )}
@@ -1604,8 +1788,22 @@ export default function CreateJobPage() {
                           </button>
                         );
                       })}
-                    {benefitsOptionsList.filter((b) => !benefitSearch || b.toLowerCase().includes(benefitSearch.toLowerCase())).length === 0 && (
-                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching benefits found</div>
+                    {benefitSearch.trim() !== '' && !benefitsOptionsList.some((b) => b.toLowerCase() === benefitSearch.trim().toLowerCase()) && !(formData.benefitNames || []).includes(benefitSearch.trim()) && (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleBenefit(benefitSearch.trim());
+                          setBenefitSearch('');
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                          Add &quot;{benefitSearch.trim()}&quot;
+                        </span>
+                        <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                      </button>
                     )}
                   </div>
                 )}
@@ -1693,8 +1891,22 @@ export default function CreateJobPage() {
                           </button>
                         );
                       })}
-                    {assetsOptionsList.filter((a) => !assetSearch || a.toLowerCase().includes(assetSearch.toLowerCase())).length === 0 && (
-                      <div className="text-xs text-slate-400 p-3 text-center italic">No matching assets found</div>
+                    {assetSearch.trim() !== '' && !assetsOptionsList.some((a) => a.toLowerCase() === assetSearch.trim().toLowerCase()) && !(formData.assetNames || []).includes(assetSearch.trim()) && (
+                      <button
+                        type="button"
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-indigo-600 bg-indigo-50/60 hover:bg-indigo-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          toggleAsset(assetSearch.trim());
+                          setAssetSearch('');
+                        }}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <Plus className="h-3.5 w-3.5 text-indigo-600" />
+                          Add &quot;{assetSearch.trim()}&quot;
+                        </span>
+                        <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                      </button>
                     )}
                   </div>
                 )}

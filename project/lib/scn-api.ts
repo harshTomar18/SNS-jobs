@@ -909,6 +909,8 @@ function formatJobPayload(data: any) {
           .map((id: any) => Number(id))
           .filter((id: number) => !isNaN(id) && id > 0)
       : undefined,
+    skills: data.skills,
+    qualifications: data.qualifications,
     benefitNames: data.benefitNames,
     assetNames: data.assetNames,
     status: data.status ? statusToApi(data.status) : undefined,

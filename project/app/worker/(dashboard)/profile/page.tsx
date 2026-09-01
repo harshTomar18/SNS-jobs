@@ -339,18 +339,22 @@ export default function WorkerProfilePage() {
   const masterIndustriesQuery = useQuery({ queryKey: ['master', 'industries'], queryFn: () => masterDataApi.raw('industries') });
   const masterIndustries: BackendLookup[] = (masterIndustriesQuery.data as BackendLookup[]) || [];
   const [industryModalOpen, setIndustryModalOpen] = useState(false);
-  const [selectedIndustryIds, setSelectedIndustryIds] = useState<number[]>([]);
+  const [selectedIndustryIds, setSelectedIndustryIds] = useState<(number | string)[]>([]);
   const [industrySearch, setIndustrySearch] = useState('');
   const handleOpenIndustryModal = () => { if (!profile) return; setSelectedIndustryIds(profile.preferredIndustryIds || []); setIndustryModalOpen(true); };
-  const toggleIndustrySelection = (id: number) => setSelectedIndustryIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleIndustrySelection = (id: number | string) => setSelectedIndustryIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const updateIndustriesMutation = useMutation({
-    mutationFn: (preferredIndustryIds: number[]) => {
+    mutationFn: (preferredIndustryIds: (number | string)[]) => {
       const industryNames = preferredIndustryIds
-        .map(id => masterIndustries.find(i => i.id === id)?.name)
+        .map(id => {
+          const found = masterIndustries.find(i => String(i.id) === String(id));
+          return found ? found.name : String(id);
+        })
         .filter(Boolean) as string[];
+      const cleanIds = preferredIndustryIds.map(Number).filter(n => !isNaN(n) && n > 0);
       return workerApi.updateProfile({
-        preferredIndustryIds,
-        industryIds: preferredIndustryIds,
+        preferredIndustryIds: cleanIds,
+        industryIds: cleanIds,
         industryNames,
         preferredIndustries: industryNames,
       });
@@ -363,18 +367,22 @@ export default function WorkerProfilePage() {
   const masterJobRolesQuery = useQuery({ queryKey: ['master', 'job-roles'], queryFn: () => masterDataApi.raw('job-roles') });
   const masterJobRoles: BackendLookup[] = (masterJobRolesQuery.data as BackendLookup[]) || [];
   const [jobRolesModalOpen, setJobRolesModalOpen] = useState(false);
-  const [selectedJobRoleIds, setSelectedJobRoleIds] = useState<number[]>([]);
+  const [selectedJobRoleIds, setSelectedJobRoleIds] = useState<(number | string)[]>([]);
   const [jobRoleSearch, setJobRoleSearch] = useState('');
   const handleOpenJobRolesModal = () => { if (!profile) return; setSelectedJobRoleIds(profile.preferredJobRoleIds || []); setJobRolesModalOpen(true); };
-  const toggleJobRoleSelection = (id: number) => setSelectedJobRoleIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleJobRoleSelection = (id: number | string) => setSelectedJobRoleIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const updateJobRolesMutation = useMutation({
-    mutationFn: (preferredJobRoleIds: number[]) => {
+    mutationFn: (preferredJobRoleIds: (number | string)[]) => {
       const jobRoleNames = preferredJobRoleIds
-        .map(id => masterJobRoles.find(r => r.id === id)?.name)
+        .map(id => {
+          const found = masterJobRoles.find(r => String(r.id) === String(id));
+          return found ? found.name : String(id);
+        })
         .filter(Boolean) as string[];
+      const cleanIds = preferredJobRoleIds.map(Number).filter(n => !isNaN(n) && n > 0);
       return workerApi.updateProfile({
-        preferredJobRoleIds,
-        jobRoleIds: preferredJobRoleIds,
+        preferredJobRoleIds: cleanIds,
+        jobRoleIds: cleanIds,
         jobRoleNames,
         preferredJobRoles: jobRoleNames,
       });
@@ -385,19 +393,23 @@ export default function WorkerProfilePage() {
 
   // Preferred Departments / Functions
   const [departmentsModalOpen, setDepartmentsModalOpen] = useState(false);
-  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<number[]>([]);
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<(number | string)[]>([]);
   const [departmentSearch, setDepartmentSearch] = useState('');
   const handleOpenDepartmentsModal = () => { if (!profile) return; setSelectedDepartmentIds(profile.preferredDepartmentIds || []); setDepartmentsModalOpen(true); };
-  const toggleDepartmentSelection = (id: number) => setSelectedDepartmentIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleDepartmentSelection = (id: number | string) => setSelectedDepartmentIds(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
   const updateDepartmentsMutation = useMutation({
-    mutationFn: (departmentIds: number[]) => {
+    mutationFn: (departmentIds: (number | string)[]) => {
       const departmentNames = departmentIds
-        .map(id => masterFunctions.find(f => f.id === id)?.name)
+        .map(id => {
+          const found = masterFunctions.find(f => String(f.id) === String(id));
+          return found ? found.name : String(id);
+        })
         .filter(Boolean) as string[];
+      const cleanIds = departmentIds.map(Number).filter(n => !isNaN(n) && n > 0);
       return workerApi.updateProfile({
-        departmentIds,
+        departmentIds: cleanIds,
         departmentNames,
-        preferredDepartmentIds: departmentIds,
+        preferredDepartmentIds: cleanIds,
         preferredDepartments: departmentNames,
       });
     },
@@ -628,15 +640,9 @@ export default function WorkerProfilePage() {
                 <p className="text-slate-400 font-bold text-[10px] leading-normal max-w-[200px]">Add more details to reach <span className="text-blue-600">All-Star</span> status.</p>
               </Card>
 
-              {(profile.department || profile.departmentName || profile.dob || profile.maritalStatus || profile.category || profile.jobPreference || profile.expectedSalaryMin || profile.expectedSalaryMax) && (
+              {(profile.dob || profile.maritalStatus || profile.category || profile.jobPreference || profile.expectedSalaryMin || profile.expectedSalaryMax) && (
                 <Card className="p-6 bg-white border border-slate-100/80 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.02)] space-y-3">
                   <h3 className="font-extrabold text-slate-800 text-xs border-b border-slate-50 pb-2.5">Personal & Preference Details</h3>
-                  {(profile.department || profile.departmentName) && (
-                    <div className="flex justify-between text-xs">
-                      <span className="font-bold text-slate-400">Department / Function</span>
-                      <span className="font-extrabold text-indigo-700">{profile.department || profile.departmentName}</span>
-                    </div>
-                  )}
                   {(profile.expectedSalaryMin > 0 || profile.expectedSalaryMax > 0) && (
                     <div className="flex justify-between text-xs">
                       <span className="font-bold text-slate-400">Expected Salary</span>
@@ -772,52 +778,6 @@ export default function WorkerProfilePage() {
                             onChange={(assets) => setForm(p => ({ ...p, assets }))}
                           />
                         </div>
-                        <div className="space-y-1.5 relative">
-                          <Label className="text-xs font-bold text-slate-500">Department / Function</Label>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              autoComplete="off"
-                              placeholder="Search or select department..."
-                              className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 transition-all shadow-sm"
-                              value={deptSearch}
-                              onChange={e => {
-                                setDeptSearch(e.target.value);
-                                setForm(p => ({ ...p, departmentName: e.target.value }));
-                                setIsDeptOpen(true);
-                              }}
-                              onFocus={() => setIsDeptOpen(true)}
-                              onBlur={() => setTimeout(() => setIsDeptOpen(false), 200)}
-                            />
-                            <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
-                          </div>
-                          {isDeptOpen && (
-                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
-                              {functionsQuery.isLoading ? (
-                                <div className="flex items-center justify-center p-2.5">
-                                  <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-                                </div>
-                              ) : filteredMasterFunctions.length === 0 ? (
-                                <div className="text-xs text-slate-400 p-2.5 text-center">No match — custom entry will be saved</div>
-                              ) : (
-                                filteredMasterFunctions.map((fn: BackendLookup) => (
-                                  <button
-                                    key={fn.id}
-                                    type="button"
-                                    className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                                    onMouseDown={() => {
-                                      setDeptSearch(fn.name);
-                                      setForm(p => ({ ...p, departmentName: fn.name }));
-                                      setIsDeptOpen(false);
-                                    }}
-                                  >
-                                    {fn.name}
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
                       </div>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
@@ -841,7 +801,34 @@ export default function WorkerProfilePage() {
                             <input type="text" autoComplete="off" placeholder="Type or select state..." className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 transition-all shadow-sm" value={stateInput} onChange={e => { setStateInput(e.target.value); setIsStateOpen(true); }} onFocus={() => setIsStateOpen(true)} onBlur={() => setTimeout(() => { setIsStateOpen(false); const m = states.find((s: string) => s.toLowerCase() === stateInput.toLowerCase()); if (m) handleStateChange(m); else if (stateInput.trim()) handleStateChange(stateInput.trim()); else setStateInput(form.state); }, 200)} />
                             <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                           </div>
-                          {isStateOpen && (<div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">{isLoadingStates ? <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div> : filteredStates.length === 0 ? <div className="text-xs text-slate-400 p-2.5 text-center">No match — will be saved as-is</div> : filteredStates.map((s: string) => <button key={s} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50" onMouseDown={() => handleStateChange(s)}>{s}</button>)}</div>)}
+                          {isStateOpen && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingStates ? (
+                                <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div>
+                              ) : (
+                                <>
+                                  {filteredStates.map((s: string) => (
+                                    <button key={s} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors" onMouseDown={() => handleStateChange(s)}>
+                                      {s}
+                                    </button>
+                                  ))}
+                                  {stateInput.trim() !== '' && !states.some((s: string) => s.toLowerCase() === stateInput.trim().toLowerCase()) && (
+                                    <button
+                                      type="button"
+                                      className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                      onMouseDown={() => {
+                                        handleStateChange(stateInput.trim());
+                                        setIsStateOpen(false);
+                                      }}
+                                    >
+                                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{stateInput.trim()}&quot;</span>
+                                      <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1.5 relative">
                           <Label className="text-[10px] text-slate-400 font-bold uppercase">City</Label>
@@ -849,7 +836,34 @@ export default function WorkerProfilePage() {
                             <input type="text" autoComplete="off" placeholder={form.state ? "Type or select city..." : "Choose state first"} disabled={!form.state} className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 transition-all shadow-sm disabled:opacity-50" value={cityInput} onChange={e => { setCityInput(e.target.value); setIsCityOpen(true); }} onFocus={() => setIsCityOpen(true)} onBlur={() => setTimeout(() => { setIsCityOpen(false); const m = cities.find((c: string) => c.toLowerCase() === cityInput.toLowerCase()); if (m) handleCityChange(m); else if (cityInput.trim()) handleCityChange(cityInput.trim()); else setCityInput(form.city); }, 200)} />
                             <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                           </div>
-                          {isCityOpen && form.state && (<div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">{isLoadingCities ? <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div> : filteredCities.length === 0 ? <div className="text-xs text-slate-400 p-2.5 text-center">No match — will be saved as-is</div> : filteredCities.map((c: string) => <button key={c} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50" onMouseDown={() => handleCityChange(c)}>{c}</button>)}</div>)}
+                          {isCityOpen && (form.state || stateInput.trim()) && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingCities ? (
+                                <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div>
+                              ) : (
+                                <>
+                                  {filteredCities.map((c: string) => (
+                                    <button key={c} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors" onMouseDown={() => handleCityChange(c)}>
+                                      {c}
+                                    </button>
+                                  ))}
+                                  {cityInput.trim() !== '' && !cities.some((c: string) => c.toLowerCase() === cityInput.trim().toLowerCase()) && (
+                                    <button
+                                      type="button"
+                                      className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                      onMouseDown={() => {
+                                        handleCityChange(cityInput.trim());
+                                        setIsCityOpen(false);
+                                      }}
+                                    >
+                                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{cityInput.trim()}&quot;</span>
+                                      <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="space-y-1.5 relative">
                           <Label className="text-[10px] text-slate-400 font-bold uppercase">Locality</Label>
@@ -857,7 +871,34 @@ export default function WorkerProfilePage() {
                             <input type="text" autoComplete="off" placeholder={form.city ? "Type or select locality..." : "Choose city first"} disabled={!form.city} className="w-full rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-700 h-10 px-3.5 pr-10 focus:outline-none focus:border-blue-600 transition-all shadow-sm disabled:opacity-50" value={localityInput} onChange={e => { setLocalityInput(e.target.value); setIsLocalityOpen(true); }} onFocus={() => setIsLocalityOpen(true)} onBlur={() => setTimeout(() => { setIsLocalityOpen(false); const m = localities.find((l: BackendLocation) => l.locality.toLowerCase() === localityInput.toLowerCase()); if (m) handleLocalityChange(m.locality); else if (localityInput.trim()) handleLocalityChange(localityInput.trim()); else setLocalityInput(form.locality); }, 200)} />
                             <ChevronRight className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 rotate-90 text-slate-400 pointer-events-none" />
                           </div>
-                          {isLocalityOpen && form.city && (<div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">{isLoadingLocalities ? <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div> : filteredLocalities.length === 0 ? <div className="text-xs text-slate-400 p-2.5 text-center">No match — will be saved as-is</div> : filteredLocalities.map((loc: BackendLocation) => <button key={loc.id} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50" onMouseDown={() => handleLocalityChange(loc.locality)}>{loc.locality}</button>)}</div>)}
+                          {isLocalityOpen && (form.city || cityInput.trim()) && (
+                            <div className="absolute left-0 right-0 top-[66px] z-50 max-h-[200px] overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg py-1">
+                              {isLoadingLocalities ? (
+                                <div className="flex justify-center p-2.5"><Loader2 className="h-4 w-4 animate-spin text-slate-400" /></div>
+                              ) : (
+                                <>
+                                  {filteredLocalities.map((loc: BackendLocation) => (
+                                    <button key={loc.id} type="button" className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors" onMouseDown={() => handleLocalityChange(loc.locality)}>
+                                      {loc.locality}
+                                    </button>
+                                  ))}
+                                  {localityInput.trim() !== '' && !localities.some((l: BackendLocation) => l.locality.toLowerCase() === localityInput.trim().toLowerCase()) && (
+                                    <button
+                                      type="button"
+                                      className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
+                                      onMouseDown={() => {
+                                        handleLocalityChange(localityInput.trim());
+                                        setIsLocalityOpen(false);
+                                      }}
+                                    >
+                                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{localityInput.trim()}&quot;</span>
+                                      <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                                    </button>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1271,10 +1312,23 @@ export default function WorkerProfilePage() {
                 <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search industries..." value={industrySearch} onChange={e => setIndustrySearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs" /></div>
                 <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
                   {masterIndustriesQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div> : masterIndustries.filter(ind => !industrySearch || ind.name?.toLowerCase().includes(industrySearch.toLowerCase())).map(ind => { const isSelected = selectedIndustryIds.includes(ind.id); return <div key={ind.id} onClick={() => toggleIndustrySelection(ind.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-indigo-50 text-indigo-700 border border-indigo-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{ind.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleIndustrySelection(ind.id)} /></div>; })}
+                  {industrySearch.trim() !== '' && !masterIndustries.some(ind => ind.name?.toLowerCase() === industrySearch.trim().toLowerCase()) && !selectedIndustryIds.includes(industrySearch.trim()) && (
+                    <div
+                      onClick={() => {
+                        const custom = industrySearch.trim();
+                        setSelectedIndustryIds(prev => [...prev, custom]);
+                        setIndustrySearch('');
+                      }}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold bg-indigo-50/60 hover:bg-indigo-100/80 text-indigo-700 border border-dashed border-indigo-200 mt-1 transition-all"
+                    >
+                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{industrySearch.trim()}&quot;</span>
+                      <Badge className="bg-indigo-100 text-indigo-700 text-[10px] font-bold border-none">Custom</Badge>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedIndustryIds.length}):</span>
-                  {selectedIndustryIds.map(id => { const item = masterIndustries.find(ind => ind.id === id); if (!item) return null; return <Badge key={id} className="bg-indigo-100 text-indigo-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleIndustrySelection(id)} /></Badge>; })}
+                  {selectedIndustryIds.map(id => { const item = masterIndustries.find(ind => String(ind.id) === String(id)); const name = item ? item.name : String(id); return <Badge key={id} className="bg-indigo-100 text-indigo-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleIndustrySelection(id)} /></Badge>; })}
                 </div>
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
@@ -1291,10 +1345,23 @@ export default function WorkerProfilePage() {
                 <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search job roles..." value={jobRoleSearch} onChange={e => setJobRoleSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs font-bold" /></div>
                 <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
                   {masterJobRolesQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-purple-600" /></div> : masterJobRoles.filter(role => !jobRoleSearch || role.name?.toLowerCase().includes(jobRoleSearch.toLowerCase())).map(role => { const isSelected = selectedJobRoleIds.includes(role.id); return <div key={role.id} onClick={() => toggleJobRoleSelection(role.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{role.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleJobRoleSelection(role.id)} /></div>; })}
+                  {jobRoleSearch.trim() !== '' && !masterJobRoles.some(r => r.name?.toLowerCase() === jobRoleSearch.trim().toLowerCase()) && !selectedJobRoleIds.includes(jobRoleSearch.trim()) && (
+                    <div
+                      onClick={() => {
+                        const custom = jobRoleSearch.trim();
+                        setSelectedJobRoleIds(prev => [...prev, custom]);
+                        setJobRoleSearch('');
+                      }}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold bg-purple-50/60 hover:bg-purple-100/80 text-purple-700 border border-dashed border-purple-200 mt-1 transition-all"
+                    >
+                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{jobRoleSearch.trim()}&quot;</span>
+                      <Badge className="bg-purple-100 text-purple-700 text-[10px] font-bold border-none">Custom</Badge>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedJobRoleIds.length}):</span>
-                  {selectedJobRoleIds.map(id => { const item = masterJobRoles.find(role => role.id === id); if (!item) return null; return <Badge key={id} className="bg-purple-100 text-purple-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleJobRoleSelection(id)} /></Badge>; })}
+                  {selectedJobRoleIds.map(id => { const item = masterJobRoles.find(role => String(role.id) === String(id)); const name = item ? item.name : String(id); return <Badge key={id} className="bg-purple-100 text-purple-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleJobRoleSelection(id)} /></Badge>; })}
                 </div>
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
@@ -1311,10 +1378,23 @@ export default function WorkerProfilePage() {
                 <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" /><Input placeholder="Search departments..." value={departmentSearch} onChange={e => setDepartmentSearch(e.target.value)} className="pl-9 rounded-xl border-slate-200 text-xs font-bold" /></div>
                 <div className="max-h-60 overflow-y-auto pr-1 space-y-1.5 border rounded-xl p-3 border-slate-100 bg-slate-50/50">
                   {functionsQuery.isLoading ? <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-blue-600" /></div> : masterFunctions.filter(dept => !departmentSearch || dept.name?.toLowerCase().includes(departmentSearch.toLowerCase())).map(dept => { const isSelected = selectedDepartmentIds.includes(dept.id); return <div key={dept.id} onClick={() => toggleDepartmentSelection(dept.id)} className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold ${isSelected ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'}`}><span>{dept.name}</span><Checkbox checked={isSelected} onCheckedChange={() => toggleDepartmentSelection(dept.id)} /></div>; })}
+                  {departmentSearch.trim() !== '' && !masterFunctions.some(dept => dept.name?.toLowerCase() === departmentSearch.trim().toLowerCase()) && !selectedDepartmentIds.includes(departmentSearch.trim()) && (
+                    <div
+                      onClick={() => {
+                        const custom = departmentSearch.trim();
+                        setSelectedDepartmentIds(prev => [...prev, custom]);
+                        setDepartmentSearch('');
+                      }}
+                      className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold bg-blue-50/60 hover:bg-blue-100/80 text-blue-700 border border-dashed border-blue-200 mt-1 transition-all"
+                    >
+                      <span className="flex items-center gap-1.5"><Plus className="h-3.5 w-3.5" />Add &quot;{departmentSearch.trim()}&quot;</span>
+                      <Badge className="bg-blue-100 text-blue-700 text-[10px] font-bold border-none">Custom</Badge>
+                    </div>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   <span className="text-xs text-slate-400 font-bold w-full">Selected ({selectedDepartmentIds.length}):</span>
-                  {selectedDepartmentIds.map(id => { const item = masterFunctions.find(dept => dept.id === id); if (!item) return null; return <Badge key={id} className="bg-blue-100 text-blue-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{item.name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleDepartmentSelection(id)} /></Badge>; })}
+                  {selectedDepartmentIds.map(id => { const item = masterFunctions.find(dept => String(dept.id) === String(id)); const name = item ? item.name : String(id); return <Badge key={id} className="bg-blue-100 text-blue-700 border-none text-[11px] font-bold py-1 px-2.5 rounded-lg flex items-center gap-1"><span>{name}</span><X className="h-3 w-3 cursor-pointer" onClick={() => toggleDepartmentSelection(id)} /></Badge>; })}
                 </div>
               </div>
               <DialogFooter className="gap-2 sm:gap-0">
@@ -1348,29 +1428,45 @@ export default function WorkerProfilePage() {
                     <div className="flex justify-center py-6">
                       <Loader2 className="h-5 w-5 animate-spin text-emerald-600" />
                     </div>
-                  ) : filteredMasterAssets.length === 0 ? (
-                    <div className="text-xs text-slate-400 text-center py-4">No matching assets found.</div>
                   ) : (
-                    filteredMasterAssets.map((asset) => {
-                      const isSelected = selectedAssets.includes(asset);
-                      return (
+                    <>
+                      {filteredMasterAssets.map((asset) => {
+                        const isSelected = selectedAssets.includes(asset);
+                        return (
+                          <div
+                            key={asset}
+                            onClick={() => toggleAssetSelection(asset)}
+                            className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold transition-all ${
+                              isSelected
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Laptop className="h-3.5 w-3.5 text-emerald-600" />
+                              <span>{asset}</span>
+                            </div>
+                            <Checkbox checked={isSelected} onCheckedChange={() => toggleAssetSelection(asset)} />
+                          </div>
+                        );
+                      })}
+                      {assetSearch.trim() !== '' && !masterAssets.some(a => a.toLowerCase() === assetSearch.trim().toLowerCase()) && !selectedAssets.includes(assetSearch.trim()) && (
                         <div
-                          key={asset}
-                          onClick={() => toggleAssetSelection(asset)}
-                          className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold transition-all ${
-                            isSelected
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                              : 'bg-white text-slate-700 hover:bg-slate-100/70 border border-transparent'
-                          }`}
+                          onClick={() => {
+                            const custom = assetSearch.trim();
+                            setSelectedAssets(prev => [...prev, custom]);
+                            setAssetSearch('');
+                          }}
+                          className="flex items-center justify-between p-2.5 rounded-xl cursor-pointer text-xs font-bold bg-emerald-50/60 hover:bg-emerald-100/80 text-emerald-800 border border-dashed border-emerald-200 mt-1 transition-all"
                         >
                           <div className="flex items-center gap-2">
-                            <Laptop className="h-3.5 w-3.5 text-emerald-600" />
-                            <span>{asset}</span>
+                            <Plus className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>Add &quot;{assetSearch.trim()}&quot;</span>
                           </div>
-                          <Checkbox checked={isSelected} onCheckedChange={() => toggleAssetSelection(asset)} />
+                          <Badge className="bg-emerald-100 text-emerald-800 text-[10px] font-bold border-none">Custom</Badge>
                         </div>
-                      );
-                    })
+                      )}
+                    </>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
