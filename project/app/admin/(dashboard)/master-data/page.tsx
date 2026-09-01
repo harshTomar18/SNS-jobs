@@ -169,6 +169,7 @@ export default function MasterDataPage() {
         onOpenChange={setShowBulkModal}
         resource={activeTab}
         resourceLabel={currentTab.label}
+        functionsList={data['functions'] || []}
         onSuccess={() => {
           queryClient.invalidateQueries({ queryKey: ['master', activeTab] });
           queryClient.invalidateQueries({ queryKey: ['admin-stats'] });

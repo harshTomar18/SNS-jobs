@@ -1385,6 +1385,60 @@ export const masterDataApi = {
       toMasterDataItem(resource, item),
     );
   },
+  importBulk(
+    resource: MasterResource,
+    file: File,
+    extraData?: { functionId?: string | number; level?: string }
+  ) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    let endpointResource: string = resource;
+    if (resource === 'job-roles') {
+      endpointResource = 'job-roles';
+      if (extraData?.functionId !== undefined && extraData?.functionId !== null && String(extraData.functionId).trim() !== '') {
+        formData.append('functionId', String(extraData.functionId));
+      }
+    } else if (resource === 'qualifications') {
+      endpointResource = 'qualifications';
+      if (extraData?.level) {
+        formData.append('level', extraData.level);
+      }
+    }
+
+    return apiPost<any>(`/master/${endpointResource}/import`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  importLocations(file: File) {
+    return this.importBulk('locations', file);
+  },
+  importIndustries(file: File) {
+    return this.importBulk('industries', file);
+  },
+  importFunctions(file: File) {
+    return this.importBulk('functions', file);
+  },
+  importSkills(file: File) {
+    return this.importBulk('skills', file);
+  },
+  importLanguages(file: File) {
+    return this.importBulk('languages', file);
+  },
+  importBenefits(file: File) {
+    return this.importBulk('benefits', file);
+  },
+  importAssets(file: File) {
+    return this.importBulk('assets', file);
+  },
+  importJobRoles(file: File, functionId?: number | string) {
+    return this.importBulk('job-roles', file, { functionId });
+  },
+  importQualifications(file: File, level: string) {
+    return this.importBulk('qualifications', file, { level });
+  },
 };
 
 export const contactApi = {

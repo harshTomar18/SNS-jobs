@@ -32,6 +32,7 @@ interface BulkMasterDataImportModalProps {
   onOpenChange: (open: boolean) => void;
   resource: MasterResource;
   resourceLabel: string;
+  functionsList?: { id: string | number; name: string }[];
   onSuccess?: () => void;
 }
 
@@ -40,12 +41,15 @@ export function BulkMasterDataImportModal({
   onOpenChange,
   resource,
   resourceLabel,
+  functionsList = [],
   onSuccess,
 }: BulkMasterDataImportModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [items, setItems] = useState<ParsedMasterItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [progressCount, setProgressCount] = useState(0);
+  const [selectedLevel, setSelectedLevel] = useState<string>('GRADUATE');
+  const [selectedFunctionId, setSelectedFunctionId] = useState<string>('');
 
   useEffect(() => {
     if (!open) {
@@ -53,6 +57,8 @@ export function BulkMasterDataImportModal({
       setItems([]);
       setIsSubmitting(false);
       setProgressCount(0);
+      setSelectedLevel('GRADUATE');
+      setSelectedFunctionId('');
     }
   }, [open, resource]);
 
@@ -63,7 +69,15 @@ export function BulkMasterDataImportModal({
     let startIdx = 0;
     if (lines.length > 0) {
       const headerLine = lines[0].toLowerCase();
-      if (headerLine.includes('name') || headerLine.includes('state') || headerLine.includes('title')) {
+      if (
+        headerLine.includes('name') ||
+        headerLine.includes('state') ||
+        headerLine.includes('title') ||
+        headerLine.includes('qualification') ||
+        headerLine.includes('post graduate') ||
+        headerLine.includes('graduate') ||
+        headerLine.includes('diploma')
+      ) {
         startIdx = 1;
       }
     }
@@ -87,7 +101,7 @@ export function BulkMasterDataImportModal({
         });
       } else if (resource === 'qualifications') {
         const name = parts[0] || '';
-        const level = parts[1] || 'GRADUATE';
+        const level = parts[1] || selectedLevel || 'GRADUATE';
         const isValid = Boolean(name);
         parsed.push({
           name,
@@ -127,42 +141,48 @@ export function BulkMasterDataImportModal({
           const worksheet = workbook.Sheets[firstSheetName];
           const rawJson: any[] = XLSX.utils.sheet_to_json(worksheet);
 
-          const parsed: ParsedMasterItem[] = rawJson.map((row: any) => {
-            if (resource === 'locations') {
-              const state = String(row.State || row.state || row['State/UT'] || '').trim();
-              const city = String(row.City || row.city || row.District || '').trim();
-              const locality = String(row.Locality || row.locality || row.Area || '').trim();
-              const isValid = Boolean(state && city && locality);
-              return {
-                name: `${city} - ${locality}`,
-                state,
-                city,
-                locality,
-                isValid,
-                error: !isValid ? 'State, City, and Locality required' : undefined,
-              };
-            } else if (resource === 'qualifications') {
-              const name = String(row.Name || row.name || row.Qualification || row['Qualification Name'] || '').trim();
-              const level = String(row.Level || row.level || 'GRADUATE').trim();
-              const isValid = Boolean(name);
-              return {
-                name,
-                level,
-                isValid,
-                error: !isValid ? 'Name required' : undefined,
-              };
-            } else {
-              const keys = Object.keys(row);
-              const nameKey = keys.find((k) => /name|title|industry|function|skill|role|language|benefit|asset/i.test(k)) || keys[0];
-              const name = String(row[nameKey] || '').trim();
-              const isValid = Boolean(name);
-              return {
-                name,
-                isValid,
-                error: !isValid ? 'Name required' : undefined,
-              };
-            }
-          });
+          const parsed: ParsedMasterItem[] = rawJson
+            .map((row: any): ParsedMasterItem | null => {
+              if (resource === 'locations') {
+                const state = String(row.State || row.state || row['State/UT'] || '').trim();
+                const city = String(row.City || row.city || row.District || '').trim();
+                const locality = String(row.Locality || row.locality || row.Area || '').trim();
+                const isValid = Boolean(state && city && locality);
+                return {
+                  name: `${city} - ${locality}`,
+                  state,
+                  city,
+                  locality,
+                  isValid,
+                  error: !isValid ? 'State, City, and Locality required' : undefined,
+                };
+              } else if (resource === 'qualifications') {
+                const name = String(row.Name || row.name || row.Qualification || row['Qualification Name'] || Object.values(row)[0] || '').trim();
+                const level = String(row.Level || row.level || selectedLevel || 'GRADUATE').trim();
+                // Check if title row (e.g. "Post Graduate" title header)
+                if (name.toLowerCase() === 'post graduate' || name.toLowerCase() === 'graduate' || name.toLowerCase() === 'diploma') {
+                  return null;
+                }
+                const isValid = Boolean(name);
+                return {
+                  name,
+                  level,
+                  isValid,
+                  error: !isValid ? 'Name required' : undefined,
+                };
+              } else {
+                const keys = Object.keys(row);
+                const nameKey = keys.find((k) => /name|title|industry|function|skill|role|language|benefit|asset/i.test(k)) || keys[0];
+                const name = String(row[nameKey] || '').trim();
+                const isValid = Boolean(name);
+                return {
+                  name,
+                  isValid,
+                  error: !isValid ? 'Name required' : undefined,
+                };
+              }
+            })
+            .filter((item): item is ParsedMasterItem => item !== null);
 
           setItems(parsed);
           toast.success(`Parsed ${parsed.length} entries for ${resourceLabel}`);
@@ -188,7 +208,7 @@ export function BulkMasterDataImportModal({
     if (resource === 'locations') {
       csvContent = 'State,City,Locality\nMaharashtra,Mumbai,Andheri East\nKarnataka,Bengaluru,Koramangala\nDelhi,New Delhi,Connaught Place\nTelangana,Hyderabad,Gachibowli';
     } else if (resource === 'qualifications') {
-      csvContent = 'Name,Level\n10th Pass,TEN\n12th Pass,TWELVE\nDiploma in Engineering,DIPLOMA\nBachelor of Technology,GRADUATE\nMaster of Business Administration,POST_GRADUATE';
+      csvContent = 'Qualification Name\nBachelor of Technology\nMaster of Business Administration\nDiploma in Mechanical Engineering\n10th Standard\n12th Standard';
     } else if (resource === 'industries') {
       csvContent = 'Name\nInformation Technology & Services\nHealthcare & Pharmaceuticals\nBanking & Financial Services\nManufacturing & Industrial\nRetail & E-commerce';
     } else if (resource === 'functions') {
@@ -222,19 +242,42 @@ export function BulkMasterDataImportModal({
   };
 
   const handleSubmit = async () => {
-    const validItems = items.filter((i) => i.isValid);
-    if (validItems.length === 0) {
-      toast.error('No valid items to import');
+    if (!file && items.length === 0) {
+      toast.error('Please select a file to import');
       return;
     }
 
     setIsSubmitting(true);
-    setProgressCount(0);
 
+    // Primary path: Direct backend API file upload
+    if (file) {
+      try {
+        await masterDataApi.importBulk(resource, file, {
+          functionId: selectedFunctionId || undefined,
+          level: selectedLevel || undefined,
+        });
+        toast.success(`Bulk import completed successfully for ${resourceLabel}!`);
+        setIsSubmitting(false);
+        onSuccess?.();
+        onOpenChange(false);
+        return;
+      } catch (apiErr) {
+        console.warn('Direct API import returned error, executing fallback batch creation...', apiErr);
+      }
+    }
+
+    // Fallback path: client-side row-by-row batch creation
+    const validItems = items.filter((i) => i.isValid);
+    if (validItems.length === 0) {
+      setIsSubmitting(false);
+      toast.error('No valid items to import');
+      return;
+    }
+
+    setProgressCount(0);
     let successCount = 0;
     let failCount = 0;
 
-    // Batch execution in chunks of 10
     const chunkSize = 10;
     for (let i = 0; i < validItems.length; i += chunkSize) {
       const chunk = validItems.slice(i, i + chunkSize);
@@ -250,7 +293,7 @@ export function BulkMasterDataImportModal({
             } else if (resource === 'qualifications') {
               await masterDataApi.create('qualifications', {
                 name: item.name,
-                level: item.level || 'GRADUATE',
+                level: selectedLevel || item.level || 'GRADUATE',
               });
             } else {
               await masterDataApi.create(resource, { name: item.name });
@@ -281,11 +324,67 @@ export function BulkMasterDataImportModal({
             Bulk Import {resourceLabel}
           </DialogTitle>
           <DialogDescription>
-            Upload an Excel (.xlsx, .xls, .csv) or Word / Text (.docx, .txt) file containing {resourceLabel} records to add them in bulk.
+            Upload an Excel (.xlsx, .xls) or text/CSV file containing {resourceLabel} records to import them in bulk.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-y-auto pr-1">
+          {/* Resource Specific Extra Parameter Form Fields */}
+          {resource === 'qualifications' && (
+            <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/20">
+              <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
+                Qualification Level (Required)
+              </label>
+              <select
+                value={selectedLevel}
+                onChange={(e) => setSelectedLevel(e.target.value)}
+                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="GRADUATE">GRADUATE</option>
+                <option value="POST_GRADUATE">POST_GRADUATE</option>
+                <option value="DIPLOMA">DIPLOMA</option>
+                <option value="TEN">TEN (10th Pass)</option>
+                <option value="TWELVE">TWELVE (12th Pass)</option>
+                <option value="ANY">ANY</option>
+              </select>
+              <p className="text-xs text-muted-foreground">
+                Level header required for qualification imports.
+              </p>
+            </div>
+          )}
+
+          {resource === 'job-roles' && (
+            <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/20">
+              <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
+                Scope under Job Function (Optional)
+              </label>
+              {functionsList && functionsList.length > 0 ? (
+                <select
+                  value={selectedFunctionId}
+                  onChange={(e) => setSelectedFunctionId(e.target.value)}
+                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  <option value="">Unscoped (No Job Function)</option>
+                  {functionsList.map((fn) => (
+                    <option key={fn.id} value={String(fn.id)}>
+                      {fn.name} (ID: {fn.id})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  placeholder="Enter Numeric Job Function ID (e.g. 5)"
+                  value={selectedFunctionId}
+                  onChange={(e) => setSelectedFunctionId(e.target.value)}
+                  type="number"
+                />
+              )}
+              <p className="text-xs text-muted-foreground">
+                If set, every imported role is scoped under that one Job Function.
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-dashed border-border bg-muted/30">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -293,7 +392,7 @@ export function BulkMasterDataImportModal({
               </div>
               <div>
                 <p className="text-sm font-medium">Select File for {resourceLabel}</p>
-                <p className="text-xs text-muted-foreground">Supported formats: .xlsx, .xls, .csv, .docx, .txt</p>
+                <p className="text-xs text-muted-foreground">Supported formats: .xlsx, .xls, .csv, .txt</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -326,9 +425,9 @@ export function BulkMasterDataImportModal({
             <div className="space-y-2 py-2">
               <div className="flex items-center justify-between text-xs font-medium">
                 <span>Importing {resourceLabel}...</span>
-                <span>{progressCount} / {validCount}</span>
+                <span>{progressCount} / {validCount || items.length || 1}</span>
               </div>
-              <Progress value={(progressCount / validCount) * 100} className="h-2" />
+              <Progress value={validCount ? (progressCount / validCount) * 100 : 50} className="h-2" />
             </div>
           )}
 
@@ -367,7 +466,7 @@ export function BulkMasterDataImportModal({
                       ) : resource === 'qualifications' ? (
                         <>
                           <td className="px-3 py-2 font-medium">{row.name || '-'}</td>
-                          <td className="px-3 py-2"><Badge variant="outline" className="text-xs">{row.level || 'GRADUATE'}</Badge></td>
+                          <td className="px-3 py-2"><Badge variant="outline" className="text-xs">{selectedLevel || row.level || 'GRADUATE'}</Badge></td>
                         </>
                       ) : (
                         <td className="px-3 py-2 font-medium">{row.name || '-'}</td>
@@ -405,9 +504,9 @@ export function BulkMasterDataImportModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || validCount === 0}
+            disabled={isSubmitting || (!file && validCount === 0)}
           >
-            {isSubmitting ? `Importing (${progressCount}/${validCount})...` : `Bulk Import ${validCount} ${resourceLabel}`}
+            {isSubmitting ? `Importing...` : `Bulk Import ${file ? resourceLabel : `${validCount} ${resourceLabel}`}`}
           </Button>
         </DialogFooter>
       </DialogContent>

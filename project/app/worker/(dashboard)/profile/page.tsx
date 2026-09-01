@@ -503,7 +503,7 @@ export default function WorkerProfilePage() {
   };
 
   return (
-    <div className="space-y-6 pb-16 min-h-screen">
+    <div className="space-y-6 pb-16 bg-[#f0f8ff] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
       {profile && (
         <>
           {/* Hero Card */}

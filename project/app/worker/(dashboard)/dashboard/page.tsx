@@ -89,7 +89,7 @@ export default function WorkerDashboardPage() {
   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
   return (
-    <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
+    <div className="space-y-8 pb-10 bg-[#f0f8ff] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
       {/* Top Banner & Profile Completion */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Welcome Banner Card */}

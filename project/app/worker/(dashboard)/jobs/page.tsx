@@ -243,7 +243,7 @@ export default function WorkerJobsPage() {
   const salPercentage = (salaryMinLimit / 300000) * 100;
 
   return (
-    <div className="space-y-8 pb-10 bg-[#f8fafc] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
+    <div className="space-y-8 pb-10 bg-[#f0f8ff] -m-4 sm:-m-6 lg:-m-8 p-4 sm:p-6 lg:p-8 min-h-screen">
       <div className="w-full space-y-6">
         {/* Central Search Header Card */}
         <Card className="p-8 bg-white border-slate-100/80 shadow-[0_8px_30px_rgb(0,0,0,0.02)] rounded-3xl space-y-6">
