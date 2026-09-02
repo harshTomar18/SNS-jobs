@@ -329,62 +329,6 @@ export function BulkMasterDataImportModal({
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-          {/* Resource Specific Extra Parameter Form Fields */}
-          {resource === 'qualifications' && (
-            <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/20">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
-                Qualification Level (Required)
-              </label>
-              <select
-                value={selectedLevel}
-                onChange={(e) => setSelectedLevel(e.target.value)}
-                className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="GRADUATE">GRADUATE</option>
-                <option value="POST_GRADUATE">POST_GRADUATE</option>
-                <option value="DIPLOMA">DIPLOMA</option>
-                <option value="TEN">TEN (10th Pass)</option>
-                <option value="TWELVE">TWELVE (12th Pass)</option>
-                <option value="ANY">ANY</option>
-              </select>
-              <p className="text-xs text-muted-foreground">
-                Level header required for qualification imports.
-              </p>
-            </div>
-          )}
-
-          {resource === 'job-roles' && (
-            <div className="space-y-2 p-3 rounded-lg border border-border bg-muted/20">
-              <label className="text-xs font-semibold text-foreground uppercase tracking-wider block">
-                Scope under Job Function (Optional)
-              </label>
-              {functionsList && functionsList.length > 0 ? (
-                <select
-                  value={selectedFunctionId}
-                  onChange={(e) => setSelectedFunctionId(e.target.value)}
-                  className="w-full h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Unscoped (No Job Function)</option>
-                  {functionsList.map((fn) => (
-                    <option key={fn.id} value={String(fn.id)}>
-                      {fn.name} (ID: {fn.id})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  placeholder="Enter Numeric Job Function ID (e.g. 5)"
-                  value={selectedFunctionId}
-                  onChange={(e) => setSelectedFunctionId(e.target.value)}
-                  type="number"
-                />
-              )}
-              <p className="text-xs text-muted-foreground">
-                If set, every imported role is scoped under that one Job Function.
-              </p>
-            </div>
-          )}
-
           <div className="flex items-center justify-between gap-4 p-4 rounded-xl border border-dashed border-border bg-muted/30">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
