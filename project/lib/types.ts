@@ -64,6 +64,18 @@ export interface Job {
   postedAt: string;
   recruiterId: string;
   recruiterName: string;
+  recruiterPhone?: string;
+  recruiterEmail?: string;
+  poster?: {
+    id: string;
+    email: string;
+    phone?: string | null;
+    recruiter?: {
+      id?: string;
+      name?: string;
+      email?: string;
+    } | null;
+  };
   status: 'draft' | 'published' | 'closed';
   isFresherFriendly: boolean;
 }

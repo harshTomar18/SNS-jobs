@@ -159,6 +159,7 @@ interface BackendJob {
   poster?: {
     id: string;
     email: string;
+    phone?: string | null;
     recruiter?: Pick<BackendRecruiter, 'id' | 'name' | 'email'> | null;
   };
   skills?: { skill?: BackendLookup }[];
@@ -497,7 +498,10 @@ export function toJob(job: BackendJob): JobWithMeta {
     benefits: benefitNames,
     postedAt: job.createdAt,
     recruiterId: job.postedBy,
-    recruiterName: recruiter?.name || job.poster?.email || 'SCN Recruiter',
+    recruiterName: recruiter?.name || (job.poster as any)?.name || job.poster?.email || 'SCN Recruiter',
+    recruiterPhone: job.poster?.phone || (recruiter as any)?.phone || (job as any).phone || undefined,
+    recruiterEmail: recruiter?.email || job.poster?.email || undefined,
+    poster: job.poster,
     status: statusToUi(job.status),
     isFresherFriendly: (job.minExperienceMonths || 0) === 0 || Boolean(job.freshersOnly),
     backendStatus: job.status,

@@ -152,7 +152,10 @@
 .dark .bg-slate-100,
 .dark [class*="bg-slate-50"],
 .dark [class*="bg-slate-100"],
-.dark [class*="bg-[#f8fafc]"] {
+.dark [class*="bg-[#f8fafc]"],
+.dark [class*="bg-[#f0f8ff]"],
+.dark .bg-\[\#f0f8ff\],
+.dark .bg-\[\#f8fafc\] {
   background-color: hsl(var(--background)) !important;
 }
 
