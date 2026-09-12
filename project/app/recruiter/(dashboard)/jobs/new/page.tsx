@@ -194,6 +194,7 @@ export default function CreateJobPage() {
   });
 
   const handleStateChange = (state: string) => {
+    setIsStateOpen(false);
     if (state === selectedState) return;
     setSelectedState(state);
     setStateInput(state);
@@ -205,6 +206,7 @@ export default function CreateJobPage() {
   };
 
   const handleCityChange = (city: string) => {
+    setIsCityOpen(false);
     if (city === selectedCity) return;
     setSelectedCity(city);
     setCityInput(city);
@@ -214,6 +216,7 @@ export default function CreateJobPage() {
   };
 
   const handleLocalityChange = (locationId: string) => {
+    setIsLocalityOpen(false);
     if (locationId === selectedLocalityId) return;
     setSelectedLocalityId(locationId);
     const loc = localities.find((l: BackendLocation) => String(l.id) === locationId);
@@ -790,6 +793,12 @@ export default function CreateJobPage() {
                               setJobRoleSearch(jobRoleSearch.trim());
                               setIsJobRoleOpen(false);
                             }}
+                            onClick={() => {
+                              setValue('jobRoleId', undefined);
+                              setValue('jobRoleName', jobRoleSearch.trim(), { shouldValidate: true });
+                              setJobRoleSearch(jobRoleSearch.trim());
+                              setIsJobRoleOpen(false);
+                            }}
                           >
                             <span className="flex items-center gap-1.5">
                               <Plus className="h-3.5 w-3.5 text-blue-600" />
@@ -873,6 +882,11 @@ export default function CreateJobPage() {
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 toggleId('functionIds', id);
+                                setIsFunctionOpen(false);
+                              }}
+                              onClick={() => {
+                                toggleId('functionIds', id);
+                                setIsFunctionOpen(false);
                               }}
                             >
                               <span>{'name' in func ? func.name : id}</span>
@@ -888,6 +902,12 @@ export default function CreateJobPage() {
                             e.preventDefault();
                             toggleId('functionIds', functionSearch.trim());
                             setFunctionSearch('');
+                            setIsFunctionOpen(false);
+                          }}
+                          onClick={() => {
+                            toggleId('functionIds', functionSearch.trim());
+                            setFunctionSearch('');
+                            setIsFunctionOpen(false);
                           }}
                         >
                           <span className="flex items-center gap-1.5">
@@ -1048,6 +1068,11 @@ export default function CreateJobPage() {
                               onMouseDown={(e) => {
                                 e.preventDefault();
                                 toggleId('industryIds', id);
+                                setIsIndustryOpen(false);
+                              }}
+                              onClick={() => {
+                                toggleId('industryIds', id);
+                                setIsIndustryOpen(false);
                               }}
                             >
                               <span>{'name' in ind ? ind.name : id}</span>
@@ -1063,6 +1088,12 @@ export default function CreateJobPage() {
                             e.preventDefault();
                             toggleId('industryIds', industrySearch.trim());
                             setIndustrySearch('');
+                            setIsIndustryOpen(false);
+                          }}
+                          onClick={() => {
+                            toggleId('industryIds', industrySearch.trim());
+                            setIndustrySearch('');
+                            setIsIndustryOpen(false);
                           }}
                         >
                           <span className="flex items-center gap-1.5">
@@ -1129,6 +1160,11 @@ export default function CreateJobPage() {
                                   onMouseDown={(e) => {
                                     e.preventDefault();
                                     handleStateChange(state);
+                                    setIsStateOpen(false);
+                                  }}
+                                  onClick={() => {
+                                    handleStateChange(state);
+                                    setIsStateOpen(false);
                                   }}
                                 >
                                   {state}
@@ -1140,6 +1176,10 @@ export default function CreateJobPage() {
                                   className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
                                   onMouseDown={(e) => {
                                     e.preventDefault();
+                                    handleStateChange(stateInput.trim());
+                                    setIsStateOpen(false);
+                                  }}
+                                  onClick={() => {
                                     handleStateChange(stateInput.trim());
                                     setIsStateOpen(false);
                                   }}
@@ -1203,6 +1243,11 @@ export default function CreateJobPage() {
                                   onMouseDown={(e) => {
                                     e.preventDefault();
                                     handleCityChange(city);
+                                    setIsCityOpen(false);
+                                  }}
+                                  onClick={() => {
+                                    handleCityChange(city);
+                                    setIsCityOpen(false);
                                   }}
                                 >
                                   {city}
@@ -1214,6 +1259,10 @@ export default function CreateJobPage() {
                                   className="w-full text-left px-3.5 py-2.5 text-xs font-bold text-blue-600 bg-blue-50/60 hover:bg-blue-100/70 border-t border-slate-100 flex items-center justify-between transition-colors"
                                   onMouseDown={(e) => {
                                     e.preventDefault();
+                                    handleCityChange(cityInput.trim());
+                                    setIsCityOpen(false);
+                                  }}
+                                  onClick={() => {
                                     handleCityChange(cityInput.trim());
                                     setIsCityOpen(false);
                                   }}
@@ -1278,6 +1327,11 @@ export default function CreateJobPage() {
                                   onMouseDown={(e) => {
                                     e.preventDefault();
                                     handleLocalityChange(String(loc.id));
+                                    setIsLocalityOpen(false);
+                                  }}
+                                  onClick={() => {
+                                    handleLocalityChange(String(loc.id));
+                                    setIsLocalityOpen(false);
                                   }}
                                 >
                                   {loc.locality}
@@ -1290,6 +1344,11 @@ export default function CreateJobPage() {
                                   onMouseDown={(e) => {
                                     e.preventDefault();
                                     handleCustomLocality(localityInput.trim());
+                                    setIsLocalityOpen(false);
+                                  }}
+                                  onClick={() => {
+                                    handleCustomLocality(localityInput.trim());
+                                    setIsLocalityOpen(false);
                                   }}
                                 >
                                   <span className="flex items-center gap-1.5">
@@ -1380,6 +1439,11 @@ export default function CreateJobPage() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             toggleId('skillIds', id);
+                            setIsSkillOpen(false);
+                          }}
+                          onClick={() => {
+                            toggleId('skillIds', id);
+                            setIsSkillOpen(false);
                           }}
                         >
                           <span>{'name' in skill ? skill.name : id}</span>
@@ -1400,6 +1464,12 @@ export default function CreateJobPage() {
                           e.preventDefault();
                           toggleId('skillIds', skillSearch.trim());
                           setSkillSearch('');
+                          setIsSkillOpen(false);
+                        }}
+                        onClick={() => {
+                          toggleId('skillIds', skillSearch.trim());
+                          setSkillSearch('');
+                          setIsSkillOpen(false);
                         }}
                       >
                         <span className="flex items-center gap-1.5">
@@ -1511,6 +1581,11 @@ export default function CreateJobPage() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             toggleId('qualificationIds', id);
+                            setIsQualOpen(false);
+                          }}
+                          onClick={() => {
+                            toggleId('qualificationIds', id);
+                            setIsQualOpen(false);
                           }}
                         >
                           <span>{'name' in qualification ? qualification.name : id}</span>
@@ -1531,6 +1606,12 @@ export default function CreateJobPage() {
                           e.preventDefault();
                           toggleId('qualificationIds', qualSearch.trim());
                           setQualSearch('');
+                          setIsQualOpen(false);
+                        }}
+                        onClick={() => {
+                          toggleId('qualificationIds', qualSearch.trim());
+                          setQualSearch('');
+                          setIsQualOpen(false);
                         }}
                       >
                         <span className="flex items-center gap-1.5">
@@ -1611,6 +1692,11 @@ export default function CreateJobPage() {
                           onMouseDown={(e) => {
                             e.preventDefault();
                             toggleId('languageIds', id);
+                            setIsLangOpen(false);
+                          }}
+                          onClick={() => {
+                            toggleId('languageIds', id);
+                            setIsLangOpen(false);
                           }}
                         >
                           <span>{'name' in lang ? lang.name : id}</span>
@@ -1631,6 +1717,12 @@ export default function CreateJobPage() {
                           e.preventDefault();
                           toggleId('languageIds', langSearch.trim());
                           setLangSearch('');
+                          setIsLangOpen(false);
+                        }}
+                        onClick={() => {
+                          toggleId('languageIds', langSearch.trim());
+                          setLangSearch('');
+                          setIsLangOpen(false);
                         }}
                       >
                         <span className="flex items-center gap-1.5">
@@ -1776,6 +1868,11 @@ export default function CreateJobPage() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               toggleBenefit(benefit);
+                              setIsBenefitOpen(false);
+                            }}
+                            onClick={() => {
+                              toggleBenefit(benefit);
+                              setIsBenefitOpen(false);
                             }}
                           >
                             <span>{benefit}</span>
@@ -1796,6 +1893,12 @@ export default function CreateJobPage() {
                           e.preventDefault();
                           toggleBenefit(benefitSearch.trim());
                           setBenefitSearch('');
+                          setIsBenefitOpen(false);
+                        }}
+                        onClick={() => {
+                          toggleBenefit(benefitSearch.trim());
+                          setBenefitSearch('');
+                          setIsBenefitOpen(false);
                         }}
                       >
                         <span className="flex items-center gap-1.5">
@@ -1879,6 +1982,11 @@ export default function CreateJobPage() {
                             onMouseDown={(e) => {
                               e.preventDefault();
                               toggleAsset(asset);
+                              setIsAssetOpen(false);
+                            }}
+                            onClick={() => {
+                              toggleAsset(asset);
+                              setIsAssetOpen(false);
                             }}
                           >
                             <span>{asset}</span>
@@ -1899,6 +2007,12 @@ export default function CreateJobPage() {
                           e.preventDefault();
                           toggleAsset(assetSearch.trim());
                           setAssetSearch('');
+                          setIsAssetOpen(false);
+                        }}
+                        onClick={() => {
+                          toggleAsset(assetSearch.trim());
+                          setAssetSearch('');
+                          setIsAssetOpen(false);
                         }}
                       >
                         <span className="flex items-center gap-1.5">
