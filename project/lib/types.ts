@@ -239,6 +239,9 @@ export interface MasterDataItem {
   count?: number;
   createdAt: string;
   status: 'active' | 'inactive';
+  state?: string;
+  city?: string;
+  locality?: string;
 }
 
 export interface PaginatedResponse<T> {

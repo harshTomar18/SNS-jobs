@@ -766,8 +766,9 @@ export function toRecruiter(recruiter: BackendRecruiter): RecruiterView {
 }
 
 export function toMasterDataItem(resource: MasterResource, item: BackendLookup | BackendLocation): MasterDataItem {
+  const isLoc = resource === 'locations';
   const name =
-    resource === 'locations'
+    isLoc
       ? `${(item as BackendLocation).city} - ${(item as BackendLocation).locality}`
       : (item as BackendLookup).level
         ? `${(item as BackendLookup).name} (${(item as BackendLookup).level})`
@@ -779,6 +780,9 @@ export function toMasterDataItem(resource: MasterResource, item: BackendLookup |
     count: 0,
     createdAt: item.createdAt || '',
     status: item.isActive === false ? 'inactive' : 'active',
+    state: isLoc ? (item as BackendLocation).state : undefined,
+    city: isLoc ? (item as BackendLocation).city : undefined,
+    locality: isLoc ? (item as BackendLocation).locality : undefined,
   };
 }
 
