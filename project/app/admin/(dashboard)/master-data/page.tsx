@@ -14,6 +14,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { DataTable, Column } from '@/components/data-table';
@@ -299,7 +300,14 @@ export default function MasterDataPage() {
         }
       }}>
         <DialogContent className={cn(activeTab === 'locations' ? 'sm:max-w-2xl' : 'sm:max-w-lg')}>
-          <DialogHeader><DialogTitle>{editingItem ? 'Edit' : 'Add'} {currentTab.label.replace(/s$/, '')}</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingItem ? 'Edit' : 'Add'} {currentTab.label.replace(/s$/, '')}</DialogTitle>
+            <DialogDescription>
+              {activeTab === 'locations'
+                ? 'Select or enter the state, city, and locality to save location reference data.'
+                : `Enter details for this ${currentTab.label.toLowerCase().replace(/s$/, '')}.`}
+            </DialogDescription>
+          </DialogHeader>
           <div className="space-y-4">
             {activeTab === 'locations' ? (
               <div className="grid gap-4 sm:grid-cols-3">

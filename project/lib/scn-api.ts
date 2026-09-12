@@ -816,6 +816,12 @@ export const authApi = {
   resendWorkerOtp(phone: string) {
     return apiPost<{ devOtp?: string }>('/auth/worker/resend-otp', { phone });
   },
+  forgotPassword(email: string) {
+    return apiPost<{ message?: string }>('/auth/forgot-password', { email });
+  },
+  resetPassword(data: { email: string; otp: string; newPassword: string }) {
+    return apiPost<{ message?: string }>('/auth/reset-password', data);
+  },
 };
 
 function formatJobPayload(data: any) {
