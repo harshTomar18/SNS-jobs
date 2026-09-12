@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: 'SCN Jobs — Find Your Next Opportunity',
   description:
     'The modern job portal connecting workers and recruiters. Discover jobs, track applications, and hire faster.',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -22,6 +27,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="shortcut icon" href="/logo.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+      </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <ThemeProvider defaultTheme="light">
           <QueryProvider>
